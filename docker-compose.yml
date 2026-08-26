@@ -1,0 +1,66 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tape}
+      POSTGRES_USER: ${POSTGRES_USER:-tape}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tape}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tape} -d ${POSTGRES_DB:-tape}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-tape}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-tape}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-tape}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-please-32bytes-min}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      SEARCH_INDEX_DIR: ${SEARCH_INDEX_DIR:-/var/lib/tape/search}
+      MEDIA_DIR: ${MEDIA_DIR:-/var/lib/tape/media}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - searchdata:/var/lib/tape/search
+      - mediadata:/var/lib/tape/media
+
+  web:
+    build:
+      context: ./web
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8080}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+    environment:
+      API_BASE_URL: ${API_BASE_URL:-http://backend:8080}
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8080}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      - backend
+
+  cms:
+    build:
+      context: ./cms
+      args:
+        VITE_ADMIN_API_URL: ${VITE_ADMIN_API_URL:-http://localhost:8080/api/admin}
+    ports:
+      - "${CMS_PORT:-5173}:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  searchdata:
+  mediadata:

@@ -1,0 +1,26 @@
+.intro {
+  margin: 8px 0 32px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.h1 {
+  font-size: 40px;
+  line-height: 1.05;
+  margin: 0 0 10px;
+}
+.lede {
+  color: var(--text-dim);
+  font-size: 17px;
+  max-width: 640px;
+  line-height: 1.5;
+  margin: 0;
+}
+.breadcrumb {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+.breadcrumb a:hover { color: var(--accent); }

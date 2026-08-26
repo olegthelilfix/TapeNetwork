@@ -1,0 +1,23 @@
+# env
+.env
+
+# Java / Maven
+backend/target/
+*.class
+
+# Node
+node_modules/
+web/.next/
+web/out/
+cms/dist/
+packages/api-types/generated/
+
+# Search indexes
+**/search-index/
+*.log
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+tasks/board.html

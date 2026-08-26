@@ -1,0 +1,36 @@
+.wrap {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.track {
+  display: inline-flex;
+  align-items: center;
+  gap: 34px;
+  padding: 9px 0;
+  animation: scroll 60s linear infinite;
+  will-change: transform;
+}
+.track:hover {
+  animation-play-state: paused;
+}
+.quote {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.sym { color: var(--text); letter-spacing: 0.06em; }
+.px { color: var(--text-dim); }
+.up { color: var(--up); }
+.down { color: var(--down); }
+
+@keyframes scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .track { animation: none; }
+}

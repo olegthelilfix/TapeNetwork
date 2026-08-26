@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #08090B; }
+  * { box-sizing: border-box; }
+  a { color: #F0B429; text-decoration: none; }
+  a:hover { color: #FFD070; }
+  ::selection { background: #F0B429; color: #08090B; }
+  @keyframes tapeScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+</style>
+</helmet>
+
+<div style="background: #08090B; color: #E9EBF0; font-family: 'IBM Plex Sans', system-ui, sans-serif; min-height: 100vh; overflow-x: hidden;">
+
+  <div style="position: sticky; top: 0; z-index: 50; background: rgba(8,9,11,0.94); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.08);">
+    <div style="display: flex; align-items: center; gap: 32px; max-width: 1440px; margin: 0 auto; padding: 0 40px; height: 68px;">
+      <div style="display: flex; align-items: baseline; gap: 9px; cursor: pointer;" onClick="{{ goHome }}">
+        <div style="width: 11px; height: 26px; background: #F0B429;"></div>
+        <div style="font-family: 'IBM Plex Serif', Georgia, serif; font-weight: 700; font-size: 21px; letter-spacing: -0.01em;">TAPE</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.22em; color: #8A90A0; text-transform: uppercase;">Network</div>
+      </div>
+      <nav style="display: flex; align-items: center; gap: 4px; flex: 1;">
+        <div onClick="{{ homeGo }}" style="{{ homeStyle }}">Home</div>
+        <div ref="{{ menuRef }}" style="position: relative;">
+          <div onClick="{{ toggleMenu }}" style="{{ showsTabStyle }}">
+            Shows
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M5 8l7 7 7-7"></path></svg>
+          </div>
+          <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position: absolute; top: 100%; left: 0; width: 318px; background: #0D0F13; border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 22px 48px rgba(0,0,0,0.6); z-index: 60;">
+              <div style="padding: 12px 16px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: #767C8C;">ALL SHOWS</div>
+              <sc-for list="{{ menuShows }}" as="m" hint-placeholder-count="4">
+                <div onClick="{{ m.go }}" style="{{ m.style }}">
+                  <div style="width: 3px; height: 100%; min-height: 34px; background: #F0B429;"></div>
+                  <div>
+                    <div style="font-size: 14px; font-weight: 600;">{{ m.name }}</div>
+                    <div style="font-size: 12px; color: #8A90A0; line-height: 1.45; margin-top: 4px;">{{ m.blurb }}</div>
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.12em; color: #616776; margin-top: 7px;">{{ m.slot }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+        <div onClick="{{ goArticles }}" style="{{ articlesStyle }}">Articles</div>
+        <div onClick="{{ goCatalog }}" style="{{ catalogStyle }}">On Demand</div>
+      </nav>
+      <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 9px; height: 36px; padding: 0 14px; border: 1px solid rgba(255,255,255,0.1); background: #101216; min-width: 150px; max-width: 230px; overflow: hidden;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A90A0" stroke-width="2.2" style="flex-shrink: 0;"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4.5-4.5"></path></svg>
+          <span style="font-size: 13px; color: #6E7484; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Search shows, tickers, hosts</span>
+        </div>
+      </div>
+    </div>
+    <sc-if value="{{ showTicker }}" hint-placeholder-val="{{ true }}">
+      <div style="border-top: 1px solid rgba(255,255,255,0.06); background: #0B0D10; height: 34px; overflow: hidden; display: flex; align-items: center;">
+        <div style="display: flex; width: 200%; animation: tapeScroll 40s linear infinite;">
+          <sc-for list="{{ tape }}" as="q" hint-placeholder-count="14">
+            <div style="display: flex; align-items: baseline; gap: 8px; padding: 0 22px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; white-space: nowrap;">
+              <span style="font-weight: 600; color: #C9CDD8;">{{ q.sym }}</span>
+              <span style="color: #8A90A0;">{{ q.px }}</span>
+              <span style="{{ q.chgStyle }}">{{ q.chg }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+  <div>
+    <div style="max-width: 1440px; margin: 0 auto; padding: 32px 40px 0;">
+      <div style="display: grid; grid-template-columns: minmax(0,1fr) 372px; gap: 24px; align-items: start;">
+
+        <div>
+          <div onClick="{{ heroClick }}" style="position: relative; aspect-ratio: 16/9; background: linear-gradient(150deg, #1B1F29 0%, #101319 55%, #0C0E12 100%); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; overflow: hidden;">
+            <div style="{{ heroImgStyle }}"></div>
+            <div style="position: absolute; inset: 0; background: linear-gradient(160deg, rgba(8,9,11,0.35), rgba(8,9,11,0.72));"></div>
+            <div style="position: absolute; top: 18px; left: 18px; display: flex; align-items: center; gap: 8px; background: #C0392B; padding: 5px 11px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em;">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: livePulse 1.8s ease-in-out infinite;"></span>ON AIR
+            </div>
+            <div style="position: absolute; top: 18px; right: 18px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #A8AEBC; background: rgba(8,9,11,0.6); padding: 5px 10px; border: 1px solid rgba(255,255,255,0.1);">14,208 WATCHING</div>
+            <sc-if value="{{ heroIdle }}" hint-placeholder-val="{{ true }}">
+              <div style="position: absolute; left: 50%; top: 34%; transform: translate(-50%,-50%); width: 76px; height: 76px; border-radius: 50%; background: rgba(240,180,41,0.92); display: flex; align-items: center; justify-content: center;">
+                <div style="width: 0; height: 0; border-left: 22px solid #08090B; border-top: 14px solid transparent; border-bottom: 14px solid transparent; margin-left: 6px;"></div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ heroPaused }}" hint-placeholder-val="{{ false }}">
+              <div style="position: absolute; left: 50%; top: 34%; transform: translate(-50%,-50%); width: 76px; height: 76px; border-radius: 50%; background: rgba(8,9,11,0.7); border: 1px solid rgba(255,255,255,0.35); display: flex; align-items: center; justify-content: center;">
+                <div style="width: 0; height: 0; border-left: 20px solid #fff; border-top: 13px solid transparent; border-bottom: 13px solid transparent; margin-left: 6px;"></div>
+              </div>
+            </sc-if>
+            <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 68px 26px 84px; background: linear-gradient(transparent, rgba(6,7,9,0.94) 62%);">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.16em; color: #F0B429; margin-bottom: 10px;">THE OPENING BELL · 09:30 ET</div>
+              <div style="font-family: 'IBM Plex Serif', Georgia, serif; font-size: clamp(22px, 2.4vw, 34px); font-weight: 700; line-height: 1.12; max-width: 720px; letter-spacing: -0.015em; text-wrap: balance;">Chips lead a narrow tape as breadth thins into the Fed window</div>
+              <div style="display: flex; align-items: center; gap: 14px; margin-top: 14px; font-size: 13px; color: #A8AEBC;">
+                <span>Dana Whitfield</span><span style="color: #3A3F4B;">/</span><span>Marcus Oyelaran</span><span style="color: #3A3F4B;">/</span><span>Live from the floor</span>
+              </div>
+            </div>
+            <sc-if value="{{ heroStarted }}" hint-placeholder-val="{{ false }}">
+              <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 22px 14px; background: linear-gradient(transparent, rgba(4,5,7,0.96) 46%);">
+                <div style="height: 3px; background: rgba(255,255,255,0.2); margin-bottom: 12px; position: relative;">
+                  <div style="position: absolute; inset: 0; background: #C0392B;"></div>
+                  <div style="position: absolute; right: -4px; top: -3px; width: 9px; height: 9px; border-radius: 50%; background: #fff;"></div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                  <sc-if value="{{ heroLivePlaying }}" hint-placeholder-val="{{ false }}">
+                    <div style="display: flex; gap: 4px;"><div style="width: 5px; height: 17px; background: #fff;"></div><div style="width: 5px; height: 17px; background: #fff;"></div></div>
+                  </sc-if>
+                  <sc-if value="{{ heroPaused }}" hint-placeholder-val="{{ false }}">
+                    <div style="width: 0; height: 0; border-left: 15px solid #fff; border-top: 9px solid transparent; border-bottom: 9px solid transparent;"></div>
+                  </sc-if>
+                  <div style="display: flex; align-items: center; gap: 9px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E9EBF0" stroke-width="1.9"><path d="M4 9h3l4-4v14l-4-4H4z"></path><path d="M16 9.5a3.5 3.5 0 0 1 0 5"></path></svg>
+                    <div style="width: 70px; height: 3px; background: rgba(255,255,255,0.22); position: relative;"><div style="position: absolute; inset: 0 30% 0 0; background: #E9EBF0;"></div></div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 7px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #C9CDD8; white-space: nowrap; flex-shrink: 0;">
+                    <span style="width: 6px; height: 6px; border-radius: 50%; background: #C0392B; flex-shrink: 0;"></span>LIVE · 02:14:38
+                  </div>
+                  <div style="flex: 1;"></div>
+                  <div onClick="{{ goPlayer }}" style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.12em; color: #C9CDD8; border: 1px solid rgba(255,255,255,0.24); padding: 4px 9px; white-space: nowrap; flex-shrink: 0; cursor: pointer;" style-hover="border-color: #F0B429; color: #F0B429;">FULL PLAYER</div>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E9EBF0" stroke-width="1.9"><path d="M4 9V4h5M20 15v5h-5M20 9V4h-5M4 15v5h5"></path></svg>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 44px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.2em; color: #E9EBF0;">TODAY ON TAPE</div>
+            <div onClick="{{ goCatalog }}" style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; color: #8A90A0; cursor: pointer;" style-hover="color: #F0B429;">FULL SCHEDULE →</div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 20px; margin-top: 22px;">
+            <sc-for list="{{ featured }}" as="c" hint-placeholder-count="6">
+              <div onClick="{{ c.go }}" style="cursor: pointer; background: #0D0F13; border: 1px solid rgba(255,255,255,0.07); transition: border-color 140ms ease, transform 140ms ease;" style-hover="border-color: rgba(240,180,41,0.55); transform: translateY(-3px);">
+                <div style="position: relative; aspect-ratio: 16/9; background: linear-gradient(135deg, #1A1E27, #0D1014); border-bottom: 1px solid rgba(255,255,255,0.07); overflow: hidden;">
+                  <div style="{{ c.imgStyle }}"></div>
+                  <div style="position: absolute; bottom: 9px; right: 9px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; background: rgba(6,7,9,0.85); padding: 3px 7px; color: #C9CDD8;">{{ c.dur }}</div>
+                  <div style="position: absolute; top: 9px; left: 9px; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; background: rgba(6,7,9,0.8); border: 1px solid rgba(255,255,255,0.14); padding: 4px 8px; color: #A8AEBC;">{{ c.kicker }}</div>
+                </div>
+                <div style="padding: 16px 16px 18px;">
+                  <div style="font-size: 15.5px; font-weight: 600; line-height: 1.32; letter-spacing: -0.01em; text-wrap: pretty;">{{ c.title }}</div>
+                  <div style="display: flex; gap: 9px; margin-top: 11px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #767C8C;">
+                    <span>{{ c.show }}</span><span style="color: #33384380;">·</span><span>{{ c.when }}</span>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 52px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.2em;">OUR SHOWS</div>
+            <div onClick="{{ goShow }}" style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; color: #8A90A0; cursor: pointer;" style-hover="color: #F0B429;">ALL SHOWS →</div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; margin-top: 22px;">
+            <sc-for list="{{ shows }}" as="s" hint-placeholder-count="4">
+              <div onClick="{{ s.go }}" style="cursor: pointer; border: 1px solid rgba(255,255,255,0.07); background: #0D0F13; padding: 18px 16px 16px; transition: border-color 140ms ease, background 140ms ease;" style-hover="border-color: rgba(240,180,41,0.5); background: #12151A;">
+                <div style="width: 34px; height: 3px; background: #F0B429; margin-bottom: 14px;"></div>
+                <div style="font-family: 'IBM Plex Serif', Georgia, serif; font-size: 17px; font-weight: 700; letter-spacing: -0.01em;">{{ s.name }}</div>
+                <div style="font-size: 12.5px; color: #8A90A0; line-height: 1.5; margin-top: 8px; text-wrap: pretty;">{{ s.blurb }}</div>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: #616776; margin-top: 14px;">{{ s.slot }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 52px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.2em;">FROM THE NEWSROOM</div>
+            <div onClick="{{ goArticles }}" style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; color: #8A90A0; cursor: pointer;" style-hover="color: #F0B429;">ALL ARTICLES →</div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 22px;">
+            <div onClick="{{ artLead.go }}" style="cursor: pointer; background: #0D0F13; border: 1px solid rgba(255,255,255,0.07); transition: border-color 140ms ease, transform 140ms ease;" style-hover="border-color: rgba(240,180,41,0.55); transform: translateY(-3px);">
+              <div style="position: relative; aspect-ratio: 16/8; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.07);">
+                <div style="{{ artLead.imgStyle }}"></div>
+                <div style="position: absolute; inset: 0; background: linear-gradient(160deg, rgba(8,9,11,0.2), rgba(8,9,11,0.7));"></div>
+                <div style="position: absolute; top: 10px; left: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.12em; background: #F0B429; color: #08090B; padding: 4px 8px; font-weight: 600;">ANALYSIS</div>
+              </div>
+              <div style="padding: 20px 20px 22px;">
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: #F0B429;">{{ artLead.cat }}</div>
+                <div style="font-family: 'IBM Plex Serif', Georgia, serif; font-size: 25px; font-weight: 700; line-height: 1.2; margin-top: 10px; letter-spacing: -0.015em; text-wrap: pretty;">{{ artLead.title }}</div>
+                <div style="font-size: 14px; color: #A8AEBC; line-height: 1.6; margin-top: 10px; text-wrap: pretty;">{{ artLead.dek }}</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #767C8C;">
+                  <span style="white-space: nowrap; flex-shrink: 0;">{{ artLead.author }}</span><span style="color: #333843;">·</span><span style="white-space: nowrap; flex-shrink: 0;">{{ artLead.date }}</span><span style="color: #333843;">·</span><span style="white-space: nowrap; flex-shrink: 0;">{{ artLead.read }}</span>
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <sc-for list="{{ homeArticles }}" as="a" hint-placeholder-count="3">
+                <div onClick="{{ a.go }}" style="cursor: pointer; background: #0D0F13; border: 1px solid rgba(255,255,255,0.07); padding: 15px 16px; transition: border-color 140ms ease, background 140ms ease;" style-hover="border-color: rgba(240,180,41,0.5); background: #12151A;">
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; color: #F0B429;">{{ a.cat }}</div>
+                  <div style="font-size: 15px; font-weight: 600; line-height: 1.35; margin-top: 8px; text-wrap: pretty;">{{ a.title }}</div>
+                  <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 9px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #767C8C;">
+                    <span style="white-space: nowrap; flex-shrink: 0;">{{ a.author }}</span><span style="color: #333843;">·</span><span style="white-space: nowrap; flex-shrink: 0;">{{ a.read }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 22px;">
+          <div style="border: 1px solid rgba(255,255,255,0.09); background: #0D0F13;">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px 18px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.18em;">PROGRAMMING</div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #767C8C;">ET</div>
+            </div>
+            <sc-for list="{{ schedule }}" as="p" hint-placeholder-count="5">
+              <div style="display: grid; grid-template-columns: 62px minmax(0,1fr); gap: 14px; padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;" style-hover="background: #12151A;">
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #767C8C; padding-top: 2px;">{{ p.time }}</div>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="font-size: 14px; font-weight: 600;">{{ p.name }}</div>
+                    <sc-if value="{{ p.live }}" hint-placeholder-val="{{ false }}"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.12em; background: #C0392B; padding: 2px 6px;">LIVE</span></sc-if>
+                  </div>
+                  <div style="font-size: 12.5px; color: #8A90A0; margin-top: 4px;">{{ p.host }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="border: 1px solid rgba(255,255,255,0.09); background: #0D0F13;">
+            <div style="padding: 15px 18px; border-bottom: 1px solid rgba(255,255,255,0.08); font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.18em;">MOST WATCHED</div>
+            <sc-for list="{{ mostWatched }}" as="m" hint-placeholder-count="5">
+              <div onClick="{{ goPlayer }}" style="display: grid; grid-template-columns: 26px minmax(0,1fr); gap: 12px; padding: 13px 18px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;" style-hover="background: #12151A;">
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #F0B429;">{{ m.n }}</div>
+                <div>
+                  <div style="font-size: 13.5px; font-weight: 500; line-height: 1.4;">{{ m.title }}</div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #6E7484; margin-top: 5px;">{{ m.meta }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="border: 1px solid rgba(240,180,41,0.28); background: linear-gradient(160deg, rgba(240,180,41,0.09), rgba(13,15,19,0.4)); padding: 22px 20px;">
+            <div style="font-family: 'IBM Plex Serif', Georgia, serif; font-size: 19px; font-weight: 700; line-height: 1.25;">Free, always. No account, no paywall.</div>
+            <div style="font-size: 13px; color: #A8AEBC; line-height: 1.55; margin-top: 10px;">Every hour of Tape Network — live and on demand — is open. Add the morning brief to your inbox.</div>
+            <div style="display: flex; margin-top: 16px; border: 1px solid rgba(255,255,255,0.16);">
+              <div style="flex: 1; padding: 11px 13px; font-size: 13px; color: #6E7484;">you@desk.com</div>
+              <div style="background: #F0B429; color: #08090B; padding: 11px 17px; font-size: 12.5px; font-weight: 600; cursor: pointer;" style-hover="background: #FFC94A;">Subscribe</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isPlayer }}" hint-placeholder-val="{{ false }}">
+  <div>
+    <div style="max-width: 1600px; margin: 0 auto; padding: 22px 32px 0;">
+      <div style="{{ playerGrid }}">
+        <div>
+          <div style="position: relative; aspect-ratio: 16/9; background: linear-gradient(150deg, #1B1F29, #0B0D11); border: 1px solid rgba(255,255,255,0.1); overflow: hidden;">
+            <div style="{{ heroImgStyle }}"></div>
+            <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,9,11,0.25), rgba(8,9,11,0.6));"></div>
+            <div style="position: absolute; top: 20px; left: 20px; display: flex; align-items: center; gap: 8px; background: #C0392B; padding: 5px 11px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em;">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: livePulse 1.8s ease-in-out infinite;"></span>LIVE
+            </div>
+            <div style="position: absolute; left: 20px; bottom: 74px; background: rgba(6,7,9,0.82); border-left: 3px solid #F0B429; padding: 11px 16px; max-width: 60%;">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: #F0B429;">NOW DISCUSSING</div>
+              <div style="font-size: 15px; font-weight: 600; margin-top: 5px;">Semis breadth: NVDA, AVGO and the equal-weight gap</div>
+            </div>
+            <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 0 18px 14px; background: linear-gradient(transparent, rgba(6,7,9,0.9));">
+              <div style="height: 3px; background: rgba(255,255,255,0.18); margin-bottom: 13px; position: relative;">
+                <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: #C0392B;"></div>
+                <div style="position: absolute; right: -5px; top: -3px; width: 9px; height: 9px; border-radius: 50%; background: #fff;"></div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 18px;">
+                <div onClick="{{ togglePlay }}" style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px;">
+                  <sc-if value="{{ playing }}" hint-placeholder-val="{{ true }}">
+                    <div style="display: flex; gap: 4px;"><div style="width: 5px; height: 18px; background: #fff;"></div><div style="width: 5px; height: 18px; background: #fff;"></div></div>
+                  </sc-if>
+                  <sc-if value="{{ paused }}" hint-placeholder-val="{{ false }}">
+                    <div style="width: 0; height: 0; border-left: 16px solid #fff; border-top: 10px solid transparent; border-bottom: 10px solid transparent;"></div>
+                  </sc-if>
+                </div>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E9EBF0" stroke-width="1.9" style="cursor: pointer;"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v4h4"></path></svg>
+                <div style="display: flex; align-items: center; gap: 9px;">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#E9EBF0" stroke-width="1.9"><path d="M4 9h3l4-4v14l-4-4H4z"></path><path d="M16 9.5a3.5 3.5 0 0 1 0 5"></path></svg>
+                  <div style="width: 78px; height: 3px; background: rgba(255,255,255,0.22); position: relative;"><div style="position: absolute; inset: 0 30% 0 0; background: #E9EBF0;"></div></div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 7px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #C9CDD8;">
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: #C0392B;"></span>LIVE · 02:14:38
+                </div>
+                <div style="flex: 1;"></div>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #C9CDD8; border: 1px solid rgba(255,255,255,0.2); padding: 3px 8px; cursor: pointer;" style-hover="border-color: #F0B429;">1080p</div>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #C9CDD8; border: 1px solid rgba(255,255,255,0.2); padding: 3px 8px; cursor: pointer;" style-hover="border-color: #F0B429;">CC</div>
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#E9EBF0" stroke-width="1.9" style="cursor: pointer;"><path d="M4 9V4h5M20 15v5h-5M20 9V4h-5M4 15v5h5"></path></svg>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 30px; padding: 22px 0 26px; border-bottom: 1px solid rgba(255,255,255,0.09);">
+            <div style="max-width: 720px;">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.16em; color: #F0B429;">THE OPENING BELL · EPISODE 1,412</div>
+              <div style="font-family: 'IBM Plex Serif', Georgia, serif; font-size: 27px; font-weight: 700; line-height: 1.2; margin-top: 10px; letter-spacing: -0.015em;">Chips lead a narrow tape as breadth thins into the Fed window</div>
+              <div style="font-size: 13.5px; color: #8A90A0; margin-top: 11px;">Dana Whitfield &amp; Marcus Oyelaran · 14,208 watching · Aug 3</div>
+            </div>
+            <div style="display: flex; gap: 10px; flex-shrink: 0; padding-top: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.16); padding: 9px 15px; font-size: 12.5px; cursor: pointer;" style-hover="border-color: #F0B429; color: #F0B429;">+ Follow show</div>
+              <div style="display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.16); padding: 9px 15px; font-size: 12.5px; cursor: pointer;" style-hover="border-color: #F0B429; color: #F0B429;">Share</div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 28px;">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; font-weight: 600; letter-spacing: 0.2em;">UP NEXT</div>
+            <div onClick="{{ goCatalog }}" style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8A90A0; cursor: pointer;" style-hover="color: #F0B429;">ON DEMAND →</div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; margin-top: 18px; padding-bottom: 40px;">
+            <sc-for list="{{ upNext }}" as="c" hint-placeholder-count="3">
+              <div style="cursor: pointer; border: 1px solid rgba(255,255,255,0.07); background: #0D0F13; transition: border-color 140ms ease, transform 140ms ease;" style-hover="border-color: rgba(240,180,41,0.5); transform: translateY(-3px);">
+                <div style="position: relative; aspect-ratio: 16/9; background: linear-gradient(135deg, #1A1E27, #0D1014); overflow: hidden;">
+                  <div style="{{ c.imgStyle }}"></div>
+                  <div style="position: absolute; bottom: 8px; right: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; background: rgba(6,7,9,0.85); padding: 3px 7px; color: #C9CDD8;">{{ c.dur }}</div>
+                </div>
+                <div style="padding: 14px;">
+                  <div style="font-size: 14px; font-weight: 600; line-height: 1.35;">{{ c.title }}</div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #767C8C; margin-top: 9px;">{{ c.show }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <sc-if value="{{ showChat }}" hint-placeholder-val="{{ true }}">
+        <div style="border: 1px solid rgba(255,255,255,0.09); background: #0D0F13; display: flex; flex-direction: column; height: calc(100vh - 140px); position: sticky; top: 116px;">
+          <div style="display: flex; border-bottom: 1px solid rgba(255,255,255,0.08);">
+            <div style="flex: 1; padding: 14px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #08090B; background: #F0B429; font-weight: 600;">LIVE CHAT</div>
+            <div style="flex: 1; padding: 14px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #8A90A0; cursor: pointer;" style-hover="color: #E9EBF0;">Q&amp;A</div>
+            <div style="flex: 1; padding: 14px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #8A90A0; cursor: pointer;" style-hover="color: #E9EBF0;">NOTES</div>
+          </div>
+          <div style="flex: 1; overflow-y: auto; padding: 6px 0;">
+            <sc-for list="{{ chat }}" as="m" hint-placeholder-count="9">
+              <div style="padding: 9px 16px; display: flex; gap: 9px; align-items: baseline;">
+                <span style="{{ m.nameStyle }}">{{ m.name }}</span>
+                <span style="font-size: 13px; color: #C1C6D2; line-height: 1.5; text-wrap: pretty;">{{ m.text }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="border-top: 1px solid rgba(255,255,255,0.08); padding: 12px 14px;">
+            <div style="display: flex; border: 1px solid rgba(255,255,255,0.14); background: #101216;">
+              <input value="{{ draft }}" onChange="{{ onDraft }}" onKeyDown="{{ onChatKey }}" placeholder="Say something to the desk" style="flex: 1; background: transparent; border: 0; outline: none; color: #E9EBF0; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; padding: 11px 12px;" />
+              <div onClick="{{ sendChat }}" style="padding: 11px 15px; background: #F0B429; color: #08090B; font-size: 12.5px; font-weight: 600; cursor: pointer;" style-hover="background: #FFC94A;">Send</div>
+            </div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #616776; margin-top: 9px;">MODERATED · NOT INVESTMENT ADVICE</div>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isShow }}" hint-placeholder-val="{{ false }}">
+  <div>
+    <div style="border-bottom: 1px solid rgba(255,255,255,0.09); background: linear-gradient(120deg, #14171F 0%, #0A0C0F 62%);">
+      <div style="max-width: 1440px; margin: 0 auto; padding: 54px 40px 46px; display: grid; grid-template-columns: minmax(0,1fr) minmax(260px,400px); gap: 56px; align-items: end;">
+        <div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.2em; color: #F0B429;">{{ show.tag }}</div>
+          <div style="font-family: 'IBM Plex Serif', Georgia, serif; font-size: 62px; font-weight: 700; line-height: 1.02; letter-spacing: -0.03em; margin-top: 16px;">{{ show.name }}</div>
+          <div style="font-size: 16px; color: #A8AEBC; line-height: 1.6; max-width: 620px; margin-top: 18px; text-wrap: pretty;">{{ show.desc }}</div>
+          <div style="display: flex; gap: 12px; margin-top: 28px;">
+            <div onClick="{{ goPlayer }}" style="display: flex; align-items: center; gap: 10px; background: #F0B429; color: #08090B; padding: 13px 22px; font-size: 13.5px; font-weight: 600; cursor: pointer;" style-hover="background: #FFC94A;">
+              <span style="width: 7px; height: 7px; border-radius: 50%; background: #C0392B;"></span>Watch live now
+            </div>
+            <div style="border: 1px solid rgba(255,255,255,0.2); padding: 13px 22px; font-size: 13.5px; cursor: pointer;" style-hover="border-color: #F0B429; color: #F0B429;">+ Follow</div>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.09);">
+          <sc-for list="{{ showStats }}" as="s" hint-placeholder-count="4">
+            <div style="background: #0B0D11; padding: 20px 18px;">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 24px; font-weight: 500; color: #F0B429;">{{ s.v }}</div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: #767C8C; margin-top: 7px;">{{ s.k }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="max-width: 1440px; margin: 0 auto; padding: 40px 40px 60px; display: grid; grid-template-columns: minmax(0,1fr) minmax(240px,372px); gap: 44px; align-items: start;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 26px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 14px;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; font-weight: 600; letter-spacing: 0.18em; color: #E9EBF0; border-bottom: 2px solid #F0B429; padding-bottom: 14px; margin-bottom: -16px;">EPISODES</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.18em; color: #767C8C; cursor: pointer;" style-hover="color: #E9EBF0;">CLIPS</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.18em; color: #767C8C; cursor: pointer;" style-hover="color: #E9EBF0;">HOSTS</div>
+          <div style="flex: 1;"></div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #767C8C;">{{ show.count }}</div>
+        </div>
+        <div style="display: flex; flex-direction: column;">
+          <sc-for list="{{ episodes }}" as="e" hint-placeholder-count="7">
+            <div onClick="{{ goPlayer }}" style="display: grid; grid-template-columns: clamp(96px, 24%, 216px) minmax(180px,1fr); gap: 20px; align-items: center; padding: 18px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); cursor: pointer; transition: background 140ms ease;" style-hover="background: #10131A;">
+              <div style="position: relative; aspect-ratio: 16/9; background: linear-gradient(135deg, #1A1E27, #0D1014); border: 1px solid rgba(255,255,255,0.07); overflow: hidden;">
+                <div style="{{ e.imgStyle }}"></div>
+                <div style="position: absolute; bottom: 7px; right: 7px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; background: rgba(6,7,9,0.85); padding: 2px 6px; color: #C9CDD8;">{{ e.dur }}</div>
+              </div>
+              <div>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.14em; color: #767C8C;">{{ e.no }} · {{ e.date }} · {{ e.views }}</div>
+                <div style="font-size: 17px; font-weight: 600; line-height: 1.32; margin-top: 8px; letter-spacing: -0.01em;">{{ e.title }}</div>
+                <div style="font-size: 13px; color: #8A90A0; line-height: 1.55; margin-top: 7px; text-wrap: pretty;">{{ e.desc }}</div>
+                <div style="display: flex; gap: 7px; margin-top: 11px;">
+                  <sc-for list="{{ e.tags }}" as="t" hint-placeholder-count="3">
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.08em; border: 1px solid rgba(255,255,255,0.12); color: #A8AEBC; padding: 3px 8px;">{{ t }}</span>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 22px;">
+        <div style="border: 1px solid rgba(255,255,255,0.09); background: #0D0F13;">
+          <div style="padding: 15px 18px; border-bottom: 1px solid rgba(255,255,255,0.08); font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.18em;">THE DESK</div>
+          <sc-for list="{{ hosts }}" as="h" hint-placeholder-count="3">
+            <div style="display: grid; grid-template-columns: 46px minmax(0,1fr); gap: 14px; padding: 16px 18px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <div style="width: 46px; height: 46px; background: linear-gradient(140deg, #232834, #12151B); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #A8AEBC;">{{ h.ini }}</div>
+              <div>
+                <div style="font-size: 14px; font-weight: 600;">{{ h.name }}</div>
+                <div style="font-size: 12.5px; color: #8A90A0; margin-top: 4px; line-height: 1.45;">{{ h.role }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="border: 1px solid rgba(255,255,255,0.09); background: #0D0F13; padding: 20px 18px;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.18em; margin-bottom: 14px;">HOW TO WATCH</div>
+          <sc-for list="{{ watchWays }}" as="w" hint-placeholder-count="4">
+            <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px;">
+              <span style="color: #C1C6D2;">{{ w.k }}</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #767C8C;">{{ w.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isCatalog }}" hint-placeholder-val="{{ false }}">
+  <div>
+    <div style="max-width: 1440px; margin: 0 auto; padding: 40px 40px 60px;">
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 22px;">
+        <div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.2em; color: #F0B429;">ON DEMAND</div>
+          <div style="font-family: 'IBM Plex Serif', Georgia, serif; font-size: 40px; font-weight: 700; letter-spacing: -0.025em; margin-top: 10px;">{{ odTitle }}</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #767C8C;">SORT</span>
+          <div style="display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.14); padding: 9px 14px; font-size: 13px; cursor: pointer;" style-hover="border-color: #F0B429;">
+            Newest first
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#8A90A0" stroke-width="2.5"><path d="M5 8l7 7 7-7"></path></svg>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 20px 0 4px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em;">
+        <div onClick="{{ odRoot }}" style="color: #F0B429; cursor: pointer;" style-hover="color: #FFD070;">ALL CATEGORIES</div>
+        <sc-if value="{{ odCatName }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="color: #3A3F4B;">/</span>
+            <div onClick="{{ odUpToCat }}" style="color: #C1C6D2; cursor: pointer;" style-hover="color: #F0B429;">{{ odCatName }}</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ odSubName }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="color: #3A3F4B;">/</span>
+            <div style="color: #E9EBF0;">{{ odSubName }}</div>
+          </div>
+        </sc-if>
+        <div style="flex: 1;"></div>
+        <div style="color: #767C8C;">{{ odCount }}</div>
+      </div>
+
+      <sc-if value="{{ odIsCats }}" hint-placeholder-val="{{ true }}">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 24px;">
+          <sc-for list="{{ odCatCards }}" as="c" hint-placeholder-count="5">
+            <div onClick="{{ c.go }}" style="cursor: pointer; display: grid; grid-template-columns: 148px minmax(0,1fr); background: #0D0F13; border: 1px solid rgba(255,255,255,0.07); transition: border-color 140ms ease, transform 140ms ease;" style-hover="border-color: rgba(240,180,41,0.55); transform: translateY(-3px);">
+              <div style="position: relative; overflow: hidden; min-height: 132px; border-right: 1px solid rgba(255,255,255,0.07);">
+                <div style="{{ c.imgStyle }}"></div>
+                <div style="position: absolute; inset: 0; background: linear-gradient(120deg, rgba(8,9,11,0.25), rgba(8,9,11,0.7));"></div>
+              </div>
+              <div style="padding: 18px 18px 16px;">
+                <div style="font-family: 'IBM Plex Serif', Georgia, serif; font-size: 20px; font-weight: 700; letter-spacing: -0.015em;">{{ c.name }}</div>
+                <div style="font-size: 13px; color: #8A90A0; line-height: 1.5; margin-top: 8px; text-wrap: pretty;">{{ c.blurb }}</div>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #616776; margin-top: 12px; line-height: 1.6;">{{ c.subNames }}</div>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: #F0B429; margin-top: 12px;">{{ c.count }} →</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ odIsSubs }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="font-size: 15px; color: #A8AEBC; line-height: 1.6; max-width: 620px; margin-top: 18px; text-wrap: pretty;">{{ odCatBlurb }}</div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 24px;">
+            <sc-for list="{{ odSubCards }}" as="x" hint-placeholder-count="3">
+              <div onClick="{{ x.go }}" style="cursor: pointer; background: #0D0F13; border: 1px solid rgba(255,255,255,0.07); transition: border-color 140ms ease, transform 140ms ease;" style-hover="border-color: rgba(240,180,41,0.55); transform: translateY(-3px);">
+                <div style="position: relative; aspect-ratio: 16/7; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.07);">
+                  <div style="{{ x.imgStyle }}"></div>
+                  <div style="position: absolute; inset: 0; background: linear-gradient(160deg, rgba(8,9,11,0.2), rgba(8,9,11,0.72));"></div>
+                  <div style="position: absolute; bottom: 10px; left: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: #F0B429;">{{ x.count }}</div>
+                </div>
+                <div style="padding: 16px 16px 18px;">
+                  <div style="font-size: 17px; font-weight: 600; letter-spacing: -0.01em;">{{ x.name }}</div>
+                  <div style="font-size: 13px; color: #8A90A0; line-height: 1.5; margin-top: 7px; text-wrap: pretty;">{{ x.blurb }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ odIsItems }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="font-size: 15px; color: #A8AEBC; line-height: 1.6; max-width: 620px; margin-top: 18px;">{{ odSubBlurb }}</div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; margin-top: 24px;">
+            <sc-for list="{{ odItems }}" as="c" hint-placeholder-count="3">
+              <div onClick="{{ goPlayer }}" style="cursor: pointer; background: #0D0F13; border: 1px solid rgba(255,255,255,0.07); transition: border-color 140ms ease, transform 140ms ease;" style-hover="border-color: rgba(240,180,41,0.55); transform: translateY(-3px);">
+                <div style="position: relative; aspect-ratio: 16/9; background: linear-gradient(135deg, #1A1E27, #0D1014); border-bottom: 1px solid rgba(255,255,255,0.07); overflow: hidden;">
+                  <div style="{{ c.imgStyle }}"></div>
+                  <div style="position: absolute; top: 8px; left: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.12em; background: rgba(6,7,9,0.8); border: 1px solid rgba(255,255,255,0.14); padding: 3px 7px; color: #A8AEBC; white-space: nowrap;">{{ c.cat }}</div>
+                  <div style="position: absolute; bottom: 8px; right: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; background: rgba(6,7,9,0.85); padding: 3px 7px; color: #C9CDD8;">{{ c.dur }}</div>
+                </div>
+                <div style="padding: 15px 15px 17px;">
+                  <div style="font-size: 14.5px; font-weight: 600; line-height: 1.35; text-wrap: pretty;">{{ c.title }}</div>
+                  <div style="display: flex; gap: 8px; margin-top: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #767C8C;">
+                    <span>{{ c.show }}</span><span style="color: #333843;">·</span><span>{{ c.date }}</span>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isArticles }}" hint-placeholder-val="{{ false }}">
+  <div>
+    <div style="max-width: 1440px; margin: 0 auto; padding: 40px 40px 60px;">
+      <div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 22px;">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.2em; color: #F0B429;">ARTICLES</div>
+        <div style="font-family: 'IBM Plex Serif', Georgia, serif; font-size: 40px; font-weight: 700; letter-spacing: -0.025em; margin-top: 10px;">The newsroom</div>
+        <div style="font-size: 15px; color: #A8AEBC; line-height: 1.6; max-width: 640px; margin-top: 12px; text-wrap: pretty;">Written analysis from the same desk that runs the shows — same categories, same disclosure, free to read.</div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 22px 0 4px;">
+        <sc-for list="{{ artFilters }}" as="f" hint-placeholder-count="6">
+          <div onClick="{{ f.go }}" style="{{ f.style }}">{{ f.label }}</div>
+        </sc-for>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 26px;">
+        <sc-for list="{{ artList }}" as="a" hint-placeholder-count="8">
+          <div onClick="{{ a.go }}" style="cursor: pointer; background: #0D0F13; border: 1px solid rgba(255,255,255,0.07); display: flex; flex-direction: column; transition: border-color 140ms ease, transform 140ms ease;" style-hover="border-color: rgba(240,180,41,0.55); transform: translateY(-3px);">
+            <div style="position: relative; aspect-ratio: 16/8; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.07);">
+              <div style="{{ a.imgStyle }}"></div>
+              <div style="position: absolute; inset: 0; background: linear-gradient(160deg, rgba(8,9,11,0.22), rgba(8,9,11,0.72));"></div>
+            </div>
+            <div style="padding: 17px 17px 19px; display: flex; flex-direction: column; gap: 9px; flex: 1;">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; color: #F0B429;">{{ a.cat }}</div>
+              <div style="font-family: 'IBM Plex Serif', Georgia, serif; font-size: 19px; font-weight: 700; line-height: 1.24; letter-spacing: -0.012em; text-wrap: pretty;">{{ a.title }}</div>
+              <div style="font-size: 13px; color: #8A90A0; line-height: 1.55; text-wrap: pretty;">{{ a.dek }}</div>
+              <div style="flex: 1;"></div>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #767C8C;">
+                <span style="white-space: nowrap; flex-shrink: 0;">{{ a.author }}</span><span style="color: #333843;">·</span><span style="white-space: nowrap; flex-shrink: 0;">{{ a.date }}</span><span style="color: #333843;">·</span><span style="white-space: nowrap; flex-shrink: 0;">{{ a.read }}</span>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isArticle }}" hint-placeholder-val="{{ false }}">
+  <div>
+    <div style="max-width: 1440px; margin: 0 auto; padding: 34px 40px 60px;">
+      <div onClick="{{ goArticles }}" style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; color: #F0B429; cursor: pointer;" style-hover="color: #FFD070;">← ALL ARTICLES</div>
+      <div style="display: grid; grid-template-columns: minmax(0,1fr) minmax(240px,336px); gap: 48px; align-items: start; margin-top: 26px;">
+        <div style="max-width: 760px;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.18em; color: #F0B429;">{{ article.cat }}</div>
+          <h1 style="font-family: 'IBM Plex Serif', Georgia, serif; font-size: 42px; font-weight: 700; line-height: 1.1; letter-spacing: -0.028em; margin: 14px 0 0; text-wrap: pretty;">{{ article.title }}</h1>
+          <div style="font-size: 18px; color: #A8AEBC; line-height: 1.55; margin-top: 16px; text-wrap: pretty;">{{ article.dek }}</div>
+          <div style="display: flex; gap: 10px; align-items: center; margin-top: 20px; padding-bottom: 22px; border-bottom: 1px solid rgba(255,255,255,0.1); font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #767C8C;">
+            <span style="color: #C1C6D2;">{{ article.author }}</span><span style="color: #333843;">·</span><span>{{ article.date }}</span><span style="color: #333843;">·</span><span>{{ article.read }} READ</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 22px; margin-top: 26px;">
+            <sc-for list="{{ article.body }}" as="p" hint-placeholder-count="3">
+              <p style="font-size: 17px; line-height: 1.72; color: #D3D7E0; margin: 0; text-wrap: pretty;">{{ p }}</p>
+            </sc-for>
+          </div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #565C6A; line-height: 1.7; margin-top: 34px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.08);">NOT A RECOMMENDATION OR INVESTMENT ADVICE. THE AUTHOR MAY HOLD POSITIONS DISCUSSED.</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.18em; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);">MORE FROM THE DESK</div>
+          <sc-for list="{{ artMore }}" as="a" hint-placeholder-count="3">
+            <div onClick="{{ a.go }}" style="cursor: pointer; background: #0D0F13; border: 1px solid rgba(255,255,255,0.07); transition: border-color 140ms ease, background 140ms ease;" style-hover="border-color: rgba(240,180,41,0.5); background: #12151A;">
+              <div style="position: relative; aspect-ratio: 16/7; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.07);">
+                <div style="{{ a.imgStyle }}"></div>
+                <div style="position: absolute; inset: 0; background: linear-gradient(160deg, rgba(8,9,11,0.2), rgba(8,9,11,0.7));"></div>
+              </div>
+              <div style="padding: 14px 15px 16px;">
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; color: #F0B429;">{{ a.cat }}</div>
+                <div style="font-size: 14.5px; font-weight: 600; line-height: 1.35; margin-top: 8px; text-wrap: pretty;">{{ a.title }}</div>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #767C8C; margin-top: 9px;">{{ a.read }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <div style="border-top: 1px solid rgba(255,255,255,0.08); background: #0A0B0E; margin-top: 20px;">
+    <div style="max-width: 1440px; margin: 0 auto; padding: 44px 40px 34px; display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 40px;">
+      <div>
+        <div style="display: flex; align-items: baseline; gap: 9px;">
+          <div style="width: 9px; height: 22px; background: #F0B429;"></div>
+          <div style="font-family: 'IBM Plex Serif', Georgia, serif; font-weight: 700; font-size: 18px;">TAPE</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.22em; color: #8A90A0;">NETWORK</div>
+        </div>
+        <div style="font-size: 12.5px; color: #767C8C; line-height: 1.65; margin-top: 14px; max-width: 330px;">Market programming for people who trade. Live 24/5 from New York, London and Singapore. Free to watch, always.</div>
+      </div>
+      <sc-for list="{{ footer }}" as="col" hint-placeholder-count="3">
+        <div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: #E9EBF0; margin-bottom: 14px;">{{ col.h }}</div>
+          <div style="display: flex; flex-direction: column; gap: 9px;">
+            <sc-for list="{{ col.items }}" as="i" hint-placeholder-count="4">
+              <div style="font-size: 13px; color: #767C8C; cursor: pointer;" style-hover="color: #E9EBF0;">{{ i }}</div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="max-width: 1440px; margin: 0 auto; padding: 0 40px 40px;">
+      <div style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 18px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #565C6A; line-height: 1.7;">© 2026 TAPE NETWORK · PROGRAMMING IS FOR INFORMATIONAL PURPOSES ONLY AND IS NOT A RECOMMENDATION OR INVESTMENT ADVICE. QUOTES DELAYED 15 MINUTES.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;initialScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;player&quot;,&quot;show&quot;,&quot;catalog&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;showTicker&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Layout&quot;},&quot;showChat&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Layout&quot;}}">
+class Component extends DCLogic {
+  state = { screen: null, playing: true, filter: "All", draft: "", chat: null, hero: "idle", showKey: "bell", menu: false, catKey: null, subKey: null, artKey: null, artCat: "All" };
+
+  odGo(catKey, subKey) {
+    return () => { this.setState({ screen: "catalog", catKey, subKey }); window.scrollTo(0, 0); };
+  }
+
+  readGo(key) {
+    return () => { this.setState({ screen: "article", artKey: key }); window.scrollTo(0, 0); };
+  }
+
+  odCats = [
+    { key: "macro", name: "Macro & Rates", blurb: "Central banks, the curve, and the data that moves it.", subs: [
+      { key: "fed", name: "Fed & policy", blurb: "Meetings, dot plots and the path.", items: [
+        { title: "Powell's window: three ways the September dot plot lands", show: "Macro Hour", date: "Aug 2", dur: "48:12" },
+        { title: "Reading the statement, not the presser", show: "Macro Hour", date: "Jul 24", dur: "39:41" },
+        { title: "What a 2026 cut path actually prices", show: "Macro Hour", date: "Jul 17", dur: "44:02" }
+      ] },
+      { key: "cpi", name: "Inflation & the curve", blurb: "Prints, shelter lags, term premium.", items: [
+        { title: "The inflation print nobody hedged", show: "Macro Hour", date: "Jul 29", dur: "41:03" },
+        { title: "The 2s10s wants to steepen — who gets hurt first", show: "The Opening Bell", date: "Jul 30", dur: "57:04" },
+        { title: "Fiscal supply is the new duration risk", show: "Macro Hour", date: "Jul 28", dur: "46:55" }
+      ] },
+      { key: "fx", name: "FX & carry", blurb: "Dollar, yen, and funding trades.", items: [
+        { title: "Yen carry, round three", show: "Macro Hour", date: "Jul 30", dur: "44:16" },
+        { title: "Dollar strength is not one trade", show: "The Opening Bell", date: "Jul 28", dur: "52:20" },
+        { title: "Cable into the London fix", show: "Macro Hour", date: "Jul 21", dur: "35:29" }
+      ] }
+    ] },
+    { key: "options", name: "Options & Volatility", blurb: "Structure, sizing and the greeks that actually matter.", subs: [
+      { key: "premium", name: "Premium selling", blurb: "Getting paid, and what for.", items: [
+        { title: "Selling premium into the NVDA print — sizing and exits", show: "The Vol Desk", date: "Aug 1", dur: "31:05" },
+        { title: "Iron condors in a 13-handle VIX", show: "The Vol Desk", date: "Jul 30", dur: "27:38" },
+        { title: "Rolling losers is a decision, not a reflex", show: "The Vol Desk", date: "Jul 28", dur: "34:12" }
+      ] },
+      { key: "skew", name: "Skew & structure", blurb: "Surface reading across index and single names.", items: [
+        { title: "Skew as a positioning signal", show: "The Vol Desk", date: "Jul 23", dur: "29:47" },
+        { title: "Dispersion: the trade behind index vol", show: "The Vol Desk", date: "Jul 16", dur: "33:20" },
+        { title: "Term structure when the event is priced twice", show: "The Vol Desk", date: "Jul 9", dur: "28:55" }
+      ] },
+      { key: "events", name: "Event trades", blurb: "Earnings, prints, and IV crush.", items: [
+        { title: "IV crush: what the straddle told you before the print", show: "The Vol Desk", date: "Jul 25", dur: "26:14" },
+        { title: "Sizing a binary: half the conviction, twice the plan", show: "The Vol Desk", date: "Jul 11", dur: "30:38" },
+        { title: "Hedging a Fed day without paying for it twice", show: "Macro Hour", date: "Jul 3", dur: "37:12" }
+      ] }
+    ] },
+    { key: "tech", name: "Technicals & Flow", blurb: "Levels, breadth, and reading the book honestly.", subs: [
+      { key: "levels", name: "Levels & breadth", blurb: "Where the tape breaks.", items: [
+        { title: "Where the tape breaks: mapping 5,940 to 6,010", show: "Chart Session", date: "Aug 1", dur: "22:47" },
+        { title: "Why the equal-weight S&P tells a different story", show: "The Opening Bell", date: "Jul 31", dur: "6:38" },
+        { title: "Relative strength screens that survive a chop", show: "Chart Session", date: "Jul 30", dur: "19:52" }
+      ] },
+      { key: "flow", name: "Order flow", blurb: "The book, the auction, the close.", items: [
+        { title: "Reading order flow without a level 2 addiction", show: "Chart Session", date: "Jul 29", dur: "24:31" },
+        { title: "When liquidity thins: trading the last hour in August", show: "The Opening Bell", date: "Jul 29", dur: "49:38" },
+        { title: "Close auctions: the five minutes that set your fill", show: "Chart Session", date: "Jul 22", dur: "21:07" }
+      ] },
+      { key: "requests", name: "Viewer requests", blurb: "Your tickers, marked up live.", items: [
+        { title: "Viewer requests: 12 tickers, 12 invalidation points", show: "Chart Session", date: "Jul 31", dur: "26:19" },
+        { title: "Requests: semis, banks and one very broken small cap", show: "Chart Session", date: "Jul 24", dur: "25:44" },
+        { title: "Requests: the three charts everyone asked for twice", show: "Chart Session", date: "Jul 17", dur: "23:02" }
+      ] }
+    ] },
+    { key: "earnings", name: "Earnings", blurb: "Prints, guidance, and the multiple that follows.", subs: [
+      { key: "semis", name: "Semis & AI", blurb: "The leadership trade, quarter by quarter.", items: [
+        { title: "Semis earnings scorecard: guidance versus the multiple", show: "The Opening Bell", date: "Aug 1", dur: "1:04:22" },
+        { title: "Capex disclosures are the real guide", show: "The Opening Bell", date: "Jul 18", dur: "55:10" },
+        { title: "When a beat is not enough", show: "The Opening Bell", date: "Jul 11", dur: "51:47" }
+      ] },
+      { key: "consumer", name: "Consumer & retail", blurb: "Margins, mix and the quiet downgrade.", items: [
+        { title: "Retail margins and the quiet consumer downgrade", show: "The Opening Bell", date: "Jul 31", dur: "51:11" },
+        { title: "Discount mix: three quarters in one chart", show: "The Opening Bell", date: "Jul 15", dur: "43:26" },
+        { title: "Traffic versus ticket: reading the same print twice", show: "The Opening Bell", date: "Jul 8", dur: "47:03" }
+      ] },
+      { key: "financials", name: "Financials", blurb: "NII, credit, and the deposit question.", items: [
+        { title: "Net interest income when the curve steepens", show: "Macro Hour", date: "Jul 26", dur: "42:18" },
+        { title: "Credit normalization or credit crack", show: "The Opening Bell", date: "Jul 19", dur: "48:36" },
+        { title: "Regionals: the deposit beta nobody modelled", show: "The Opening Bell", date: "Jul 12", dur: "45:55" }
+      ] }
+    ] },
+    { key: "long", name: "Interviews & Long Form", blurb: "Hours with the people who actually run risk.", subs: [
+      { key: "desk", name: "The desk", blurb: "Traders on their worst and best books.", items: [
+        { title: "A prop desk head on risk limits, hiring and blowups", show: "The Long Position", date: "Jul 30", dur: "58:40" },
+        { title: "The trade that broke a $40m book", show: "The Long Position", date: "Jul 23", dur: "1:12:03" },
+        { title: "Twenty years of futures: what changed, what never does", show: "The Long Position", date: "Jul 16", dur: "1:08:21" }
+      ] },
+      { key: "process", name: "Careers & process", blurb: "Drawdowns, journals, and staying in the seat.", items: [
+        { title: "What a 15% drawdown does to your process", show: "The Long Position", date: "Jul 9", dur: "41:19" },
+        { title: "Stop hunting is not a strategy", show: "Chart Session", date: "Jul 27", dur: "46:55" },
+        { title: "Journaling for people who hate journaling", show: "The Long Position", date: "Jul 2", dur: "38:47" }
+      ] },
+      { key: "funds", name: "Funds & founders", blurb: "Allocators, PMs and the business of trading.", items: [
+        { title: "Raising a first fund in a flat year", show: "The Long Position", date: "Jun 25", dur: "1:02:14" },
+        { title: "An allocator on what actually gets funded", show: "The Long Position", date: "Jun 18", dur: "56:29" },
+        { title: "Basis trade mechanics after the ETF flows normalized", show: "Digital Assets", date: "Jul 28", dur: "36:24" }
+      ] }
+    ] }
+  ];
+
+  articles = [
+    { key: "a1", cat: "Macro & Rates", title: "The Fed's last mile is a positioning problem, not a data problem", dek: "Everyone agrees on the direction. Almost nobody agrees on the size — and that is where the pain trade lives.", author: "Tomas Bek", date: "Aug 3, 2026", read: "6 MIN", body: [
+      "The September meeting is the first in two years where the front end and the strategist consensus disagree by more than a single cut. That gap is not an information problem — the data is public and unusually clean. It is a positioning problem: the market has been paid to fade extremes since March, and fading extremes is now the crowded trade.",
+      "What matters for the next four weeks is less the print and more who has to move if the print is boring. Real money has duration on, fast money is short the front end, and both are sized as if the distribution is narrow. It is not.",
+      "Our read: own optionality around the meeting rather than a directional view. The cheapest expression is still in the curve, not in outright levels."
+    ] },
+    { key: "a2", cat: "Options & Volatility", title: "A 13-handle VIX does not mean the tails are cheap", dek: "Index vol is low because dispersion is high. Those are different trades and they are being priced as one.", author: "Renee Ash", date: "Aug 2, 2026", read: "5 MIN", body: [
+      "Single-name implied vol has barely moved while index vol has bled for six weeks. That is textbook dispersion, and it is what makes the headline VIX number misleading for anyone selling premium on the index.",
+      "If you are short index vol here, you are short correlation, whether or not you meant to be. The position works until one sector stops moving independently — and semis are the obvious candidate.",
+      "Sizing rule we keep repeating on the show: half the notional you think the edge deserves, and write the exit down before the position is on."
+    ] },
+    { key: "a3", cat: "Technicals & Flow", title: "Breadth has been telling a different story since June", dek: "The index is up. The median stock is not. Here is the level that decides which one is right.", author: "Ilya Grant", date: "Aug 1, 2026", read: "4 MIN", body: [
+      "Equal-weight has underperformed cap-weight for nine of the last eleven weeks. That is not automatically bearish — narrow tapes can run for months — but it does change what a break of 5,940 means.",
+      "Watch participation on any move above 6,010. If fewer than half the S&P names confirm, the breakout is a leadership event, not a market event, and it should be traded through the leaders rather than the index."
+    ] },
+    { key: "a4", cat: "Earnings", title: "Capex disclosures are the only guidance that matters this quarter", dek: "Forget the beat. The spend schedule is where the multiple gets decided.", author: "Dana Whitfield", date: "Jul 31, 2026", read: "7 MIN", body: [
+      "Three of the four largest hyperscalers moved their capex language this quarter without moving the headline number. The buy side noticed; the tape took two sessions to.",
+      "For semis, the read-through is mechanical: capex commitments dated beyond eighteen months are being valued at roughly half the multiple of near-term orders. That spread is the trade.",
+      "The risk is that a single guidance walk-back re-rates the whole complex. Position accordingly — this is a group where the correlation goes to one on bad news."
+    ] },
+    { key: "a5", cat: "Interviews & Long Form", title: "\u201cThe book that broke me was the one I understood best\u201d", dek: "A prop desk head on risk limits, hiring, and the drawdown that changed how he sizes everything.", author: "Amara Reid", date: "Jul 30, 2026", read: "12 MIN", body: [
+      "He has run the same desk for eleven years and has fired more traders for process than for P&L. The conversation kept returning to one idea: conviction is not a risk input.",
+      "On hiring: he no longer asks candidates for their best trade. He asks for the trade they held too long, and listens for whether the story has a number in it."
+    ] },
+    { key: "a6", cat: "Macro & Rates", title: "Yen carry is rebuilding, quietly", dek: "The unwind is over. The funding trade is back on — with worse liquidity underneath it.", author: "Lena Hoffmann", date: "Jul 29, 2026", read: "5 MIN", body: [
+      "Positioning data suggests the carry trade has rebuilt roughly two thirds of what came off in the spring, but through a narrower set of counterparties.",
+      "That matters more than the size. The same notional in fewer hands means the next unwind is faster, and the gaps are wider. Hedge the gap, not the level."
+    ] },
+    { key: "a7", cat: "Technicals & Flow", title: "The last hour in August is a different market", dek: "Thin books, heavier closes, and fills that do not look like your backtest.", author: "Ilya Grant", date: "Jul 28, 2026", read: "4 MIN", body: [
+      "Close auction share of daily volume has climbed for four straight Augusts. If your strategy assumes continuous liquidity, August is where the assumption quietly stops being true.",
+      "Practical fix: move execution earlier, size down into the final thirty minutes, and treat the auction print as information rather than a target."
+    ] },
+    { key: "a8", cat: "Earnings", title: "Retail's downgrade is happening in the mix, not the top line", dek: "Traffic is fine. Ticket is fine. What people put in the basket is not.", author: "Marcus Oyelaran", date: "Jul 27, 2026", read: "6 MIN", body: [
+      "Three consecutive quarters of mix shift toward private label and smaller pack sizes is not a promotion cycle. It is a consumer decision that shows up in margin before it shows up in revenue.",
+      "The names that have already guided margin down are, counterintuitively, the cleaner longs here. The risk sits with anyone still holding a full-year margin number set in January."
+    ] }
+  ];
+
+  menuRef = React.createRef();
+
+  componentDidMount() {
+    this._close = e => {
+      if (!this.state.menu) return;
+      const el = this.menuRef.current;
+      if (el && e.target instanceof Node && el.contains(e.target)) return;
+      this.setState({ menu: false });
+    };
+    document.addEventListener("mousedown", this._close);
+  }
+  componentWillUnmount() { document.removeEventListener("mousedown", this._close); }
+
+  toggleMenu = e => { e.stopPropagation(); this.setState(s => ({ menu: !s.menu })); };
+
+  openShow(key) {
+    return e => { e.stopPropagation(); this.setState({ screen: "show", showKey: key, menu: false }); window.scrollTo(0, 0); };
+  }
+
+  showsData = {
+    bell: {
+      name: "The Opening Bell", slot: "WEEKDAYS 09:30 ET", tag: "DAILY · WEEKDAYS 09:30 ET",
+      blurb: "Two hours on the tape as it prints, from the bell.",
+      desc: "Two hours on the tape as it prints. Order flow, breadth, and the trades desks are actually putting on — before the narrative catches up.",
+      count: "1,412 EPISODES",
+      stats: [{ v: "1,412", k: "EPISODES" }, { v: "10 hrs", k: "LIVE PER WEEK" }, { v: "4.2M", k: "MONTHLY VIEWS" }, { v: "$0", k: "TO WATCH" }],
+      hosts: [
+        { ini: "DW", name: "Dana Whitfield", role: "Anchor · 14 years on an equities desk" },
+        { ini: "MO", name: "Marcus Oyelaran", role: "Markets editor · former futures broker" },
+        { ini: "RA", name: "Renee Ash", role: "Options contributor" }
+      ],
+      episodes: [
+        { no: "EP 1,412", date: "Aug 3, 2026", title: "Chips lead a narrow tape as breadth thins into the Fed window", desc: "Live now — semis leadership, the equal-weight gap, and how desks are hedging September.", dur: "LIVE", views: "14.2K WATCHING", tags: ["NVDA", "AVGO", "BREADTH"] },
+        { no: "EP 1,411", date: "Aug 1, 2026", title: "Semis earnings scorecard: guidance versus the multiple", desc: "Which prints justified the re-rating, and where the buy side is quietly trimming.", dur: "1:04:22", views: "212K VIEWS", tags: ["EARNINGS", "SEMIS"] },
+        { no: "EP 1,410", date: "Jul 31, 2026", title: "Retail margins and the quiet consumer downgrade", desc: "Three quarters of mix shift in one chart, and what it means for discretionary.", dur: "51:11", views: "168K VIEWS", tags: ["RETAIL", "MACRO"] },
+        { no: "EP 1,409", date: "Jul 30, 2026", title: "The 2s10s wants to steepen — who gets hurt first", desc: "Positioning that has been offside since June, walked through step by step.", dur: "57:04", views: "141K VIEWS", tags: ["RATES", "CURVE"] },
+        { no: "EP 1,408", date: "Jul 29, 2026", title: "When liquidity thins: trading the last hour in August", desc: "Volume profiles, close auctions, and why size behaves differently after 15:30.", dur: "49:38", views: "133K VIEWS", tags: ["LIQUIDITY", "ES"] },
+        { no: "EP 1,407", date: "Jul 28, 2026", title: "Dollar strength is not one trade", desc: "Separating the rate differential story from the risk-off bid in DXY.", dur: "52:20", views: "119K VIEWS", tags: ["FX", "DXY"] }
+      ]
+    },
+    vol: {
+      name: "The Vol Desk", slot: "TUE / THU 14:00 ET", tag: "TWICE WEEKLY · TUE / THU 14:00 ET",
+      blurb: "Options structure, sizing and the trades behind the greeks.",
+      desc: "Structure before conviction. Every segment ends with a live position: strikes, sizing, and the exit written down before it is on.",
+      count: "486 EPISODES",
+      stats: [{ v: "486", k: "EPISODES" }, { v: "4 hrs", k: "LIVE PER WEEK" }, { v: "1.9M", k: "MONTHLY VIEWS" }, { v: "$0", k: "TO WATCH" }],
+      hosts: [
+        { ini: "RA", name: "Renee Ash", role: "Host · ex market-maker, CBOE floor" },
+        { ini: "JT", name: "Julian Terrell", role: "Vol strategist · dispersion and skew" }
+      ],
+      episodes: [
+        { no: "EP 486", date: "Aug 1, 2026", title: "Selling premium into the print: sizing the NVDA event", desc: "Why the straddle was fair and the wings were not, with the trade we put on.", dur: "31:05", views: "156K VIEWS", tags: ["NVDA", "EARNINGS", "VEGA"] },
+        { no: "EP 485", date: "Jul 30, 2026", title: "Iron condors in a 13-handle VIX", desc: "What you are actually paid for when the tails are cheap and the body is not.", dur: "27:38", views: "128K VIEWS", tags: ["VIX", "CONDOR"] },
+        { no: "EP 484", date: "Jul 28, 2026", title: "Rolling losers is a decision, not a reflex", desc: "A blunt segment on when a roll is risk management and when it is denial.", dur: "34:12", views: "174K VIEWS", tags: ["RISK", "PROCESS"] },
+        { no: "EP 483", date: "Jul 23, 2026", title: "Skew as a positioning signal", desc: "Reading put skew across index, semis and single names in one screen.", dur: "29:47", views: "97K VIEWS", tags: ["SKEW", "INDEX"] }
+      ]
+    },
+    macro: {
+      name: "Macro Hour", slot: "WEEKDAYS 16:00 ET", tag: "DAILY · WEEKDAYS 16:00 ET",
+      blurb: "Rates, FX and the policy calendar, without the theatre.",
+      desc: "Rates, currencies and central banks in the hour after the close — what the data actually changed, and what was already in the price.",
+      count: "902 EPISODES",
+      stats: [{ v: "902", k: "EPISODES" }, { v: "5 hrs", k: "LIVE PER WEEK" }, { v: "2.6M", k: "MONTHLY VIEWS" }, { v: "$0", k: "TO WATCH" }],
+      hosts: [
+        { ini: "TB", name: "Tomas Bek", role: "Host · former rates strategist" },
+        { ini: "LH", name: "Lena Hoffmann", role: "FX contributor · London desk" }
+      ],
+      episodes: [
+        { no: "EP 902", date: "Aug 2, 2026", title: "Powell's window: three ways the September dot plot lands", desc: "Scenario map for the meeting, and the trades that express each one cleanly.", dur: "48:12", views: "231K VIEWS", tags: ["FED", "RATES"] },
+        { no: "EP 901", date: "Jul 30, 2026", title: "Yen carry, round three", desc: "Positioning after the unwind, and where the funding trade is rebuilding.", dur: "44:16", views: "188K VIEWS", tags: ["JPY", "CARRY"] },
+        { no: "EP 900", date: "Jul 29, 2026", title: "The inflation print nobody hedged", desc: "Services stickiness, shelter lags, and why the front end shrugged.", dur: "41:03", views: "162K VIEWS", tags: ["CPI", "FRONT END"] },
+        { no: "EP 899", date: "Jul 28, 2026", title: "Fiscal supply is the new duration risk", desc: "Auction sizes, dealer balance sheets, and the term premium question.", dur: "46:55", views: "144K VIEWS", tags: ["TREASURIES", "SUPPLY"] }
+      ]
+    },
+    chart: {
+      name: "Chart Session", slot: "DAILY 12:00 ET", tag: "DAILY · 12:00 ET",
+      blurb: "Levels, breadth and viewer chart requests, live.",
+      desc: "Half an hour of levels. Viewers send tickers, we mark them up live — support, breadth, relative strength, and where the trade is invalidated.",
+      count: "1,140 EPISODES",
+      stats: [{ v: "1,140", k: "EPISODES" }, { v: "2.5 hrs", k: "LIVE PER WEEK" }, { v: "3.1M", k: "MONTHLY VIEWS" }, { v: "$0", k: "TO WATCH" }],
+      hosts: [
+        { ini: "IG", name: "Ilya Grant", role: "Host · technician, 20 years on the tape" },
+        { ini: "AR", name: "Amara Reid", role: "Contributor · breadth and market internals" }
+      ],
+      episodes: [
+        { no: "EP 1,140", date: "Aug 1, 2026", title: "Where the tape breaks: mapping 5,940 to 6,010", desc: "The two levels that decide whether August chops or trends.", dur: "22:47", views: "142K VIEWS", tags: ["ES", "LEVELS"] },
+        { no: "EP 1,139", date: "Jul 31, 2026", title: "Viewer requests: 12 tickers, 12 invalidation points", desc: "Fast marks on the most-asked names, each with a line that kills the idea.", dur: "26:19", views: "121K VIEWS", tags: ["REQUESTS", "SETUPS"] },
+        { no: "EP 1,138", date: "Jul 30, 2026", title: "Relative strength screens that survive a chop", desc: "Why most RS screens break in range markets, and a version that does not.", dur: "19:52", views: "108K VIEWS", tags: ["RS", "SCREENS"] },
+        { no: "EP 1,137", date: "Jul 29, 2026", title: "Reading order flow without a level 2 addiction", desc: "What the book tells you, what it does not, and how to stop over-trading it.", dur: "24:31", views: "205K VIEWS", tags: ["FLOW", "PROCESS"] }
+      ]
+    }
+  };
+
+  heroClick = () => this.setState(s => ({ hero: s.hero === "playing" ? "paused" : "playing" }));
+
+  get screen() { return this.state.screen ?? this.props.initialScreen ?? "home"; }
+
+  go(s) { return () => { this.setState({ screen: s }); window.scrollTo(0, 0); }; }
+
+  chipStyle(active) {
+    return {
+      fontFamily: "'IBM Plex Mono', monospace", fontSize: "11px", letterSpacing: "0.1em",
+      padding: "8px 14px", cursor: "pointer",
+      border: active ? "1px solid #F0B429" : "1px solid rgba(255,255,255,0.13)",
+      background: active ? "#F0B429" : "transparent",
+      color: active ? "#08090B" : "#A8AEBC",
+      fontWeight: active ? 600 : 400
+    };
+  }
+
+  tabStyle(active) {
+    return {
+      fontSize: "13.5px", fontWeight: active ? 600 : 400, padding: "0 14px", height: "68px", whiteSpace: "nowrap",
+      display: "flex", alignItems: "center", cursor: "pointer",
+      color: active ? "#E9EBF0" : "#8A90A0",
+      boxShadow: active ? "inset 0 -2px 0 #F0B429" : "none"
+    };
+  }
+
+  send = () => {
+    const t = this.state.draft.trim();
+    if (!t) return;
+    this.setState(s => ({ draft: "", chat: [...(s.chat ?? this.baseChat), { name: "you", text: t, you: true }] }));
+  };
+
+  baseChat = [
+    { name: "flowtrader_kc", text: "breadth is the whole story today, equal weight is red" },
+    { name: "vega_hunter", text: "IV crush after the print was brutal on my calls" },
+    { name: "MOD · Priya", text: "Reminder: chart requests go in the Q&A tab.", mod: true },
+    { name: "tape_reader88", text: "NVDA holding VWAP all session, buyers still there" },
+    { name: "sarah_m", text: "any read on the 2s10s here?" },
+    { name: "desk_of_one", text: "watching 5,940 as the line in the sand" },
+    { name: "quietbid", text: "this segment on order flow is the best one all week" },
+    { name: "hedgehog_ldn", text: "cable looks heavy into the London fix" },
+    { name: "MOD · Priya", text: "Dana takes viewer questions at the bottom of the hour.", mod: true },
+    { name: "swingsonly", text: "added to semis on that flush, small size" }
+  ];
+
+  pics = [
+    "uploads/Gemini_Generated_Image_bsfmq5bsfmq5bsfm.png",
+    "uploads/Gemini_Generated_Image_jik0zpjik0zpjik0.png",
+    "uploads/Gemini_Generated_Image_udj4nuudj4nuudj4.png",
+    "uploads/Gemini_Generated_Image_wo6oltwo6oltwo6o.png",
+    "uploads/Gemini_Generated_Image_mlj41hmlj41hmlj4.png",
+    "uploads/Gemini_Generated_Image_bsfmq5bsfmq5bsfm-fa91b74f.png",
+    "uploads/Gemini_Generated_Image_jik0zpjik0zpjik0-ef37c215.png"
+  ];
+  pic(i) { return this.pics[i % this.pics.length]; }
+
+  bg(u) {
+    return { position: "absolute", inset: 0, backgroundImage: 'url("' + u + '")', backgroundSize: "cover", backgroundPosition: "center" };
+  }
+
+  withPics(list, offset) { return list.map((o, i) => ({ ...o, imgStyle: this.bg(this.pic(i + (offset || 0))) })); }
+
+  card(kicker, title, show, when, dur, img) { return { kicker, title, show, when, dur, imgStyle: this.bg(img), go: this.go("player") }; }
+
+  renderVals() {
+    const scr = this.screen;
+    const tabs = [["home", "Home"], ["catalog", "On Demand"]]
+      .map(([k, label]) => ({ label, go: this.go(k), style: this.tabStyle(scr === k) }));
+    const keys = ["bell", "vol", "macro", "chart"];
+    const show = this.showsData[this.state.showKey];
+    const menuShows = keys.map(k => ({
+      name: this.showsData[k].name, slot: this.showsData[k].slot, blurb: this.showsData[k].blurb,
+      go: this.openShow(k),
+      style: {
+        display: "grid", gridTemplateColumns: "3px minmax(0,1fr)", gap: "12px", alignItems: "start",
+        padding: "13px 16px", cursor: "pointer",
+        borderBottom: "1px solid rgba(255,255,255,0.05)",
+        background: this.state.showKey === k && scr === "show" ? "#15181F" : "transparent"
+      }
+    }));
+
+    const up = { color: "#2FBF71", fontFamily: "'IBM Plex Mono', monospace" };
+    const down = { color: "#E5484D", fontFamily: "'IBM Plex Mono', monospace" };
+    const rawTape = [
+      ["ES", "5,942.25", "+0.41%", 1], ["NQ", "21,488.50", "+0.78%", 1], ["SPY", "591.14", "+0.38%", 1],
+      ["NVDA", "184.62", "+2.14%", 1], ["AAPL", "228.05", "-0.32%", 0], ["TSLA", "341.77", "-1.08%", 0],
+      ["VIX", "14.82", "-3.40%", 0], ["US10Y", "4.216%", "+2 bp", 1], ["DXY", "103.41", "-0.12%", 0],
+      ["CL", "68.94", "+1.62%", 1], ["GC", "3,412.60", "+0.27%", 1], ["BTC", "112,480", "-0.94%", 0],
+      ["EURUSD", "1.0862", "+0.15%", 1], ["AVGO", "1,742.10", "+3.02%", 1]
+    ].map(([sym, px, chg, u]) => ({ sym, px, chg, chgStyle: u ? up : down }));
+
+    const cat = this.odCats.find(c => c.key === this.state.catKey) || null;
+    const sub = cat ? (cat.subs.find(x => x.key === this.state.subKey) || null) : null;
+    const odLevel = sub ? "items" : cat ? "subs" : "cats";
+    const odCatCards = this.odCats.map((c, i) => ({
+      name: c.name, blurb: c.blurb, go: this.odGo(c.key, null),
+      count: c.subs.length + " SUBCATEGORIES · " + c.subs.reduce((n, x) => n + x.items.length, 0) + " VIDEOS",
+      subNames: c.subs.map(x => x.name).join("  ·  "),
+      imgStyle: this.bg(this.pic(i + 1))
+    }));
+    const odSubCards = cat ? cat.subs.map((x, i) => ({
+      name: x.name, blurb: x.blurb, count: x.items.length + " VIDEOS",
+      go: this.odGo(cat.key, x.key), imgStyle: this.bg(this.pic(i + 3))
+    })) : [];
+    const odItems = sub ? this.withPics(sub.items.map(v => ({ ...v, cat: cat.name.toUpperCase() })), 4) : [];
+
+    const chatRows = (this.state.chat ?? this.baseChat).map(m => ({
+      name: m.name, text: m.text,
+      nameStyle: {
+        fontFamily: "'IBM Plex Mono', monospace", fontSize: "11.5px", whiteSpace: "nowrap", flexShrink: 0,
+        color: m.mod ? "#F0B429" : m.you ? "#2FBF71" : "#6E7484", fontWeight: m.mod ? 600 : 400
+      }
+    }));
+
+    return {
+      tabs, tape: [...rawTape, ...rawTape],
+      showTicker: this.props.showTicker ?? true,
+      showChat: this.props.showChat ?? true,
+      isHome: scr === "home", isPlayer: scr === "player", isShow: scr === "show", isCatalog: scr === "catalog",
+      goHome: this.go("home"), goPlayer: this.go("player"), goShow: this.go("show"), goCatalog: this.odGo(null, null),
+      playing: this.state.playing, paused: !this.state.playing,
+      togglePlay: () => this.setState(s => ({ playing: !s.playing })),
+      playerGrid: {
+        display: "grid",
+        gridTemplateColumns: (this.props.showChat ?? true) ? "minmax(0,1fr) 358px" : "minmax(0,1fr)",
+        gap: "24px", alignItems: "start"
+      },
+      heroImgStyle: this.bg(this.pic(0)),
+      heroClick: this.heroClick,
+      heroIdle: this.state.hero === "idle",
+      heroStarted: this.state.hero !== "idle",
+      heroLivePlaying: this.state.hero === "playing",
+      heroPaused: this.state.hero === "paused",
+      featured: [
+        this.card("REPLAY", "Powell's window: three ways the September dot plot lands", "Macro Hour", "2h ago", "48:12", this.pic(1)),
+        this.card("CLIP", "Why the equal-weight S&P is telling a different story", "The Opening Bell", "4h ago", "6:38", this.pic(2)),
+        this.card("REPLAY", "Selling premium into the NVDA print — sizing and exits", "The Vol Desk", "Yesterday", "31:05", this.pic(3)),
+        this.card("CLIP", "The one level that matters on ES this week", "Chart Session", "Yesterday", "4:12", this.pic(4)),
+        this.card("INTERVIEW", "A prop desk head on risk limits, hiring and blowups", "The Long Position", "Jul 30", "58:40", this.pic(5)),
+        this.card("REPLAY", "Yen carry, round three: positioning after the unwind", "Macro Hour", "Jul 30", "44:16", this.pic(6))
+      ],
+      shows: keys.map(k => ({ name: this.showsData[k].name, blurb: this.showsData[k].blurb, slot: this.showsData[k].slot, go: this.openShow(k) })),
+      menuShows, menuOpen: this.state.menu, toggleMenu: this.toggleMenu,
+      menuRef: this.menuRef,
+      homeGo: this.go("home"), homeStyle: this.tabStyle(scr === "home"), catalogStyle: this.tabStyle(scr === "catalog"),
+      showsTabStyle: { ...this.tabStyle(scr === "show"), gap: "7px" },
+      show,
+      schedule: [
+        { time: "09:30", name: "The Opening Bell", host: "Whitfield · Oyelaran", live: true },
+        { time: "12:00", name: "Chart Session", host: "Ilya Grant", live: false },
+        { time: "14:00", name: "The Vol Desk", host: "Renee Ash", live: false },
+        { time: "16:00", name: "Macro Hour", host: "Tomas Bek", live: false },
+        { time: "18:30", name: "The Long Position", host: "Amara Reid", live: false },
+        { time: "20:00", name: "Asia Handover", host: "Singapore desk", live: false }
+      ],
+      mostWatched: [
+        { n: "01", title: "The trade that broke a $40m book", meta: "THE LONG POSITION · 1:12:03" },
+        { n: "02", title: "Reading order flow without a level 2 addiction", meta: "CHART SESSION · 22:47" },
+        { n: "03", title: "Iron condors in a 13-handle VIX", meta: "THE VOL DESK · 27:38" },
+        { n: "04", title: "What a 15% drawdown does to your process", meta: "THE LONG POSITION · 41:19" },
+        { n: "05", title: "Semis earnings scorecard", meta: "THE OPENING BELL · 1:04:22" }
+      ],
+      chat: chatRows, draft: this.state.draft,
+      onDraft: e => this.setState({ draft: e.target.value }),
+      onChatKey: e => { if (e.key === "Enter") this.send(); },
+      sendChat: this.send,
+      upNext: this.withPics([
+        { title: "Chart Session: viewer requests, 12:00 ET", show: "CHART SESSION", dur: "LIVE IN 2H" },
+        { title: "Why the equal-weight S&P tells a different story", show: "THE OPENING BELL", dur: "6:38" },
+        { title: "Selling premium into the print", show: "THE VOL DESK", dur: "31:05" }
+      ], 3),
+      showStats: show.stats,
+      episodes: this.withPics(show.episodes, 1),
+      hosts: show.hosts,
+      watchWays: [
+        { k: "Live stream", v: "24/5 · FREE" }, { k: "Apple TV / Roku", v: "TAPE NETWORK" },
+        { k: "Podcast feed", v: "AUDIO ONLY" }, { k: "Morning brief", v: "06:45 ET DAILY" }
+      ],
+      isArticles: scr === "articles", isArticle: scr === "article",
+      goArticles: () => { this.setState({ screen: "articles" }); window.scrollTo(0, 0); },
+      articlesStyle: this.tabStyle(scr === "articles" || scr === "article"),
+      artFilters: ["All", ...this.odCats.map(c => c.name)].map(label => ({
+        label, style: this.chipStyle(this.state.artCat === label), go: () => this.setState({ artCat: label })
+      })),
+      artList: (this.state.artCat === "All" ? this.articles : this.articles.filter(a => a.cat === this.state.artCat))
+        .map((a, i) => ({ ...a, go: this.readGo(a.key), imgStyle: this.bg(this.pic(i + 2)) })),
+      artLead: { ...this.articles[0], go: this.readGo(this.articles[0].key), imgStyle: this.bg(this.pic(1)) },
+      homeArticles: this.articles.slice(1, 4).map((a, i) => ({ ...a, go: this.readGo(a.key), imgStyle: this.bg(this.pic(i + 4)) })),
+      article: this.articles.find(a => a.key === this.state.artKey) || this.articles[0],
+      artMore: this.articles.filter(a => a.key !== this.state.artKey).slice(0, 3).map((a, i) => ({ ...a, go: this.readGo(a.key), imgStyle: this.bg(this.pic(i + 5)) })),
+      odLevel, odIsCats: odLevel === "cats", odIsSubs: odLevel === "subs", odIsItems: odLevel === "items",
+      odCatCards, odSubCards, odItems,
+      odCatName: cat ? cat.name : "", odSubName: sub ? sub.name : "",
+      odSubBlurb: sub ? sub.blurb : "", odCatBlurb: cat ? cat.blurb : "",
+      odCount: sub ? sub.items.length + " VIDEOS" : cat ? cat.subs.length + " SUBCATEGORIES" : this.odCats.length + " CATEGORIES",
+      odRoot: this.odGo(null, null), odUpToCat: cat ? this.odGo(cat.key, null) : this.odGo(null, null),
+      odTitle: sub ? sub.name : cat ? cat.name : "Browse the archive",
+      odKicker: sub ? "VIDEOS" : cat ? "SUBCATEGORIES" : "ON DEMAND",
+      footer: [
+        { h: "PROGRAMMING", items: ["Live now", "Full schedule", "All shows", "Clips", "Podcast feed"] },
+        { h: "READ", items: ["Latest articles", "Macro & rates", "Options & volatility", "Technicals & flow", "Earnings"] },
+        { h: "NETWORK", items: ["About", "The desk", "Press", "Advertise", "Disclosures"] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

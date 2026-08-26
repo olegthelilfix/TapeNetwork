@@ -1,0 +1,31 @@
+/* Tape Network design tokens — ported from the prototype (dark "terminal" theme). */
+:root {
+  /* Surfaces */
+  --bg: #08090b;
+  --surface: #101216;
+  --surface-2: #15181f;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.13);
+
+  /* Text */
+  --text: #e9ebf0;
+  --text-dim: #a8aebc;
+  --text-muted: #8a90a0;
+  --text-faint: #6e7484;
+
+  /* Brand + market colors */
+  --accent: #f0b429;         /* gold */
+  --accent-ink: #08090b;     /* text on accent */
+  --up: #2fbf71;             /* green */
+  --down: #e5484d;           /* red */
+  --live: #e5484d;
+
+  /* Type */
+  --font-serif: "IBM Plex Serif", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Layout */
+  --maxw: 1200px;
+  --radius: 4px;
+}

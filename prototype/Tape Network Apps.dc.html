@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #0E1014; -webkit-font-smoothing: antialiased; }
+  * { box-sizing: border-box; }
+  a { color: #F0B429; text-decoration: none; }
+  a:hover { color: #FFD070; }
+  ::-webkit-scrollbar { width: 0; height: 0; }
+  @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.22; } }
+</style>
+</helmet>
+
+<div style="background: #0E1014; color: #E9EBF0; font-family: 'IBM Plex Sans', system-ui, sans-serif; padding: 72px 80px 96px; display: flex; flex-direction: column; gap: 72px; min-height: 100vh;">
+
+  <div>
+    <div style="display: flex; align-items: baseline; gap: 14px;">
+      <div style="width: 12px; height: 30px; background: #F0B429;"></div>
+      <div style="font-family: 'IBM Plex Serif', Georgia, serif; font-size: 30px; font-weight: 700; letter-spacing: -0.02em;">Tape Network — native apps</div>
+    </div>
+    <div style="font-size: 15px; color: #8A90A0; margin-top: 12px; max-width: 720px; line-height: 1.6;">Same programming, two platform idioms. iOS uses large titles, segmented controls and a translucent tab bar; Android follows Material 3 with a top app bar, filter chips and a pill-indicator navigation bar.</div>
+  </div>
+
+  <sc-if value="{{ showIOS }}" hint-placeholder-val="{{ true }}">
+  <div>
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 28px;">
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.22em; color: #E9EBF0;">IOS</div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #616776;">IPHONE 16 PRO · 402 × 874</div>
+      <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.08);"></div>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 56px;">
+
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+          <div style="height: 100%; display: flex; flex-direction: column; background: #08090B; color: #E9EBF0; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif;">
+            <div style="flex: 1; overflow-y: auto; padding: 58px 0 16px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 20px 0;">
+                <div style="display: flex; align-items: baseline; gap: 7px;">
+                  <div style="width: 8px; height: 20px; background: #F0B429;"></div>
+                  <div style="font-family: 'IBM Plex Serif', Georgia, serif; font-size: 17px; font-weight: 700;">TAPE</div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 8.5px; letter-spacing: 0.2em; color: #8A90A0;">NETWORK</div>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                  <div style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#F0B429" stroke-width="2.1"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4.5-4.5"></path></svg>
+                  </div>
+                  <div style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#F0B429" stroke-width="2.1"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"></path><path d="M10.5 21a2 2 0 0 0 3 0"></path></svg>
+                  </div>
+                </div>
+              </div>
+              <div style="padding: 10px 20px 0; font-size: 34px; font-weight: 700; letter-spacing: -0.9px; line-height: 41px;">Live</div>
+
+              <div style="margin: 14px 20px 0; border-radius: 16px; overflow: hidden; background: #0D0F13; border: 0.5px solid rgba(255,255,255,0.1);">
+                <div style="position: relative; aspect-ratio: 16/9;">
+                  <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_bsfmq5bsfmq5bsfm.png'); background-size: cover; background-position: center;"></div>
+                  <div style="position: absolute; inset: 0; background: linear-gradient(170deg, rgba(8,9,11,0.2), rgba(8,9,11,0.7));"></div>
+                  <div style="position: absolute; top: 12px; left: 12px; display: flex; align-items: center; gap: 6px; background: #C0392B; border-radius: 100px; padding: 5px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; font-weight: 600; letter-spacing: 0.12em;">
+                    <span style="width: 5px; height: 5px; border-radius: 50%; background: #fff; animation: livePulse 1.8s ease-in-out infinite;"></span>ON AIR
+                  </div>
+                  <div style="position: absolute; top: 12px; right: 12px; background: rgba(8,9,11,0.62); border-radius: 100px; padding: 5px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; color: #C9CDD8;">14,208</div>
+                  <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 56px; height: 56px; border-radius: 50%; background: rgba(240,180,41,0.94); display: flex; align-items: center; justify-content: center;">
+                    <div style="width: 0; height: 0; border-left: 16px solid #08090B; border-top: 10px solid transparent; border-bottom: 10px solid transparent; margin-left: 5px;"></div>
+                  </div>
+                </div>
+                <div style="padding: 14px 15px 16px;">
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; color: #F0B429;">THE OPENING BELL · 09:30 ET</div>
+                  <div style="font-size: 19px; font-weight: 600; line-height: 1.26; letter-spacing: -0.5px; margin-top: 8px;">Chips lead a narrow tape as breadth thins into the Fed window</div>
+                  <div style="font-size: 13px; color: #8A90A0; margin-top: 7px;">Dana Whitfield · Marcus Oyelaran</div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 2px; margin: 20px 20px 0; padding: 2px; background: rgba(120,120,128,0.24); border-radius: 9px;">
+                <div style="flex: 1; text-align: center; padding: 7px 0; border-radius: 7px; background: #F0B429; color: #08090B; font-size: 13px; font-weight: 600;">Today</div>
+                <div style="flex: 1; text-align: center; padding: 7px 0; border-radius: 7px; color: #A8AEBC; font-size: 13px;">Up next</div>
+                <div style="flex: 1; text-align: center; padding: 7px 0; border-radius: 7px; color: #A8AEBC; font-size: 13px;">Replays</div>
+              </div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 24px 20px 0;">
+                <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">Today on Tape</div>
+                <div style="font-size: 15px; color: #F0B429;">See all</div>
+              </div>
+              <div style="display: flex; gap: 12px; overflow-x: auto; padding: 12px 20px 4px;">
+                <div style="flex: 0 0 214px;">
+                  <div style="position: relative; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden;">
+                    <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_jik0zpjik0zpjik0.png'); background-size: cover; background-position: center;"></div>
+                    <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(4,5,7,0.82); border-radius: 5px; padding: 2px 6px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #C9CDD8;">48:12</div>
+                  </div>
+                  <div style="font-size: 14.5px; font-weight: 600; line-height: 1.32; margin-top: 10px; letter-spacing: -0.3px;">Powell's window: three ways the dot plot lands</div>
+                  <div style="font-size: 12.5px; color: #767C8C; margin-top: 5px;">Macro Hour · 2h ago</div>
+                </div>
+                <div style="flex: 0 0 214px;">
+                  <div style="position: relative; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden;">
+                    <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_udj4nuudj4nuudj4.png'); background-size: cover; background-position: center;"></div>
+                    <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(4,5,7,0.82); border-radius: 5px; padding: 2px 6px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #C9CDD8;">6:38</div>
+                  </div>
+                  <div style="font-size: 14.5px; font-weight: 600; line-height: 1.32; margin-top: 10px; letter-spacing: -0.3px;">Why equal-weight tells a different story</div>
+                  <div style="font-size: 12.5px; color: #767C8C; margin-top: 5px;">The Opening Bell · 4h ago</div>
+                </div>
+                <div style="flex: 0 0 214px;">
+                  <div style="position: relative; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden;">
+                    <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_wo6oltwo6oltwo6o.png'); background-size: cover; background-position: center;"></div>
+                  </div>
+                  <div style="font-size: 14.5px; font-weight: 600; line-height: 1.32; margin-top: 10px; letter-spacing: -0.3px;">Selling premium into the print</div>
+                  <div style="font-size: 12.5px; color: #767C8C; margin-top: 5px;">The Vol Desk · Yesterday</div>
+                </div>
+              </div>
+
+              <div style="padding: 22px 20px 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">From the newsroom</div>
+              <div style="margin: 12px 20px 0; border-radius: 14px; overflow: hidden; background: #0D0F13; border: 0.5px solid rgba(255,255,255,0.09);">
+                <div style="display: grid; grid-template-columns: 84px minmax(0,1fr); gap: 13px; padding: 13px; border-bottom: 0.5px solid rgba(255,255,255,0.07);">
+                  <div style="position: relative; aspect-ratio: 1; border-radius: 9px; overflow: hidden;">
+                    <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_mlj41hmlj41hmlj4.png'); background-size: cover; background-position: center;"></div>
+                  </div>
+                  <div>
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.14em; color: #F0B429;">MACRO &amp; RATES</div>
+                    <div style="font-size: 14.5px; font-weight: 600; line-height: 1.32; margin-top: 6px; letter-spacing: -0.3px;">The front end is pricing four cuts. The desk is not.</div>
+                    <div style="font-size: 12px; color: #767C8C; margin-top: 6px;">7 min read</div>
+                  </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 84px minmax(0,1fr); gap: 13px; padding: 13px;">
+                  <div style="position: relative; aspect-ratio: 1; border-radius: 9px; overflow: hidden;">
+                    <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_bsfmq5bsfmq5bsfm-fa91b74f.png'); background-size: cover; background-position: center;"></div>
+                  </div>
+                  <div>
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.14em; color: #F0B429;">OPTIONS &amp; VOLATILITY</div>
+                    <div style="font-size: 14.5px; font-weight: 600; line-height: 1.32; margin-top: 6px; letter-spacing: -0.3px;">What a 13-handle VIX actually pays you for</div>
+                    <div style="font-size: 12px; color: #767C8C; margin-top: 6px;">9 min read</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="border-top: 0.5px solid rgba(255,255,255,0.12); background: rgba(12,13,17,0.86); backdrop-filter: blur(24px) saturate(180%); display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 0 30px;">
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; color: #F0B429;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="5" width="19" height="13" rx="2"></rect><path d="M9.5 9.5l5 2.5-5 2.5z" fill="currentColor" stroke="none"></path></svg>
+                <span style="font-size: 10px; font-weight: 600;">Live</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; color: #767C8C;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M9 9v11"></path></svg>
+                <span style="font-size: 10px;">Shows</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; color: #767C8C;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h11l5 5v11H4z"></path><path d="M7.5 12h9M7.5 16h6"></path></svg>
+                <span style="font-size: 10px;">Read</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; color: #767C8C;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M4 12h16M4 19h10"></path></svg>
+                <span style="font-size: 10px;">Library</span>
+              </div>
+            </div>
+          </div>
+        </x-import>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.16em; color: #767C8C;">01 · LIVE HOME</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+          <div style="height: 100%; display: flex; flex-direction: column; background: #08090B; color: #E9EBF0; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif;">
+            <div style="position: relative; aspect-ratio: 16/9; margin-top: 54px; flex-shrink: 0;">
+              <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_bsfmq5bsfmq5bsfm.png'); background-size: cover; background-position: center;"></div>
+              <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,9,11,0.4), rgba(8,9,11,0.55));"></div>
+              <div style="position: absolute; top: 12px; left: 14px; display: flex; align-items: center; gap: 6px; background: #C0392B; border-radius: 100px; padding: 5px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; font-weight: 600; letter-spacing: 0.12em;">
+                <span style="width: 5px; height: 5px; border-radius: 50%; background: #fff; animation: livePulse 1.8s ease-in-out infinite;"></span>LIVE
+              </div>
+              <div style="position: absolute; left: 14px; right: 14px; bottom: 12px; display: flex; align-items: center; gap: 12px;">
+                <div style="flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.24); position: relative;"><div style="position: absolute; inset: 0; background: #C0392B; border-radius: 2px;"></div></div>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #C9CDD8;">02:14:38</div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9"><path d="M4 9V4h5M20 15v5h-5M20 9V4h-5M4 15v5h5"></path></svg>
+              </div>
+            </div>
+
+            <div style="padding: 15px 20px 0; flex-shrink: 0;">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; color: #F0B429;">THE OPENING BELL · LIVE</div>
+              <div style="font-size: 19px; font-weight: 600; line-height: 1.26; letter-spacing: -0.5px; margin-top: 8px;">Chips lead a narrow tape as breadth thins into the Fed window</div>
+              <div style="display: flex; gap: 10px; margin-top: 14px;">
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; height: 44px; border-radius: 12px; background: rgba(240,180,41,0.14); color: #F0B429; font-size: 14.5px; font-weight: 600;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v12M6 10l6 6 6-6M4 20h16"></path></svg>Save
+                </div>
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; height: 44px; border-radius: 12px; background: rgba(120,120,128,0.24); color: #E9EBF0; font-size: 14.5px; font-weight: 600;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5M4 16v4h16v-4"></path></svg>Share
+                </div>
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(120,120,128,0.24); display: flex; align-items: center; justify-content: center;">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E9EBF0" stroke-width="2"><circle cx="5" cy="12" r="1.6" fill="#E9EBF0"></circle><circle cx="12" cy="12" r="1.6" fill="#E9EBF0"></circle><circle cx="19" cy="12" r="1.6" fill="#E9EBF0"></circle></svg>
+                </div>
+              </div>
+              <div style="display: flex; gap: 2px; margin-top: 16px; padding: 2px; background: rgba(120,120,128,0.24); border-radius: 9px;">
+                <div style="flex: 1; text-align: center; padding: 7px 0; border-radius: 7px; background: #F0B429; color: #08090B; font-size: 13px; font-weight: 600;">Chat</div>
+                <div style="flex: 1; text-align: center; padding: 7px 0; border-radius: 7px; color: #A8AEBC; font-size: 13px;">Q&amp;A</div>
+                <div style="flex: 1; text-align: center; padding: 7px 0; border-radius: 7px; color: #A8AEBC; font-size: 13px;">Notes</div>
+              </div>
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px;">
+              <div style="display: flex; gap: 8px; align-items: baseline;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #6E7484; flex-shrink: 0;">flowtrader_kc</div><div style="font-size: 13.5px; color: #C1C6D2; line-height: 1.45;">breadth is the whole story today, equal weight is red</div></div>
+              <div style="display: flex; gap: 8px; align-items: baseline;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #6E7484; flex-shrink: 0;">vega_hunter</div><div style="font-size: 13.5px; color: #C1C6D2; line-height: 1.45;">IV crush after the print was brutal on my calls</div></div>
+              <div style="display: flex; gap: 8px; align-items: baseline;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #F0B429; font-weight: 600; flex-shrink: 0;">MOD · Priya</div><div style="font-size: 13.5px; color: #C1C6D2; line-height: 1.45;">Chart requests go in the Q&amp;A tab.</div></div>
+              <div style="display: flex; gap: 8px; align-items: baseline;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #6E7484; flex-shrink: 0;">tape_reader88</div><div style="font-size: 13.5px; color: #C1C6D2; line-height: 1.45;">NVDA holding VWAP all session, buyers still there</div></div>
+              <div style="display: flex; gap: 8px; align-items: baseline;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #6E7484; flex-shrink: 0;">desk_of_one</div><div style="font-size: 13.5px; color: #C1C6D2; line-height: 1.45;">watching 5,940 as the line in the sand</div></div>
+              <div style="display: flex; gap: 8px; align-items: baseline;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #2FBF71; flex-shrink: 0;">you</div><div style="font-size: 13.5px; color: #C1C6D2; line-height: 1.45;">any read on the 2s10s from here?</div></div>
+            </div>
+
+            <div style="padding: 10px 16px 30px; border-top: 0.5px solid rgba(255,255,255,0.1); background: rgba(12,13,17,0.86); backdrop-filter: blur(24px); display: flex; align-items: center; gap: 10px;">
+              <div style="flex: 1; height: 44px; border-radius: 22px; background: rgba(120,120,128,0.24); display: flex; align-items: center; padding: 0 16px; font-size: 15px; color: #7B8090;">Say something…</div>
+              <div style="width: 44px; height: 44px; border-radius: 22px; background: #F0B429; display: flex; align-items: center; justify-content: center;">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#08090B" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+              </div>
+            </div>
+          </div>
+        </x-import>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.16em; color: #767C8C;">02 · LIVE PLAYER + CHAT</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+          <div style="height: 100%; display: flex; flex-direction: column; background: #08090B; color: #E9EBF0; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif;">
+            <div style="flex: 1; overflow-y: auto; padding: 58px 0 16px;">
+              <div style="padding: 8px 20px 0; font-size: 34px; font-weight: 700; letter-spacing: -0.9px; line-height: 41px;">On Demand</div>
+              <div style="margin: 14px 20px 0; height: 40px; border-radius: 12px; background: rgba(120,120,128,0.24); display: flex; align-items: center; gap: 8px; padding: 0 12px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7B8090" stroke-width="2.2"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4.5-4.5"></path></svg>
+                <div style="font-size: 15px; color: #7B8090;">Shows, tickers, hosts</div>
+              </div>
+              <div style="display: flex; gap: 8px; overflow-x: auto; padding: 16px 20px 0;">
+                <div style="flex-shrink: 0; height: 34px; padding: 0 15px; border-radius: 17px; background: #F0B429; color: #08090B; font-size: 13.5px; font-weight: 600; display: flex; align-items: center;">All</div>
+                <div style="flex-shrink: 0; height: 34px; padding: 0 15px; border-radius: 17px; background: rgba(120,120,128,0.24); color: #C9CDD8; font-size: 13.5px; display: flex; align-items: center;">Macro</div>
+                <div style="flex-shrink: 0; height: 34px; padding: 0 15px; border-radius: 17px; background: rgba(120,120,128,0.24); color: #C9CDD8; font-size: 13.5px; display: flex; align-items: center;">Options</div>
+                <div style="flex-shrink: 0; height: 34px; padding: 0 15px; border-radius: 17px; background: rgba(120,120,128,0.24); color: #C9CDD8; font-size: 13.5px; display: flex; align-items: center;">Technicals</div>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 14px; padding: 20px;">
+                <div style="border-radius: 16px; overflow: hidden; background: #0D0F13; border: 0.5px solid rgba(255,255,255,0.09);">
+                  <div style="position: relative; aspect-ratio: 16/6;">
+                    <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_jik0zpjik0zpjik0.png'); background-size: cover; background-position: center;"></div>
+                    <div style="position: absolute; inset: 0; background: linear-gradient(120deg, rgba(8,9,11,0.3), rgba(8,9,11,0.74));"></div>
+                    <div style="position: absolute; left: 14px; bottom: 12px; font-family: 'IBM Plex Serif', Georgia, serif; font-size: 19px; font-weight: 700;">Macro &amp; rates</div>
+                  </div>
+                  <div style="padding: 13px 14px 15px;">
+                    <div style="font-size: 13px; color: #8A90A0; line-height: 1.5;">Central banks, the curve, and the dollar.</div>
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.12em; color: #F0B429; margin-top: 10px;">3 SUBCATEGORIES · 14 VIDEOS ›</div>
+                  </div>
+                </div>
+                <div style="border-radius: 16px; overflow: hidden; background: #0D0F13; border: 0.5px solid rgba(255,255,255,0.09);">
+                  <div style="position: relative; aspect-ratio: 16/6;">
+                    <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_udj4nuudj4nuudj4.png'); background-size: cover; background-position: center;"></div>
+                    <div style="position: absolute; inset: 0; background: linear-gradient(120deg, rgba(8,9,11,0.3), rgba(8,9,11,0.74));"></div>
+                    <div style="position: absolute; left: 14px; bottom: 12px; font-family: 'IBM Plex Serif', Georgia, serif; font-size: 19px; font-weight: 700;">Options &amp; volatility</div>
+                  </div>
+                  <div style="padding: 13px 14px 15px;">
+                    <div style="font-size: 13px; color: #8A90A0; line-height: 1.5;">Premium, skew and the mechanics of getting paid.</div>
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.12em; color: #F0B429; margin-top: 10px;">3 SUBCATEGORIES · 12 VIDEOS ›</div>
+                  </div>
+                </div>
+                <div style="border-radius: 16px; overflow: hidden; background: #0D0F13; border: 0.5px solid rgba(255,255,255,0.09);">
+                  <div style="position: relative; aspect-ratio: 16/6;">
+                    <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_wo6oltwo6oltwo6o.png'); background-size: cover; background-position: center;"></div>
+                    <div style="position: absolute; inset: 0; background: linear-gradient(120deg, rgba(8,9,11,0.3), rgba(8,9,11,0.74));"></div>
+                    <div style="position: absolute; left: 14px; bottom: 12px; font-family: 'IBM Plex Serif', Georgia, serif; font-size: 19px; font-weight: 700;">Technicals &amp; flow</div>
+                  </div>
+                  <div style="padding: 13px 14px 15px;">
+                    <div style="font-size: 13px; color: #8A90A0; line-height: 1.5;">Levels, breadth and the order book.</div>
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.12em; color: #F0B429; margin-top: 10px;">3 SUBCATEGORIES · 16 VIDEOS ›</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="border-top: 0.5px solid rgba(255,255,255,0.12); background: rgba(12,13,17,0.86); backdrop-filter: blur(24px) saturate(180%); display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 0 30px;">
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; color: #767C8C;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="5" width="19" height="13" rx="2"></rect><path d="M9.5 9.5l5 2.5-5 2.5z" fill="currentColor" stroke="none"></path></svg>
+                <span style="font-size: 10px;">Live</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; color: #767C8C;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M9 9v11"></path></svg>
+                <span style="font-size: 10px;">Shows</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; color: #767C8C;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h11l5 5v11H4z"></path><path d="M7.5 12h9M7.5 16h6"></path></svg>
+                <span style="font-size: 10px;">Read</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; color: #F0B429;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M4 12h16M4 19h10"></path></svg>
+                <span style="font-size: 10px; font-weight: 600;">Library</span>
+              </div>
+            </div>
+          </div>
+        </x-import>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.16em; color: #767C8C;">03 · ON DEMAND BROWSE</div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ showAndroid }}" hint-placeholder-val="{{ true }}">
+  <div>
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 28px;">
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.22em; color: #E9EBF0;">ANDROID</div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #616776;">MATERIAL 3 · 412 × 892</div>
+      <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.08);"></div>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 56px;">
+
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" hint-size="412px,892px">
+          <div style="height: 100%; display: flex; flex-direction: column; background: #0F1013; color: #E6E1E9; font-family: Roboto, system-ui, sans-serif;">
+            <div style="height: 64px; display: flex; align-items: center; gap: 12px; padding: 0 12px 0 16px; flex-shrink: 0;">
+              <div style="display: flex; align-items: baseline; gap: 7px; flex: 1;">
+                <div style="width: 8px; height: 20px; background: #F0B429;"></div>
+                <div style="font-family: 'IBM Plex Serif', Georgia, serif; font-size: 20px; font-weight: 700; color: #E6E1E9;">Tape</div>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center;">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#CAC4D0" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4.5-4.5"></path></svg>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 32px; height: 32px; border-radius: 16px; background: #F0B429; color: #08090B; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500;">D</div>
+              </div>
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; padding-bottom: 16px;">
+              <div style="margin: 0 16px; border-radius: 28px; overflow: hidden; background: #1B1B1F;">
+                <div style="position: relative; aspect-ratio: 16/9;">
+                  <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_bsfmq5bsfmq5bsfm.png'); background-size: cover; background-position: center;"></div>
+                  <div style="position: absolute; inset: 0; background: linear-gradient(170deg, rgba(8,9,11,0.18), rgba(8,9,11,0.7));"></div>
+                  <div style="position: absolute; top: 14px; left: 14px; display: flex; align-items: center; gap: 6px; background: #C0392B; border-radius: 8px; padding: 6px 11px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.12em;">
+                    <span style="width: 5px; height: 5px; border-radius: 50%; background: #fff; animation: livePulse 1.8s ease-in-out infinite;"></span>ON AIR
+                  </div>
+                  <div style="position: absolute; right: 14px; bottom: 14px; width: 56px; height: 56px; border-radius: 18px; background: #F0B429; display: flex; align-items: center; justify-content: center;">
+                    <div style="width: 0; height: 0; border-left: 16px solid #08090B; border-top: 10px solid transparent; border-bottom: 10px solid transparent; margin-left: 4px;"></div>
+                  </div>
+                </div>
+                <div style="padding: 16px 18px 20px;">
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: #F0B429;">THE OPENING BELL · 09:30 ET</div>
+                  <div style="font-size: 20px; font-weight: 500; line-height: 1.3; margin-top: 9px; color: #E6E1E9;">Chips lead a narrow tape as breadth thins into the Fed window</div>
+                  <div style="font-size: 13.5px; color: #CAC4D0; margin-top: 8px;">Dana Whitfield · Marcus Oyelaran · 14,208 watching</div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px; overflow-x: auto; padding: 20px 16px 0;">
+                <div style="flex-shrink: 0; height: 36px; padding: 0 16px; border-radius: 10px; background: #F0B429; color: #1D1B20; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 7px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D1B20" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>Live
+                </div>
+                <div style="flex-shrink: 0; height: 36px; padding: 0 16px; border-radius: 10px; border: 1px solid #49454F; color: #CAC4D0; font-size: 14px; display: flex; align-items: center;">Macro</div>
+                <div style="flex-shrink: 0; height: 36px; padding: 0 16px; border-radius: 10px; border: 1px solid #49454F; color: #CAC4D0; font-size: 14px; display: flex; align-items: center;">Options</div>
+                <div style="flex-shrink: 0; height: 36px; padding: 0 16px; border-radius: 10px; border: 1px solid #49454F; color: #CAC4D0; font-size: 14px; display: flex; align-items: center;">Interviews</div>
+              </div>
+
+              <div style="padding: 24px 16px 0; font-size: 16px; font-weight: 500; letter-spacing: 0.1px; color: #CAC4D0;">Today on Tape</div>
+              <div style="display: flex; flex-direction: column; gap: 12px; padding: 12px 16px 0;">
+                <div style="display: grid; grid-template-columns: 132px minmax(0,1fr); gap: 14px; background: #1B1B1F; border-radius: 20px; padding: 12px;">
+                  <div style="position: relative; aspect-ratio: 16/10; border-radius: 14px; overflow: hidden;">
+                    <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_jik0zpjik0zpjik0.png'); background-size: cover; background-position: center;"></div>
+                    <div style="position: absolute; bottom: 6px; right: 6px; background: rgba(4,5,7,0.82); border-radius: 6px; padding: 2px 6px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #E6E1E9;">48:12</div>
+                  </div>
+                  <div>
+                    <div style="font-size: 15px; font-weight: 500; line-height: 1.35; color: #E6E1E9;">Powell's window: three ways the dot plot lands</div>
+                    <div style="font-size: 12.5px; color: #938F99; margin-top: 8px;">Macro Hour · 2h ago</div>
+                  </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 132px minmax(0,1fr); gap: 14px; background: #1B1B1F; border-radius: 20px; padding: 12px;">
+                  <div style="position: relative; aspect-ratio: 16/10; border-radius: 14px; overflow: hidden;">
+                    <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_udj4nuudj4nuudj4.png'); background-size: cover; background-position: center;"></div>
+                    <div style="position: absolute; bottom: 6px; right: 6px; background: rgba(4,5,7,0.82); border-radius: 6px; padding: 2px 6px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #E6E1E9;">6:38</div>
+                  </div>
+                  <div>
+                    <div style="font-size: 15px; font-weight: 500; line-height: 1.35; color: #E6E1E9;">Why the equal-weight S&amp;P tells a different story</div>
+                    <div style="font-size: 12.5px; color: #938F99; margin-top: 8px;">The Opening Bell · 4h ago</div>
+                  </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 132px minmax(0,1fr); gap: 14px; background: #1B1B1F; border-radius: 20px; padding: 12px;">
+                  <div style="position: relative; aspect-ratio: 16/10; border-radius: 14px; overflow: hidden;">
+                    <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_wo6oltwo6oltwo6o.png'); background-size: cover; background-position: center;"></div>
+                    <div style="position: absolute; bottom: 6px; right: 6px; background: rgba(4,5,7,0.82); border-radius: 6px; padding: 2px 6px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #E6E1E9;">31:05</div>
+                  </div>
+                  <div>
+                    <div style="font-size: 15px; font-weight: 500; line-height: 1.35; color: #E6E1E9;">Selling premium into the NVDA print</div>
+                    <div style="font-size: 12.5px; color: #938F99; margin-top: 8px;">The Vol Desk · Yesterday</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background: #1B1B1F; display: grid; grid-template-columns: repeat(4, 1fr); padding: 12px 0 16px; flex-shrink: 0;">
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <div style="width: 64px; height: 32px; border-radius: 16px; background: rgba(240,180,41,0.22); display: flex; align-items: center; justify-content: center;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F0B429" stroke-width="2"><rect x="2.5" y="5" width="19" height="13" rx="2"></rect><path d="M9.5 9.5l5 2.5-5 2.5z" fill="#F0B429" stroke="none"></path></svg>
+                </div>
+                <span style="font-size: 12px; font-weight: 500; color: #F0B429;">Live</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <div style="width: 64px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#CAC4D0" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M9 9v11"></path></svg>
+                </div>
+                <span style="font-size: 12px; color: #CAC4D0;">Shows</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <div style="width: 64px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#CAC4D0" stroke-width="2"><path d="M4 4h11l5 5v11H4z"></path><path d="M7.5 12h9M7.5 16h6"></path></svg>
+                </div>
+                <span style="font-size: 12px; color: #CAC4D0;">Read</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <div style="width: 64px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#CAC4D0" stroke-width="2"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"></rect><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"></rect><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"></rect><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"></rect></svg>
+                </div>
+                <span style="font-size: 12px; color: #CAC4D0;">Library</span>
+              </div>
+            </div>
+          </div>
+        </x-import>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.16em; color: #767C8C;">01 · LIVE HOME</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" hint-size="412px,892px">
+          <div style="height: 100%; display: flex; flex-direction: column; background: #0F1013; color: #E6E1E9; font-family: Roboto, system-ui, sans-serif;">
+            <div style="position: relative; aspect-ratio: 16/9; flex-shrink: 0;">
+              <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_bsfmq5bsfmq5bsfm.png'); background-size: cover; background-position: center;"></div>
+              <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,9,11,0.42), rgba(8,9,11,0.56));"></div>
+              <div style="position: absolute; top: 12px; left: 12px; width: 44px; height: 44px; border-radius: 22px; background: rgba(0,0,0,0.42); display: flex; align-items: center; justify-content: center;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M15 5l-7 7 7 7"></path></svg>
+              </div>
+              <div style="position: absolute; left: 14px; right: 14px; bottom: 12px; display: flex; align-items: center; gap: 12px;">
+                <div style="flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.26); position: relative;"><div style="position: absolute; inset: 0; background: #C0392B; border-radius: 2px;"></div></div>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #E6E1E9;">LIVE</div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 9V4h5M20 15v5h-5M20 9V4h-5M4 15v5h5"></path></svg>
+              </div>
+            </div>
+
+            <div style="padding: 18px 16px 0; flex-shrink: 0;">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: #F0B429;">THE OPENING BELL · LIVE</div>
+              <div style="font-size: 21px; font-weight: 500; line-height: 1.28; margin-top: 9px;">Chips lead a narrow tape as breadth thins into the Fed window</div>
+              <div style="display: flex; gap: 10px; margin-top: 16px;">
+                <div style="height: 44px; padding: 0 22px; border-radius: 22px; background: #F0B429; color: #1D1B20; font-size: 14.5px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1D1B20" stroke-width="2.2"><path d="M12 4v12M6 10l6 6 6-6M4 20h16"></path></svg>Save
+                </div>
+                <div style="height: 44px; padding: 0 22px; border-radius: 22px; border: 1px solid #49454F; color: #E6E1E9; font-size: 14.5px; display: flex; align-items: center; gap: 8px;">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E6E1E9" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5M4 16v4h16v-4"></path></svg>Share
+                </div>
+                <div style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #49454F; display: flex; align-items: center; justify-content: center;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E6E1E9" stroke-width="2"><circle cx="12" cy="5" r="1.7" fill="#E6E1E9"></circle><circle cx="12" cy="12" r="1.7" fill="#E6E1E9"></circle><circle cx="12" cy="19" r="1.7" fill="#E6E1E9"></circle></svg>
+                </div>
+              </div>
+              <div style="display: flex; gap: 26px; margin-top: 18px; border-bottom: 1px solid #322F35;">
+                <div style="padding: 0 2px 12px; font-size: 14px; font-weight: 500; color: #F0B429; box-shadow: inset 0 -3px 0 #F0B429;">Chat</div>
+                <div style="padding: 0 2px 12px; font-size: 14px; color: #CAC4D0;">Q&amp;A</div>
+                <div style="padding: 0 2px 12px; font-size: 14px; color: #CAC4D0;">About</div>
+              </div>
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+              <div style="display: flex; gap: 9px; align-items: baseline;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #938F99; flex-shrink: 0;">flowtrader_kc</div><div style="font-size: 14px; color: #DDD8E1; line-height: 1.45;">breadth is the whole story today, equal weight is red</div></div>
+              <div style="display: flex; gap: 9px; align-items: baseline;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #F0B429; font-weight: 600; flex-shrink: 0;">MOD · Priya</div><div style="font-size: 14px; color: #DDD8E1; line-height: 1.45;">Dana takes viewer questions at the bottom of the hour.</div></div>
+              <div style="display: flex; gap: 9px; align-items: baseline;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #938F99; flex-shrink: 0;">quietbid</div><div style="font-size: 14px; color: #DDD8E1; line-height: 1.45;">this segment on order flow is the best one all week</div></div>
+              <div style="display: flex; gap: 9px; align-items: baseline;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #938F99; flex-shrink: 0;">hedgehog_ldn</div><div style="font-size: 14px; color: #DDD8E1; line-height: 1.45;">cable looks heavy into the London fix</div></div>
+              <div style="display: flex; gap: 9px; align-items: baseline;"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #2FBF71; flex-shrink: 0;">you</div><div style="font-size: 14px; color: #DDD8E1; line-height: 1.45;">watching 5,940 as the line in the sand</div></div>
+            </div>
+
+            <div style="padding: 10px 16px 16px; background: #1B1B1F; display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
+              <div style="flex: 1; height: 48px; border-radius: 24px; background: #26232A; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #938F99;">Message</div>
+              <div style="width: 48px; height: 48px; border-radius: 16px; background: #F0B429; display: flex; align-items: center; justify-content: center;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D1B20" stroke-width="2.2"><path d="M4 12l16-7-7 16-2-6z"></path></svg>
+              </div>
+            </div>
+          </div>
+        </x-import>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.16em; color: #767C8C;">02 · LIVE PLAYER + CHAT</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" hint-size="412px,892px">
+          <div style="height: 100%; display: flex; flex-direction: column; background: #0F1013; color: #E6E1E9; font-family: Roboto, system-ui, sans-serif;">
+            <div style="height: 64px; display: flex; align-items: center; gap: 8px; padding: 0 8px; flex-shrink: 0;">
+              <div style="width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center;">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#E6E1E9" stroke-width="2.2"><path d="M15 5l-7 7 7 7"></path></svg>
+              </div>
+              <div style="flex: 1; font-size: 20px; font-weight: 400;">The Vol Desk</div>
+              <div style="width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center;">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#CAC4D0" stroke-width="2"><circle cx="12" cy="5" r="1.7" fill="#CAC4D0"></circle><circle cx="12" cy="12" r="1.7" fill="#CAC4D0"></circle><circle cx="12" cy="19" r="1.7" fill="#CAC4D0"></circle></svg>
+              </div>
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; padding-bottom: 20px;">
+              <div style="position: relative; aspect-ratio: 16/8;">
+                <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_wo6oltwo6oltwo6o.png'); background-size: cover; background-position: center;"></div>
+                <div style="position: absolute; inset: 0; background: linear-gradient(0deg, #0F1013 4%, rgba(15,16,19,0.3) 60%, transparent);"></div>
+              </div>
+              <div style="padding: 4px 16px 0;">
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: #F0B429;">WEEKDAYS 14:00 ET</div>
+                <div style="font-family: 'IBM Plex Serif', Georgia, serif; font-size: 30px; font-weight: 700; line-height: 1.08; letter-spacing: -0.02em; margin-top: 10px;">The Vol Desk</div>
+                <div style="font-size: 14px; color: #CAC4D0; line-height: 1.6; margin-top: 12px;">Options, skew and the mechanics of getting paid for risk. Renee Ash runs the book live.</div>
+                <div style="display: flex; gap: 10px; margin-top: 18px;">
+                  <div style="flex: 1; height: 48px; border-radius: 24px; background: #F0B429; color: #1D1B20; font-size: 15px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 9px;">
+                    <div style="width: 0; height: 0; border-left: 11px solid #1D1B20; border-top: 7px solid transparent; border-bottom: 7px solid transparent;"></div>Watch live
+                  </div>
+                  <div style="height: 48px; padding: 0 22px; border-radius: 24px; border: 1px solid #49454F; color: #E6E1E9; font-size: 15px; display: flex; align-items: center;">Follow</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
+                  <div style="background: #1B1B1F; border-radius: 18px; padding: 16px;">
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; color: #F0B429;">486</div>
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: #938F99; margin-top: 6px;">EPISODES</div>
+                  </div>
+                  <div style="background: #1B1B1F; border-radius: 18px; padding: 16px;">
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; color: #F0B429;">312K</div>
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: #938F99; margin-top: 6px;">FOLLOWERS</div>
+                  </div>
+                </div>
+                <div style="font-size: 16px; font-weight: 500; color: #CAC4D0; margin-top: 26px;">Episodes</div>
+              </div>
+              <div style="display: flex; flex-direction: column;">
+                <div style="display: grid; grid-template-columns: 132px minmax(0,1fr); gap: 14px; padding: 14px 16px; border-bottom: 1px solid #26232A;">
+                  <div style="position: relative; aspect-ratio: 16/10; border-radius: 14px; overflow: hidden;">
+                    <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_mlj41hmlj41hmlj4.png'); background-size: cover; background-position: center;"></div>
+                    <div style="position: absolute; bottom: 6px; right: 6px; background: rgba(4,5,7,0.82); border-radius: 6px; padding: 2px 6px; font-family: 'IBM Plex Mono', monospace; font-size: 10px;">27:38</div>
+                  </div>
+                  <div>
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #938F99;">EP 485 · JUL 30</div>
+                    <div style="font-size: 15px; font-weight: 500; line-height: 1.34; margin-top: 6px;">Iron condors in a 13-handle VIX</div>
+                    <div style="font-size: 12.5px; color: #938F99; margin-top: 6px;">128K views</div>
+                  </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 132px minmax(0,1fr); gap: 14px; padding: 14px 16px; border-bottom: 1px solid #26232A;">
+                  <div style="position: relative; aspect-ratio: 16/10; border-radius: 14px; overflow: hidden;">
+                    <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_bsfmq5bsfmq5bsfm-fa91b74f.png'); background-size: cover; background-position: center;"></div>
+                    <div style="position: absolute; bottom: 6px; right: 6px; background: rgba(4,5,7,0.82); border-radius: 6px; padding: 2px 6px; font-family: 'IBM Plex Mono', monospace; font-size: 10px;">34:12</div>
+                  </div>
+                  <div>
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #938F99;">EP 484 · JUL 28</div>
+                    <div style="font-size: 15px; font-weight: 500; line-height: 1.34; margin-top: 6px;">Rolling losers is a decision, not a reflex</div>
+                    <div style="font-size: 12.5px; color: #938F99; margin-top: 6px;">96K views</div>
+                  </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 132px minmax(0,1fr); gap: 14px; padding: 14px 16px;">
+                  <div style="position: relative; aspect-ratio: 16/10; border-radius: 14px; overflow: hidden;">
+                    <div style="position: absolute; inset: 0; background-image: url('uploads/Gemini_Generated_Image_jik0zpjik0zpjik0-ef37c215.png'); background-size: cover; background-position: center;"></div>
+                    <div style="position: absolute; bottom: 6px; right: 6px; background: rgba(4,5,7,0.82); border-radius: 6px; padding: 2px 6px; font-family: 'IBM Plex Mono', monospace; font-size: 10px;">29:47</div>
+                  </div>
+                  <div>
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #938F99;">EP 483 · JUL 23</div>
+                    <div style="font-size: 15px; font-weight: 500; line-height: 1.34; margin-top: 6px;">Skew as a positioning signal</div>
+                    <div style="font-size: 12.5px; color: #938F99; margin-top: 6px;">97K views</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background: #1B1B1F; display: grid; grid-template-columns: repeat(4, 1fr); padding: 12px 0 16px; flex-shrink: 0;">
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <div style="width: 64px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#CAC4D0" stroke-width="2"><rect x="2.5" y="5" width="19" height="13" rx="2"></rect><path d="M9.5 9.5l5 2.5-5 2.5z" fill="#CAC4D0" stroke="none"></path></svg>
+                </div>
+                <span style="font-size: 12px; color: #CAC4D0;">Live</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <div style="width: 64px; height: 32px; border-radius: 16px; background: rgba(240,180,41,0.22); display: flex; align-items: center; justify-content: center;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F0B429" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M9 9v11"></path></svg>
+                </div>
+                <span style="font-size: 12px; font-weight: 500; color: #F0B429;">Shows</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <div style="width: 64px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#CAC4D0" stroke-width="2"><path d="M4 4h11l5 5v11H4z"></path><path d="M7.5 12h9M7.5 16h6"></path></svg>
+                </div>
+                <span style="font-size: 12px; color: #CAC4D0;">Read</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <div style="width: 64px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#CAC4D0" stroke-width="2"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"></rect><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"></rect><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"></rect><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"></rect></svg>
+                </div>
+                <span style="font-size: 12px; color: #CAC4D0;">Library</span>
+              </div>
+            </div>
+          </div>
+        </x-import>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.16em; color: #767C8C;">03 · SHOW PAGE</div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showIOS&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Platforms&quot;},&quot;showAndroid&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Platforms&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      showIOS: this.props.showIOS ?? true,
+      showAndroid: this.props.showAndroid ?? true
+    };
+  }
+}
+</script>
+</body>
+</html>

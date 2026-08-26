@@ -1,0 +1,24 @@
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+.bar {
+  width: 6px;
+  height: 26px;
+  background: var(--accent);
+  display: inline-block;
+}
+.word {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 23px;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.network {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  color: var(--text-muted);
+}

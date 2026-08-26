@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "tasks": {
+      "command": "node",
+      "args": ["tools/task-mcp/server.mjs"]
+    }
+  }
+}
