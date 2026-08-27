@@ -20,4 +20,8 @@ provider "google" {
   project = var.project_id
   region  = var.region
   zone    = var.zone
+
+  # When set, Terraform runs as this service account (via your ADC identity's
+  # token-creator permission on it) — mirror your gcloud impersonation here.
+  impersonate_service_account = var.impersonate_service_account != "" ? var.impersonate_service_account : null
 }

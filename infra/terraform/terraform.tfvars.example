@@ -1,9 +1,12 @@
 # Copy to terraform.tfvars and fill in. terraform.tfvars is git-ignored.
-project_id  = "my-gcp-project-id"
+project_id  = "schwab-433114"
 github_repo = "olegthelilfix/TapeNetwork"
 
+# Run Terraform as the same service account gcloud impersonates.
+impersonate_service_account = "dev-sa-terraform-vm@schwab-433114.iam.gserviceaccount.com"
+
 # Optional overrides:
-# region            = "europe-west3"
-# zone              = "europe-west3-c"
+# region            = "europe-west4"
+# zone              = "europe-west4-a"
 # machine_type      = "e2-medium"
 # data_disk_size_gb = 20

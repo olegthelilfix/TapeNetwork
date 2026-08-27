@@ -1,8 +1,9 @@
-name: Deploy
+name: Deploy (Artifact Registry + WIF)
 
+# Full design — requires project-admin provisioning (WIF, dedicated SAs, IAP,
+# Artifact Registry). Until infra/terraform is applied with those grants, this
+# is manual-only. The active pipeline is deploy-vm.yml (GHCR + SSH).
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
 
 concurrency:

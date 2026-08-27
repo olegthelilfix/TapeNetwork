@@ -1,0 +1,11 @@
+# Copy to terraform.tfvars (git-ignored) and set your deploy public key.
+# Generate a keypair first:
+#   ssh-keygen -t ed25519 -C tape-deploy -f ~/.ssh/tape_deploy -N ""
+# then paste the contents of ~/.ssh/tape_deploy.pub below:
+ssh_public_key = "ssh-ed25519 AAAA... tape-deploy"
+
+# Optional overrides:
+# project_id   = "schwab-433114"
+# region       = "europe-west4"
+# zone         = "europe-west4-a"
+# machine_type = "e2-medium"

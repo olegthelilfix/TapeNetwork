@@ -6,13 +6,19 @@ variable "project_id" {
 variable "region" {
   type        = string
   description = "GCP region."
-  default     = "europe-west3" # Frankfurt
+  default     = "europe-west4" # Netherlands (matches gcloud config)
 }
 
 variable "zone" {
   type        = string
   description = "GCP zone."
-  default     = "europe-west3-c"
+  default     = "europe-west4-a"
+}
+
+variable "impersonate_service_account" {
+  type        = string
+  description = "Optional SA email for Terraform to impersonate (leave empty to use your ADC identity directly). Set this to match your gcloud auth/impersonate_service_account."
+  default     = ""
 }
 
 variable "github_repo" {
