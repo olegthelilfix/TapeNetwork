@@ -1,0 +1,69 @@
+name: PR build & test (on VM)
+
+# On every PR, ship the branch source to the VM and build + test all three
+# modules there (in throwaway Docker containers). This only checks that the
+# branch builds — it does NOT deploy. The PR check goes red if anything fails.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+concurrency:
+  group: pr-build-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  remote-build:
+    runs-on: ubuntu-latest
+    env:
+      SSH_USER: ${{ vars.SSH_USER }}
+      VM_HOST: ${{ vars.VM_HOST }}
+      DIR: /tmp/pr-build-${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Package & copy source to VM
+        run: |
+          tar czf src.tgz --exclude=.git --exclude=node_modules --exclude=target --exclude=.next \
+            backend web cms
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" "mkdir -p '$DIR'"
+          scp -i ~/.ssh/id_deploy src.tgz "$SSH_USER@$VM_HOST:$DIR/src.tgz"
+
+      - name: Build & test on VM
+        run: |
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" DIR="$DIR" bash <<'REMOTE'
+          set -euxo pipefail
+          cd "$DIR"
+          tar xzf src.tgz
+          mkdir -p /opt/tape/ci/m2   # cache maven deps between runs
+
+          echo '::group::backend — mvn verify'
+          docker run --rm -v "$PWD/backend:/app" -v /opt/tape/ci/m2:/root/.m2 -w /app \
+            maven:3.9-eclipse-temurin-21 mvn -B verify
+          echo '::endgroup::'
+
+          echo '::group::web — npm ci && test && build'
+          docker run --rm -v "$PWD/web:/app" -w /app \
+            node:20-alpine sh -c 'npm ci && npm test && npm run build'
+          echo '::endgroup::'
+
+          echo '::group::cms — npm ci && build'
+          docker run --rm -v "$PWD/cms:/app" -w /app \
+            node:20-alpine sh -c 'npm ci && npm run build'
+          echo '::endgroup::'
+          REMOTE
+
+      - name: Clean up VM
+        if: always()
+        run: |
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
+            "docker run --rm -v '$DIR:/w' busybox sh -c 'rm -rf /w/..?* /w/.[!.]* /w/*' 2>/dev/null || true; rmdir '$DIR' 2>/dev/null || true"
