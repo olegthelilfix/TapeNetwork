@@ -1,0 +1,58 @@
+# Production stack for the VM. Unlike the root docker-compose.yml, this pulls
+# prebuilt images from Artifact Registry (no build:). Image refs and secrets come
+# from the .env file the deploy pipeline writes next to this file on the VM.
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - /opt/tape/data/pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: ${BACKEND_IMAGE}
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      SEARCH_INDEX_DIR: /var/lib/tape/search
+      MEDIA_DIR: /var/lib/tape/media
+    volumes:
+      - /opt/tape/data/search:/var/lib/tape/search
+      - /opt/tape/data/media:/var/lib/tape/media
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    image: ${WEB_IMAGE}
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: http://backend:8080
+      NEXT_PUBLIC_API_BASE_URL: ${PUBLIC_API_URL}
+      NEXT_PUBLIC_SITE_URL: ${PUBLIC_WEB_URL}
+    ports:
+      - "80:3000"
+    depends_on:
+      - backend
+
+  cms:
+    image: ${CMS_IMAGE}
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend

@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars and fill in. terraform.tfvars is git-ignored.
+project_id  = "my-gcp-project-id"
+github_repo = "olegthelilfix/TapeNetwork"
+
+# Optional overrides:
+# region            = "europe-west3"
+# zone              = "europe-west3-c"
+# machine_type      = "e2-medium"
+# data_disk_size_gb = 20
