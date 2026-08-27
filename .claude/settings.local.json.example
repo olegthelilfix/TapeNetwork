@@ -1,0 +1,10 @@
+{
+  "//": "Copy this file to settings.local.json (which is git-ignored) and fill in your token.",
+  "//github": "Enables the project 'github' MCP server and supplies its token.",
+  "enabledMcpjsonServers": [
+    "github"
+  ],
+  "env": {
+    "GITHUB_PAT": "github_pat_REPLACE_ME"
+  }
+}
