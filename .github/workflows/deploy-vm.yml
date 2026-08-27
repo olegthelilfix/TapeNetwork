@@ -2,9 +2,11 @@ name: Deploy (GHCR + SSH)
 
 # Variant 2: no GCP project-admin needed. Build 3 images, push to GHCR, then
 # deploy onto the VM over plain SSH (key auth). See infra/README.md.
+#
+# Manual only — never auto-deploys on push. Trigger from Actions → Run workflow
+# and pick the branch in the "Use workflow from" dropdown; that branch is what
+# gets built and deployed.
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
 
 concurrency:
