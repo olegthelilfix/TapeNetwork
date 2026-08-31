@@ -56,3 +56,16 @@ services:
       - "8081:80"
     depends_on:
       - backend
+
+  streamer:
+    image: ${STREAMER_IMAGE:-ghcr.io/olegthelilfix/tapenetwork-streamer:latest}
+    restart: unless-stopped
+    environment:
+      VIDEOS_DIR: /data/videos
+      HLS_CACHE_DIR: /data/hls-cache
+      CORS_ORIGINS: ${CORS_ALLOWED_ORIGINS:-*}
+    volumes:
+      - /opt/tape/data/videos:/data/videos
+      - /opt/tape/data/hls-cache:/data/hls-cache
+    ports:
+      - "8082:8082"

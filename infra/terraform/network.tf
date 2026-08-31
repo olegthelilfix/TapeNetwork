@@ -14,7 +14,7 @@ resource "google_compute_firewall" "http" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "443", "8080", "8081"] # web, (tls), backend API, cms
+    ports    = ["80", "443", "8080", "8081", "8082"] # web, (tls), backend API, cms, streamer
   }
 
   source_ranges = ["0.0.0.0/0"]
