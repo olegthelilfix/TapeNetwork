@@ -1,0 +1,11 @@
+# Playwright
+node_modules/
+playwright-report/
+test-results/
+.playwright/
+
+# Robot Framework (rebot output + Browser lib node deps)
+output.xml
+log.html
+report.html
+/robot/browser/

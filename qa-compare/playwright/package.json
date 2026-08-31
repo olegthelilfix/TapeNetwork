@@ -1,0 +1,12 @@
+{
+  "name": "tape-qa-playwright",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "codegen": "playwright codegen ${BASE_URL:-http://localhost:3000}",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0"
+  }
+}
