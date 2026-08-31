@@ -58,7 +58,7 @@ services:
       - backend
 
   streamer:
-    image: ${STREAMER_IMAGE:-ghcr.io/olegthelilfix/tapenetwork-streamer:latest}
+    image: ${STREAMER_IMAGE}
     restart: unless-stopped
     environment:
       VIDEOS_DIR: /data/videos

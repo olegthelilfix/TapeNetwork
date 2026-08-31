@@ -60,12 +60,19 @@ jobs:
           docker push "$IMAGE_PREFIX/cms:$TAG"
           docker push "$IMAGE_PREFIX/cms:latest"
 
+      - name: Build & push streamer
+        run: |
+          docker build -t "$IMAGE_PREFIX/streamer:$TAG" -t "$IMAGE_PREFIX/streamer:latest" ./streamer
+          docker push "$IMAGE_PREFIX/streamer:$TAG"
+          docker push "$IMAGE_PREFIX/streamer:latest"
+
       - name: Render deploy .env
         run: |
           cat > deploy.env <<EOF
           BACKEND_IMAGE=$IMAGE_PREFIX/backend:$TAG
           WEB_IMAGE=$IMAGE_PREFIX/web:$TAG
           CMS_IMAGE=$IMAGE_PREFIX/cms:$TAG
+          STREAMER_IMAGE=$IMAGE_PREFIX/streamer:$TAG
           PUBLIC_WEB_URL=${{ vars.PUBLIC_WEB_URL }}
           PUBLIC_API_URL=${{ vars.PUBLIC_API_URL }}
           CORS_ALLOWED_ORIGINS=${{ vars.CORS_ALLOWED_ORIGINS }}
