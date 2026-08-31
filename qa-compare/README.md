@@ -65,3 +65,16 @@ Open both test files side by side and skim the DX — that is the real decision.
 - Same Playwright engine underneath, so a full trace/video is available via `New Context` options
   (`tracing=`, `recordVideo`); open the saved trace with `playwright show-trace <file>`.
 - No first-party UI mode / interactive time-travel runner.
+
+## CI (GitHub Actions)
+
+`.github/workflows/qa-e2e.yml` runs both suites against a deployed URL and uploads each report
+as a downloadable artifact.
+
+- Trigger: **Actions → QA E2E → Run workflow** (set `base_url`), or automatically on any push
+  touching `qa-compare/**`. Tests hit the deployed site directly — the stack is not booted in CI.
+- Download: open the run → **Artifacts** → `playwright-report` / `robot-report` (zip).
+- View locally:
+  - Playwright: unzip, then `npx playwright show-report <unzipped-folder>` (or just open `index.html`).
+  - Robot: unzip and open `log.html` / `report.html` in a browser.
+- Reports upload even when tests fail (`if: always()`), so you always get the trace/log to debug.
