@@ -12,6 +12,6 @@ Home Navigates To Shows
     New Page          ${BASE_URL}/
     Get Title         contains    Tape
     Click             a[href="/shows"] >> nth=0
-    Wait For Elements State    h1    visible
+    Wait For Elements State    h1:has-text("Shows")    visible    timeout=10s
     Get Url           contains    /shows
     Get Text          h1    ==    Shows
