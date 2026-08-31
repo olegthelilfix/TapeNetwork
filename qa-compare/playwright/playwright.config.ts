@@ -4,7 +4,7 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests",
   use: {
-    baseURL: process.env.BASE_URL ?? "http://34.13.255.70",
+    baseURL: process.env.BASE_URL ?? "http://localhost:3000",
     headless: true,
     trace: "on",                  // full step-by-step trace every run (open with show-trace / report)
     video: "retain-on-failure",   // keep a screen recording when a test fails
