@@ -49,3 +49,19 @@ robot smoke.robot                 # runs the suite, writes log.html / report.htm
 | Engine | Playwright | Playwright (wrapped) |
 
 Open both test files side by side and skim the DX — that is the real decision.
+
+## See exactly what the browser did
+
+**Playwright** (this scaffold has `trace: "on"`, so every run is replayable):
+- `npm run report` — HTML report; each test has a **Trace** you scrub step by step, with a
+  before/after DOM snapshot, screenshot, network and console for every action.
+- `npm run test:ui` — **UI mode**: interactive time-travel runner, watch each step, pick locators.
+- `npm run test:headed` — watch it run live in a real browser window.
+- `npx playwright test --debug` — Inspector, step through action by action.
+- `npm run codegen` — the inverse: click around and it writes the TS for you.
+
+**Robot Framework**:
+- `log.html` (written every run) — step-by-step keyword log with screenshots embedded.
+- Same Playwright engine underneath, so a full trace/video is available via `New Context` options
+  (`tracing=`, `recordVideo`); open the saved trace with `playwright show-trace <file>`.
+- No first-party UI mode / interactive time-travel runner.
