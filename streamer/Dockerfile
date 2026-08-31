@@ -14,7 +14,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w' -o /streamer .
 # Stage 2: Minimal runtime with ffmpeg for stream processing
 FROM alpine:3.20
 
-RUN apk add --no-cache ffmpeg
+# ffmpeg for transcoding; tini as PID 1 to reap FFmpeg subprocesses and
+# forward SIGTERM for graceful shutdown (Alpine has no init otherwise).
+RUN apk add --no-cache ffmpeg tini
 
 COPY --from=builder /streamer /usr/local/bin/streamer
 
@@ -23,4 +25,4 @@ RUN mkdir -p /data/videos /data/hls-cache
 
 EXPOSE 8082
 
-ENTRYPOINT ["streamer"]
+ENTRYPOINT ["/sbin/tini", "--", "streamer"]
