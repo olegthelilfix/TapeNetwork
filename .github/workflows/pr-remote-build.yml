@@ -44,11 +44,11 @@ jobs:
           set -euxo pipefail
           cd "$DIR"
           tar xzf src.tgz
-          mkdir -p /opt/tape/ci/m2   # cache maven deps between runs
+          mkdir -p /opt/tape/ci/gradle   # cache Gradle deps between runs
 
-          echo '::group::backend — mvn verify'
-          docker run --rm -v "$PWD/backend:/app" -v /opt/tape/ci/m2:/root/.m2 -w /app \
-            maven:3.9-eclipse-temurin-21 mvn -B verify
+          echo '::group::backend — gradle build'
+          docker run --rm -v "$PWD/backend:/app" -v /opt/tape/ci/gradle:/root/.gradle -w /app \
+            eclipse-temurin:21-jdk sh -c './gradlew build --no-daemon'
           echo '::endgroup::'
 
           echo '::group::web — npm ci && test && build'
@@ -61,7 +61,6 @@ jobs:
             node:20-alpine sh -c 'npm ci && npm run build'
           echo '::endgroup::'
           REMOTE
-
       - name: Clean up VM
         if: always()
         run: |
