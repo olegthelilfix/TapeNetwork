@@ -1,4 +1,5 @@
 import type { TableProps } from "antd";
+
 import type { ResourceField } from "@/ui/ResourceForm";
 
 export type ResourceRecord = Record<string, unknown> & {

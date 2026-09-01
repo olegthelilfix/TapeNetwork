@@ -1,7 +1,9 @@
 import type { ChangeEvent, FC } from "react";
 import { useRef } from "react";
+
 import { UploadOutlined } from "@ant-design/icons";
 import { Button, Space, Typography } from "antd";
+
 import type { MediaFieldProps } from "./MediaField.types";
 
 export const MediaField: FC<MediaFieldProps> = ({ value, onChange, isUploading, onUpload }) => {

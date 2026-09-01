@@ -1,8 +1,10 @@
 import type { AuthProvider } from "@refinedev/core";
 import axios from "axios";
-import { getStoredJson, getStoredString, removeStoredValue, setStoredJson, setStoredString } from "@/utils/storage";
-import { apiClient } from "../data-provider";
+
 import { sessionStorageKeys } from "../apiConfig";
+import { apiClient } from "../data-provider";
+
+import { getStoredJson, getStoredString, removeStoredValue, setStoredJson, setStoredString } from "@/utils/storage";
 
 type AuthIdentity = {
     email: string;

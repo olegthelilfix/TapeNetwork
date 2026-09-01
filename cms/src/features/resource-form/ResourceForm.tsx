@@ -1,11 +1,15 @@
 import type { FC } from "react";
+
 import { Create, Edit, useForm, useSelect } from "@refinedev/antd";
-import { Form, Select, message } from "antd";
-import type { ReferenceField, ResourceField } from "@/ui/ResourceForm";
-import { ResourceForm as ResourceFormView, ResourceFormField, type FormValues } from "@/ui/ResourceForm";
-import { serializeDateTimeFields } from "@/utils/date";
+import { Form, message, Select } from "antd";
+
 import { useMediaUpload } from "@/features/media-upload";
+import type { ReferenceField, ResourceField } from "@/ui/ResourceForm";
+import { type FormValues, ResourceForm as ResourceFormView, ResourceFormField } from "@/ui/ResourceForm";
+
 import type { ResourceFormFeatureProps } from "./ResourceForm.types";
+
+import { serializeDateTimeFields } from "@/utils/date";
 
 const ReferenceFieldItem: FC<{ field: ReferenceField }> = ({ field }) => {
     const { selectProps } = useSelect<{ id: number } & Record<string, string | number | boolean | null>>({

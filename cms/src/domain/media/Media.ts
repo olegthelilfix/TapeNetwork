@@ -1,4 +1,5 @@
 import type { EntityId } from "@/domain/shared";
+
 import type { MediaKind } from "./MediaKind";
 
 export type Media = {

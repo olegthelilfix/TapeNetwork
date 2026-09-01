@@ -1,6 +1,9 @@
 import type { FC, ReactNode } from "react";
+
 import { Button, Popconfirm, Space, Table, Tag, Typography } from "antd";
+
 import type { ResourceField } from "@/ui/ResourceForm";
+
 import type { ResourceRecord, ResourceTableProps } from "./ResourceTable.types";
 
 const renderCell = (field: ResourceField, value: unknown): ReactNode => {

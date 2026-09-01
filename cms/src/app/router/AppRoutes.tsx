@@ -1,9 +1,12 @@
-import { lazy, Suspense, type FC } from "react";
-import { Authenticated } from "@refinedev/core";
+import { type FC, lazy, Suspense } from "react";
+
 import { ErrorComponent, ThemedLayoutV2 } from "@refinedev/antd";
+import { Authenticated } from "@refinedev/core";
 import { CatchAllNavigate, NavigateToResource } from "@refinedev/react-router-v6";
 import { Outlet, Route, Routes } from "react-router-dom";
+
 import { resourceDefinitions } from "@/features/resource-management";
+
 import type { AppRoutesProps } from "./AppRoutes.types";
 
 const DashboardPage = lazy(async () => {

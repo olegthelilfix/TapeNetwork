@@ -1,6 +1,7 @@
 import js from "@eslint/js";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
 import tseslint from "typescript-eslint";
 
 const browserGlobals = {
@@ -22,6 +23,7 @@ export default tseslint.config(
         plugins: {
             "react-hooks": reactHooks,
             "react-refresh": reactRefresh,
+            "simple-import-sort": simpleImportSort,
         },
         rules: {
             "@typescript-eslint/no-explicit-any": "error",
@@ -36,6 +38,17 @@ export default tseslint.config(
             "react-hooks/rules-of-hooks": "error",
             "react-hooks/exhaustive-deps": "warn",
             "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+            "simple-import-sort/imports": ["error", {
+                groups: [
+                    ["^react(?:\\u0000|/.*|$)"],
+                    ["^@?\\w"],
+                    ["^@/(?:app|pages|features|ui|domain)(?:/.*|$)"],
+                    ["^\\."],
+                    ["^@/utils(?:/.*|$)"],
+                    ["^.+\\.(?:css|scss|sass|less|styl)\\u0000?$", "^\\u0000"],
+                ],
+            }],
+            "simple-import-sort/exports": "error",
         },
     },
     {

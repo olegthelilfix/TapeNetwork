@@ -1,12 +1,16 @@
 import type { FC } from "react";
-import { Refine } from "@refinedev/core";
+
 import { RefineThemes, useNotificationProvider } from "@refinedev/antd";
-import "@refinedev/antd/dist/reset.css";
+import { Refine } from "@refinedev/core";
 import routerBindings, { DocumentTitleHandler, UnsavedChangesNotifier } from "@refinedev/react-router-v6";
 import { App as AntdApp, ConfigProvider } from "antd";
 import { BrowserRouter } from "react-router-dom";
+
 import { authProvider, dataProvider, resources, uploadMedia } from "@/app/refine";
+
 import { AppRoutes } from "./router";
+
+import "@refinedev/antd/dist/reset.css";
 
 export const App: FC = () => {
     return (

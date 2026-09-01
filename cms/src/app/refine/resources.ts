@@ -1,4 +1,5 @@
 import type { ResourceProps } from "@refinedev/core";
+
 import { resourceDefinitions } from "@/features/resource-management";
 
 export const resources: ResourceProps[] = resourceDefinitions.map((definition) => ({

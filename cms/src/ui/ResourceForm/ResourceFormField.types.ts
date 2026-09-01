@@ -1,4 +1,5 @@
 import type { MediaUploadHandler } from "@/ui/MediaField";
+
 import type { ResourceField } from "./ResourceField";
 
 export type ResourceFormFieldProps = {

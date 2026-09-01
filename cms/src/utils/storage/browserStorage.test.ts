@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
+
 import { getStoredJson, getStoredString, removeStoredValue, setStoredJson, setStoredString } from "./browserStorage";
 
 type Session = {

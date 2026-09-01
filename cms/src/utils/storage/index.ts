@@ -1,3 +1,4 @@
+export type { JsonGuard } from "./browserStorage";
 export {
     getStoredJson,
     getStoredString,
@@ -5,4 +6,3 @@ export {
     setStoredJson,
     setStoredString,
 } from "./browserStorage";
-export type { JsonGuard } from "./browserStorage";

@@ -1,7 +1,9 @@
 import simpleRestProvider from "@refinedev/simple-rest";
 import axios from "axios";
-import { getStoredString } from "@/utils/storage";
+
 import { apiUrl, sessionStorageKeys } from "../apiConfig";
+
+import { getStoredString } from "@/utils/storage";
 
 export const apiClient = axios.create({
     baseURL: apiUrl,

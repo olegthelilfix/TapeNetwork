@@ -1,4 +1,5 @@
 import type { EntityId } from "@/domain/shared";
+
 import { apiClient } from "../data-provider";
 
 type UploadMediaResponse = {

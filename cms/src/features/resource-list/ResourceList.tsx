@@ -1,7 +1,10 @@
 import type { FC } from "react";
+
 import { List, useTable } from "@refinedev/antd";
 import { useDelete, useNavigation } from "@refinedev/core";
-import { ResourceTable, type ResourceRecord } from "@/ui/ResourceTable";
+
+import { type ResourceRecord, ResourceTable } from "@/ui/ResourceTable";
+
 import type { ResourceListFeatureProps } from "./ResourceList.types";
 
 export const ResourceListFeature: FC<ResourceListFeatureProps> = ({ definition }) => {

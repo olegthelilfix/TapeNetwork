@@ -1,5 +1,7 @@
 import type { FC } from "react";
+
 import { Card, Space, Tag, Typography } from "antd";
+
 import { resourceDefinitions } from "@/features/resource-management";
 
 const { Title, Paragraph } = Typography;
