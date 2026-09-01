@@ -156,7 +156,7 @@ terraform output vm_external_ip
 ```bash
 CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT= gcloud compute firewall-rules create tape-allow-http \
   --project schwab-433114 --network default --direction INGRESS --action ALLOW \
-  --rules tcp:80,tcp:443,tcp:8080,tcp:8081 --source-ranges 0.0.0.0/0 --target-tags tape
+  --rules tcp:80,tcp:443,tcp:8080,tcp:8081,tcp:8082 --source-ranges 0.0.0.0/0 --target-tags tape
 ```
 ```bash
 CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT= gcloud compute firewall-rules create tape-allow-ssh \

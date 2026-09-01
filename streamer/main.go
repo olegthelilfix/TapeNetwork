@@ -1,21 +1,26 @@
-// tape-streamer — Go HTTP video streaming service
+// tape-streamer — Go HTTP video streaming service (pre-transcode model)
 //
-// Serves video files from VIDEOS_DIR as adaptive HLS streams. On first request
-// for a given file, FFmpeg transcodes the source into multiple quality tiers
-// (360p/720p/1080p, skipping qualities above the source resolution). Segments
-// are cached in HLS_CACHE_DIR and served on subsequent requests without
-// re-transcoding. A background goroutine cleans up stale caches.
+// A background worker prepares HLS renditions AHEAD of client requests. On
+// startup (and on a rescan interval) the scanner walks VIDEOS_DIR, and any
+// video without a finished HLS cache is queued to a bounded worker pool that
+// transcodes it into multiple quality tiers (360p/720p/1080p, skipping tiers
+// above the source resolution). FFmpeg NEVER runs on the request path: HTTP
+// handlers only serve what is already prepared, and answer "not ready" for
+// videos still pending/transcoding.
+//
+// Cache layout:
+//   HLS_CACHE_DIR/<file>/<quality>/index.m3u8 + seg-*.ts
+//   HLS_CACHE_DIR/<file>/.ready          — completion marker (tiers list, JSON)
 //
 // Environment variables:
 //   VIDEOS_DIR          – source video directory              (default /data/videos)
 //   HLS_CACHE_DIR       – HLS segment cache root               (default /data/hls-cache)
 //   PORT                – HTTP listen port                     (default 8082)
 //   SEGMENT_DURATION    – seconds per HLS segment              (default 6)
-//   CACHE_MAX_AGE       – cache eviction age; int seconds or a
-//                         Go duration string like "24h"        (default 24h)
 //   CORS_ORIGINS        – comma-separated allowed origins      (default *)
-//   MAX_CONCURRENT      – max simultaneous FFmpeg transcodes   (default 2)
-//   TRANSCODE_TIMEOUT   – per-file transcode ceiling, duration (default 15m)
+//   MAX_CONCURRENT      – parallel FFmpeg transcodes           (default 2)
+//   TRANSCODE_TIMEOUT   – per-file transcode ceiling, duration (default 30m)
+//   RESCAN_INTERVAL     – how often to rescan VIDEOS_DIR        (default 1m)
 
 package main
 
@@ -46,10 +51,10 @@ type config struct {
 	HLSCacheDir      string
 	Port             string
 	SegmentDuration  int
-	CacheMaxAge      time.Duration
 	CORSOrigins      string
 	MaxConcurrent    int
 	TranscodeTimeout time.Duration
+	RescanInterval   time.Duration
 }
 
 func loadConfig() config {
@@ -58,10 +63,10 @@ func loadConfig() config {
 		HLSCacheDir:      envOrDefault("HLS_CACHE_DIR", "/data/hls-cache"),
 		Port:             envOrDefault("PORT", "8082"),
 		SegmentDuration:  envOrDefaultInt("SEGMENT_DURATION", 6),
-		CacheMaxAge:      envOrDefaultDuration("CACHE_MAX_AGE", 24*time.Hour),
 		CORSOrigins:      envOrDefault("CORS_ORIGINS", "*"),
 		MaxConcurrent:    envOrDefaultInt("MAX_CONCURRENT", 2),
-		TranscodeTimeout: envOrDefaultDuration("TRANSCODE_TIMEOUT", 15*time.Minute),
+		TranscodeTimeout: envOrDefaultDuration("TRANSCODE_TIMEOUT", 30*time.Minute),
+		RescanInterval:   envOrDefaultDuration("RESCAN_INTERVAL", time.Minute),
 	}
 }
 
@@ -82,9 +87,8 @@ func envOrDefaultInt(key string, def int) int {
 	return def
 }
 
-// envOrDefaultDuration accepts either a bare integer (interpreted as seconds)
-// or a Go duration string like "24h" / "15m". Falls back to def with a warning
-// on an unparseable value, so a typo never silently changes behavior.
+// envOrDefaultDuration accepts either a bare integer (seconds) or a Go duration
+// string like "30m". Falls back to def with a warning on an unparseable value.
 func envOrDefaultDuration(key string, def time.Duration) time.Duration {
 	v := os.Getenv(key)
 	if v == "" {
@@ -104,13 +108,15 @@ func envOrDefaultDuration(key string, def time.Duration) time.Duration {
 // Path-segment validation (defense against traversal + ffmpeg arg injection)
 // ---------------------------------------------------------------------------
 
-// safeSegment allows only characters legitimately used in our filenames,
-// quality tiers, and segment names: alphanumerics, dot, hyphen, underscore.
-// This rejects "..", "/", leading "-", URL-encoded traversal, etc.
 var safeSegment = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
 
 func isSafeSegment(s string) bool {
 	return s != "" && !strings.Contains(s, "..") && safeSegment.MatchString(s)
+}
+
+var videoExts = map[string]bool{
+	".mp4": true, ".mkv": true, ".avi": true, ".mov": true,
+	".webm": true, ".flv": true, ".wmv": true, ".ts": true, ".m4v": true,
 }
 
 // ---------------------------------------------------------------------------
@@ -118,12 +124,12 @@ func isSafeSegment(s string) bool {
 // ---------------------------------------------------------------------------
 
 type quality struct {
-	Name         string // e.g. "360p"
+	Name         string
 	Width        int
 	Height       int
-	VideoBitrate string // e.g. "800k"
-	AudioBitrate string // e.g. "96k"
-	Bandwidth    int    // bits/s for master playlist
+	VideoBitrate string
+	AudioBitrate string
+	Bandwidth    int
 }
 
 var qualities = []quality{
@@ -137,16 +143,15 @@ var qualities = []quality{
 // ---------------------------------------------------------------------------
 
 type probeResult struct {
-	Width    int
-	Height   int
-	Duration float64
+	Width  int
+	Height int
 }
 
 func probeVideo(ctx context.Context, path string) (*probeResult, error) {
 	cmd := exec.CommandContext(ctx, "ffprobe",
 		"-v", "error",
 		"-select_streams", "v:0",
-		"-show_entries", "stream=width,height,duration",
+		"-show_entries", "stream=width,height",
 		"-of", "json",
 		path,
 	)
@@ -154,12 +159,10 @@ func probeVideo(ctx context.Context, path string) (*probeResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ffprobe failed: %w", err)
 	}
-
 	var data struct {
 		Streams []struct {
-			Width    int    `json:"width"`
-			Height   int    `json:"height"`
-			Duration string `json:"duration"`
+			Width  int `json:"width"`
+			Height int `json:"height"`
 		} `json:"streams"`
 	}
 	if err := json.Unmarshal(out, &data); err != nil {
@@ -168,53 +171,66 @@ func probeVideo(ctx context.Context, path string) (*probeResult, error) {
 	if len(data.Streams) == 0 {
 		return nil, fmt.Errorf("no video stream found in %s", path)
 	}
-
-	s := data.Streams[0]
-	dur, _ := strconv.ParseFloat(s.Duration, 64)
-	return &probeResult{Width: s.Width, Height: s.Height, Duration: dur}, nil
+	return &probeResult{Width: data.Streams[0].Width, Height: data.Streams[0].Height}, nil
 }
 
 // ---------------------------------------------------------------------------
-// Transcoding lock map — one mutex per source filename, prunable
+// Preparation registry — status of each video's HLS renditions
 // ---------------------------------------------------------------------------
 
-type lockMap struct {
-	mu    sync.Mutex
-	locks map[string]*sync.Mutex
+type status string
+
+const (
+	statusPending     status = "pending"     // discovered, queued, not started
+	statusTranscoding status = "transcoding" // FFmpeg running
+	statusReady       status = "ready"       // renditions complete on disk
+	statusFailed      status = "failed"      // transcode errored
+)
+
+type videoState struct {
+	Status    status    `json:"status"`
+	Tiers     []string  `json:"tiers,omitempty"` // quality names produced
+	Error     string    `json:"error,omitempty"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func newLockMap() *lockMap {
-	return &lockMap{locks: make(map[string]*sync.Mutex)}
+// readyMarker is what the .ready file holds — the tiers actually produced.
+type readyMarker struct {
+	Tiers     []string  `json:"tiers"`
+	Completed time.Time `json:"completed"`
 }
 
-// get returns a per-filename mutex. Safe for concurrent access.
-func (lm *lockMap) get(filename string) *sync.Mutex {
-	lm.mu.Lock()
-	defer lm.mu.Unlock()
-	if m, ok := lm.locks[filename]; ok {
-		return m
+type registry struct {
+	mu sync.RWMutex
+	m  map[string]*videoState
+}
+
+func newRegistry() *registry { return &registry{m: make(map[string]*videoState)} }
+
+func (r *registry) get(name string) (videoState, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	st, ok := r.m[name]
+	if !ok {
+		return videoState{}, false
 	}
-	m := &sync.Mutex{}
-	lm.locks[filename] = m
-	return m
+	return *st, true
 }
 
-// prune drops entries whose mutex is currently free and whose filename is in
-// the keep set. Called from the cache-cleanup goroutine so the map does not
-// grow unboundedly as video content rotates.
-func (lm *lockMap) prune(keep map[string]bool) {
-	lm.mu.Lock()
-	defer lm.mu.Unlock()
-	for name, m := range lm.locks {
-		if keep[name] {
-			continue
-		}
-		// Only remove if not currently held (TryLock succeeds).
-		if m.TryLock() {
-			m.Unlock()
-			delete(lm.locks, name)
-		}
+func (r *registry) set(name string, st status, tiers []string, errMsg string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.m[name] = &videoState{Status: st, Tiers: tiers, Error: errMsg, UpdatedAt: time.Now()}
+}
+
+func (r *registry) snapshot() map[string]videoState {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	out := make(map[string]videoState, len(r.m))
+	for k, v := range r.m {
+		out[k] = *v
 	}
+	return out
 }
 
 // ---------------------------------------------------------------------------
@@ -223,8 +239,8 @@ func (lm *lockMap) prune(keep map[string]bool) {
 
 type server struct {
 	cfg   config
-	locks *lockMap
-	sem   chan struct{} // bounds concurrent FFmpeg processes
+	reg   *registry
+	queue chan string
 }
 
 func newServer(cfg config) *server {
@@ -233,12 +249,11 @@ func newServer(cfg config) *server {
 	}
 	return &server{
 		cfg:   cfg,
-		locks: newLockMap(),
-		sem:   make(chan struct{}, cfg.MaxConcurrent),
+		reg:   newRegistry(),
+		queue: make(chan string, 1024),
 	}
 }
 
-// addCORS sets CORS response headers based on configuration.
 func (s *server) addCORS(w http.ResponseWriter, r *http.Request) {
 	origin := r.Header.Get("Origin")
 	if s.cfg.CORSOrigins == "*" {
@@ -256,140 +271,124 @@ func (s *server) addCORS(w http.ResponseWriter, r *http.Request) {
 }
 
 // ---------------------------------------------------------------------------
-// GET /health
+// Background preparation: scanner + worker pool
 // ---------------------------------------------------------------------------
 
-func (s *server) handleHealth(w http.ResponseWriter, r *http.Request) {
-	s.addCORS(w, r)
-	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"ok"}`))
+// startWorkers launches MaxConcurrent workers draining the queue.
+func (s *server) startWorkers(ctx context.Context, wg *sync.WaitGroup) {
+	for i := 0; i < s.cfg.MaxConcurrent; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case name, ok := <-s.queue:
+					if !ok {
+						return
+					}
+					s.prepare(ctx, name)
+				}
+			}
+		}(i)
+	}
 }
 
-// ---------------------------------------------------------------------------
-// GET /videos — list source video files
-// ---------------------------------------------------------------------------
-
-type videoInfo struct {
-	Name     string    `json:"name"`
-	Size     int64     `json:"size"`
-	Modified time.Time `json:"modified"`
+// startScanner scans VIDEOS_DIR on startup and every RescanInterval, enqueuing
+// any video that is not already ready/queued/in-flight.
+func (s *server) startScanner(ctx context.Context, wg *sync.WaitGroup) {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		s.scan()
+		ticker := time.NewTicker(s.cfg.RescanInterval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				s.scan()
+				s.cleanupOrphans()
+			}
+		}
+	}()
 }
 
-func (s *server) handleVideos(w http.ResponseWriter, r *http.Request) {
-	s.addCORS(w, r)
-
+// scan lists source videos and enqueues those needing preparation.
+func (s *server) scan() {
 	entries, err := os.ReadDir(s.cfg.VideosDir)
 	if err != nil {
-		http.Error(w, "cannot read videos directory", http.StatusInternalServerError)
-		log.Printf("[tape-streamer] ReadDir %s: %v", s.cfg.VideosDir, err)
+		log.Printf("[tape-streamer] scan ReadDir %s: %v", s.cfg.VideosDir, err)
 		return
 	}
-
-	var videos []videoInfo
 	for _, e := range entries {
-		if e.IsDir() {
+		if e.IsDir() || !videoExts[strings.ToLower(filepath.Ext(e.Name()))] {
 			continue
 		}
-		info, err := e.Info()
-		if err != nil {
+		name := e.Name()
+		if !isSafeSegment(name) {
+			continue // names that cannot be addressed via URL are skipped
+		}
+
+		// Already known? Only (re)enqueue if we've never seen it.
+		if st, ok := s.reg.get(name); ok {
+			_ = st
 			continue
 		}
-		// Accept common video extensions.
-		ext := strings.ToLower(filepath.Ext(e.Name()))
-		switch ext {
-		case ".mp4", ".mkv", ".avi", ".mov", ".webm", ".flv", ".wmv", ".ts", ".m4v":
-			videos = append(videos, videoInfo{
-				Name:     e.Name(),
-				Size:     info.Size(),
-				Modified: info.ModTime(),
-			})
+
+		// If a completed cache already exists on disk (e.g. after restart),
+		// adopt it as ready without re-transcoding.
+		if tiers, ok := s.readMarker(name); ok {
+			s.reg.set(name, statusReady, tiers, "")
+			continue
+		}
+
+		// New / unprepared → mark pending and enqueue.
+		s.reg.set(name, statusPending, nil, "")
+		select {
+		case s.queue <- name:
+			log.Printf("[tape-streamer] queued %s for preparation", name)
+		default:
+			log.Printf("[tape-streamer] queue full, will retry %s next scan", name)
+			// Roll back so the next scan re-enqueues it.
+			s.reg.mu.Lock()
+			delete(s.reg.m, name)
+			s.reg.mu.Unlock()
 		}
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(videos)
 }
 
-// ---------------------------------------------------------------------------
-// GET /stream/{filename}/master.m3u8
-// ---------------------------------------------------------------------------
-
-func (s *server) handleMaster(w http.ResponseWriter, r *http.Request, filename string) {
-	s.addCORS(w, r)
-
-	srcPath := filepath.Join(s.cfg.VideosDir, filename)
-	if _, err := os.Stat(srcPath); os.IsNotExist(err) {
-		http.Error(w, "video not found", http.StatusNotFound)
-		return
+// readMarker returns the produced tiers if the video has a completed cache.
+func (s *server) readMarker(name string) ([]string, bool) {
+	markerPath := filepath.Join(s.cfg.HLSCacheDir, name, ".ready")
+	b, err := os.ReadFile(markerPath)
+	if err != nil {
+		return nil, false
 	}
-
-	// Acquire per-file lock so only one FFmpeg run happens at a time.
-	fileLock := s.locks.get(filename)
-
-	// Check if transcoding is already in progress (non-blocking check).
-	if !fileLock.TryLock() {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Retry-After", "10")
-		w.WriteHeader(http.StatusAccepted)
-		json.NewEncoder(w).Encode(map[string]string{
-			"status":  "transcoding",
-			"message": "transcoding in progress, retry shortly",
-		})
-		return
+	var m readyMarker
+	if err := json.Unmarshal(b, &m); err != nil || len(m.Tiers) == 0 {
+		return nil, false
 	}
-	defer fileLock.Unlock()
-
-	// If everything is already cached, skip probe/transcode entirely and just
-	// serve the master playlist (fast path for the common case).
-	if !s.allCached(filename) {
-		if err := s.transcode(r.Context(), w, filename, srcPath); err != nil {
-			return // transcode already wrote the error response
-		}
-	}
-
-	s.writeMaster(w, filename)
+	return m.Tiers, true
 }
 
-// allCached reports whether at least one quality tier has a finished playlist.
-func (s *server) allCached(filename string) bool {
-	for _, q := range qualities {
-		indexPath := filepath.Join(s.cfg.HLSCacheDir, filename, q.Name, "index.m3u8")
-		if _, err := os.Stat(indexPath); err == nil {
-			// Touch for cache-cleanup mtime tracking.
-			now := time.Now()
-			os.Chtimes(filepath.Dir(indexPath), now, now)
-			return true
-		}
-	}
-	return false
-}
+// prepare transcodes one video into all applicable tiers, then writes the
+// .ready marker. Bounded by the worker pool; honors TranscodeTimeout.
+func (s *server) prepare(ctx context.Context, name string) {
+	s.reg.set(name, statusTranscoding, nil, "")
+	srcPath := filepath.Join(s.cfg.VideosDir, name)
 
-// transcode probes the source and runs FFmpeg for each applicable quality.
-// It bounds concurrency with the server semaphore and enforces a per-file
-// timeout via context. On error it writes the HTTP response and returns err.
-func (s *server) transcode(ctx context.Context, w http.ResponseWriter, filename, srcPath string) error {
-	// Bound the number of concurrent FFmpeg processes across the whole server.
-	select {
-	case s.sem <- struct{}{}:
-		defer func() { <-s.sem }()
-	case <-ctx.Done():
-		http.Error(w, "client cancelled", http.StatusRequestTimeout)
-		return ctx.Err()
-	}
-
-	// Enforce a transcode ceiling. Derived from the request context so a client
-	// disconnect also cancels FFmpeg.
-	ctx, cancel := context.WithTimeout(ctx, s.cfg.TranscodeTimeout)
+	tctx, cancel := context.WithTimeout(ctx, s.cfg.TranscodeTimeout)
 	defer cancel()
 
-	probe, err := probeVideo(ctx, srcPath)
+	probe, err := probeVideo(tctx, srcPath)
 	if err != nil {
-		http.Error(w, "failed to probe video", http.StatusInternalServerError)
-		log.Printf("[tape-streamer] probe %s: %v", filename, err)
-		return err
+		s.fail(name, fmt.Sprintf("probe: %v", err))
+		return
 	}
 
-	// Determine which qualities to produce (skip those above source resolution).
 	var applicable []quality
 	for _, q := range qualities {
 		if q.Width <= probe.Width && q.Height <= probe.Height {
@@ -400,250 +399,278 @@ func (s *server) transcode(ctx context.Context, w http.ResponseWriter, filename,
 		applicable = []quality{qualities[0]} // very low-res source
 	}
 
+	videoDir := filepath.Join(s.cfg.HLSCacheDir, name)
+	// Clear any partial cache from a prior aborted attempt.
+	os.RemoveAll(videoDir)
+
+	var produced []string
 	for _, q := range applicable {
-		qDir := filepath.Join(s.cfg.HLSCacheDir, filename, q.Name)
-		indexPath := filepath.Join(qDir, "index.m3u8")
-
-		if _, err := os.Stat(indexPath); err == nil {
-			now := time.Now()
-			os.Chtimes(qDir, now, now)
-			continue
-		}
-
-		if err := os.MkdirAll(qDir, 0o755); err != nil {
-			http.Error(w, "cache dir error", http.StatusInternalServerError)
-			log.Printf("[tape-streamer] mkdir %s: %v", qDir, err)
-			return err
-		}
-
-		segPattern := filepath.Join(qDir, "seg-%d.ts")
-		log.Printf("[tape-streamer] transcoding %s @ %s", filename, q.Name)
-
-		cmd := exec.CommandContext(ctx, "ffmpeg",
-			"-nostdin",
-			"-i", srcPath,
-			"-vf", fmt.Sprintf("scale=%d:%d", q.Width, q.Height),
-			"-c:v", "libx264",
-			"-b:v", q.VideoBitrate,
-			"-c:a", "aac",
-			"-b:a", q.AudioBitrate,
-			"-f", "hls",
-			"-hls_time", strconv.Itoa(s.cfg.SegmentDuration),
-			"-hls_list_size", "0",
-			"-hls_segment_filename", segPattern,
-			indexPath,
-		)
-
-		stderr, err := cmd.CombinedOutput()
-		if err != nil {
-			// Clean the half-written dir so a retry starts fresh.
-			os.RemoveAll(qDir)
-			if ctx.Err() == context.DeadlineExceeded {
-				http.Error(w, "transcoding timed out", http.StatusGatewayTimeout)
-				log.Printf("[tape-streamer] ffmpeg %s %s timed out after %s", filename, q.Name, s.cfg.TranscodeTimeout)
-			} else if ctx.Err() == context.Canceled {
-				log.Printf("[tape-streamer] ffmpeg %s %s cancelled by client", filename, q.Name)
+		if err := s.transcodeTier(tctx, name, srcPath, q); err != nil {
+			os.RemoveAll(videoDir) // don't leave a half-done cache
+			if tctx.Err() == context.DeadlineExceeded {
+				s.fail(name, fmt.Sprintf("timed out after %s on %s", s.cfg.TranscodeTimeout, q.Name))
+			} else if ctx.Err() != nil {
+				// server shutting down — leave as transcoding, next start retries
+				log.Printf("[tape-streamer] %s @ %s cancelled (shutdown)", name, q.Name)
 			} else {
-				http.Error(w, "transcoding failed", http.StatusInternalServerError)
-				log.Printf("[tape-streamer] ffmpeg %s %s failed: %v\n%s", filename, q.Name, err, string(stderr))
+				s.fail(name, fmt.Sprintf("ffmpeg %s: %v", q.Name, err))
 			}
-			return err
+			return
 		}
-		log.Printf("[tape-streamer] done transcoding %s @ %s", filename, q.Name)
+		produced = append(produced, q.Name)
+	}
+
+	// Write completion marker atomically.
+	marker := readyMarker{Tiers: produced, Completed: time.Now()}
+	if b, err := json.Marshal(marker); err == nil {
+		tmp := filepath.Join(videoDir, ".ready.tmp")
+		if err := os.WriteFile(tmp, b, 0o644); err == nil {
+			os.Rename(tmp, filepath.Join(videoDir, ".ready"))
+		}
+	}
+
+	s.reg.set(name, statusReady, produced, "")
+	log.Printf("[tape-streamer] ready: %s (%s)", name, strings.Join(produced, ", "))
+}
+
+func (s *server) transcodeTier(ctx context.Context, name, srcPath string, q quality) error {
+	qDir := filepath.Join(s.cfg.HLSCacheDir, name, q.Name)
+	if err := os.MkdirAll(qDir, 0o755); err != nil {
+		return fmt.Errorf("mkdir: %w", err)
+	}
+	segPattern := filepath.Join(qDir, "seg-%d.ts")
+	indexPath := filepath.Join(qDir, "index.m3u8")
+	log.Printf("[tape-streamer] transcoding %s @ %s", name, q.Name)
+
+	cmd := exec.CommandContext(ctx, "ffmpeg",
+		"-nostdin",
+		"-i", srcPath,
+		"-vf", fmt.Sprintf("scale=%d:%d", q.Width, q.Height),
+		"-c:v", "libx264",
+		"-b:v", q.VideoBitrate,
+		"-c:a", "aac",
+		"-b:a", q.AudioBitrate,
+		"-f", "hls",
+		"-hls_time", strconv.Itoa(s.cfg.SegmentDuration),
+		"-hls_list_size", "0",
+		"-hls_segment_filename", segPattern,
+		indexPath,
+	)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		log.Printf("[tape-streamer] ffmpeg %s %s failed: %v\n%s", name, q.Name, err, string(out))
+		return err
 	}
 	return nil
 }
 
-// writeMaster builds and writes the master playlist listing produced tiers.
-func (s *server) writeMaster(w http.ResponseWriter, filename string) {
-	var buf strings.Builder
-	buf.WriteString("#EXTM3U\n")
-	for _, q := range qualities {
-		indexPath := filepath.Join(s.cfg.HLSCacheDir, filename, q.Name, "index.m3u8")
-		if _, err := os.Stat(indexPath); err != nil {
-			continue
-		}
-		buf.WriteString(fmt.Sprintf(
-			"#EXT-X-STREAM-INF:BANDWIDTH=%d,RESOLUTION=%dx%d,NAME=\"%s\"\n",
-			q.Bandwidth, q.Width, q.Height, q.Name,
-		))
-		buf.WriteString(fmt.Sprintf("%s/index.m3u8\n", q.Name))
-	}
-
-	w.Header().Set("Content-Type", "application/vnd.apple.mpegurl")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Write([]byte(buf.String()))
+func (s *server) fail(name, msg string) {
+	s.reg.set(name, statusFailed, nil, msg)
+	log.Printf("[tape-streamer] FAILED %s: %s", name, msg)
 }
 
-// ---------------------------------------------------------------------------
-// GET /stream/{filename}/{quality}/index.m3u8
-// ---------------------------------------------------------------------------
-
-func (s *server) handleQualityPlaylist(w http.ResponseWriter, r *http.Request, filename, qual string) {
-	s.addCORS(w, r)
-
-	indexPath := filepath.Join(s.cfg.HLSCacheDir, filename, qual, "index.m3u8")
-	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
-		http.Error(w, "playlist not found — request master.m3u8 first", http.StatusNotFound)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/vnd.apple.mpegurl")
-	w.Header().Set("Cache-Control", "no-cache")
-	http.ServeFile(w, r, indexPath)
-}
-
-// ---------------------------------------------------------------------------
-// GET /stream/{filename}/{quality}/seg-{n}.ts
-// ---------------------------------------------------------------------------
-
-func (s *server) handleSegment(w http.ResponseWriter, r *http.Request, filename, qual, segFile string) {
-	s.addCORS(w, r)
-
-	segPath := filepath.Join(s.cfg.HLSCacheDir, filename, qual, segFile)
-	if _, err := os.Stat(segPath); os.IsNotExist(err) {
-		http.Error(w, "segment not found", http.StatusNotFound)
-		return
-	}
-
-	w.Header().Set("Content-Type", "video/MP2T")
-	http.ServeFile(w, r, segPath)
-}
-
-// ---------------------------------------------------------------------------
-// Router — parses /stream/{filename}/{...} paths manually (stdlib only)
-// ---------------------------------------------------------------------------
-
-func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Handle CORS preflight.
-	if r.Method == http.MethodOptions {
-		s.addCORS(w, r)
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-
-	path := strings.TrimPrefix(r.URL.Path, "/")
-
-	switch {
-	case path == "health":
-		s.handleHealth(w, r)
-		return
-
-	case path == "videos":
-		s.handleVideos(w, r)
-		return
-
-	case strings.HasPrefix(path, "stream/"):
-		s.routeStream(w, r, strings.TrimPrefix(path, "stream/"))
-		return
-
-	default:
-		http.NotFound(w, r)
-	}
-}
-
-// routeStream dispatches /stream/... sub-paths.
-// Expected shapes:
-//
-//	{filename}/master.m3u8
-//	{filename}/{quality}/index.m3u8
-//	{filename}/{quality}/seg-{n}.ts
-func (s *server) routeStream(w http.ResponseWriter, r *http.Request, sub string) {
-	parts := strings.SplitN(sub, "/", 3)
-
-	if len(parts) < 2 {
-		http.NotFound(w, r)
-		return
-	}
-
-	filename := parts[0]
-
-	// Validate EVERY path segment against a strict allowlist. This blocks
-	// directory traversal (.., /, URL-encoded variants) and ffmpeg arg
-	// injection (a leading '-') on the filename, quality, and segment names.
-	if !isSafeSegment(filename) {
-		http.Error(w, "invalid filename", http.StatusBadRequest)
-		return
-	}
-
-	switch {
-	// /stream/{filename}/master.m3u8
-	case len(parts) == 2 && parts[1] == "master.m3u8":
-		s.handleMaster(w, r, filename)
-
-	// /stream/{filename}/{quality}/index.m3u8
-	case len(parts) == 3 && strings.HasSuffix(parts[2], "index.m3u8"):
-		qual := parts[1]
-		if !isSafeSegment(qual) {
-			http.Error(w, "invalid quality", http.StatusBadRequest)
-			return
-		}
-		s.handleQualityPlaylist(w, r, filename, qual)
-
-	// /stream/{filename}/{quality}/seg-{n}.ts
-	case len(parts) == 3 && strings.HasPrefix(parts[2], "seg-") && strings.HasSuffix(parts[2], ".ts"):
-		qual := parts[1]
-		segFile := parts[2]
-		if !isSafeSegment(qual) || !isSafeSegment(segFile) {
-			http.Error(w, "invalid segment path", http.StatusBadRequest)
-			return
-		}
-		s.handleSegment(w, r, filename, qual, segFile)
-
-	default:
-		http.NotFound(w, r)
-	}
-}
-
-// ---------------------------------------------------------------------------
-// Cache cleanup goroutine
-// ---------------------------------------------------------------------------
-
-func (s *server) startCacheCleanup(ctx context.Context) {
-	ticker := time.NewTicker(1 * time.Hour)
-	go func() {
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				s.cleanCache()
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-}
-
-func (s *server) cleanCache() {
-	cutoff := time.Now().Add(-s.cfg.CacheMaxAge)
-
+// cleanupOrphans removes cache dirs whose source video no longer exists.
+func (s *server) cleanupOrphans() {
 	entries, err := os.ReadDir(s.cfg.HLSCacheDir)
 	if err != nil {
-		log.Printf("[tape-streamer] cache cleanup ReadDir: %v", err)
 		return
 	}
-
-	// Track which cache dirs survive, to prune orphaned lockMap entries.
-	keep := make(map[string]bool)
 	for _, e := range entries {
 		if !e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if _, err := os.Stat(filepath.Join(s.cfg.VideosDir, name)); os.IsNotExist(err) {
+			log.Printf("[tape-streamer] cleanup: source gone, removing cache for %s", name)
+			os.RemoveAll(filepath.Join(s.cfg.HLSCacheDir, name))
+			s.reg.mu.Lock()
+			delete(s.reg.m, name)
+			s.reg.mu.Unlock()
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// HTTP handlers (serve-only — never transcode)
+// ---------------------------------------------------------------------------
+
+func (s *server) handleHealth(w http.ResponseWriter, r *http.Request) {
+	s.addCORS(w, r)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"status":"ok"}`))
+}
+
+type videoInfo struct {
+	Name     string    `json:"name"`
+	Size     int64     `json:"size"`
+	Modified time.Time `json:"modified"`
+	Status   status    `json:"status"`
+	Tiers    []string  `json:"tiers,omitempty"`
+	Error    string    `json:"error,omitempty"`
+}
+
+func (s *server) handleVideos(w http.ResponseWriter, r *http.Request) {
+	s.addCORS(w, r)
+	entries, err := os.ReadDir(s.cfg.VideosDir)
+	if err != nil {
+		http.Error(w, "cannot read videos directory", http.StatusInternalServerError)
+		log.Printf("[tape-streamer] ReadDir %s: %v", s.cfg.VideosDir, err)
+		return
+	}
+	var videos []videoInfo
+	for _, e := range entries {
+		if e.IsDir() || !videoExts[strings.ToLower(filepath.Ext(e.Name()))] {
 			continue
 		}
 		info, err := e.Info()
 		if err != nil {
 			continue
 		}
-		if info.ModTime().Before(cutoff) {
-			dirPath := filepath.Join(s.cfg.HLSCacheDir, e.Name())
-			log.Printf("[tape-streamer] cache cleanup: removing %s (age %s)", e.Name(), time.Since(info.ModTime()).Round(time.Minute))
-			os.RemoveAll(dirPath)
-		} else {
-			keep[e.Name()] = true
+		vi := videoInfo{Name: e.Name(), Size: info.Size(), Modified: info.ModTime(), Status: "unknown"}
+		if st, ok := s.reg.get(e.Name()); ok {
+			vi.Status = st.Status
+			vi.Tiers = st.Tiers
+			vi.Error = st.Error
 		}
+		videos = append(videos, vi)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(videos)
+}
+
+// handleStatus returns the full preparation registry (ops/debug view).
+func (s *server) handleStatus(w http.ResponseWriter, r *http.Request) {
+	s.addCORS(w, r)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(s.reg.snapshot())
+}
+
+// writeNotReady emits a 202/503 depending on preparation status.
+func (s *server) writeNotReady(w http.ResponseWriter, name string, st videoState) {
+	w.Header().Set("Content-Type", "application/json")
+	switch st.Status {
+	case statusFailed:
+		w.WriteHeader(http.StatusServiceUnavailable)
+		json.NewEncoder(w).Encode(map[string]string{"status": "failed", "error": st.Error})
+	default: // pending / transcoding
+		w.Header().Set("Retry-After", "15")
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(map[string]string{"status": string(st.Status), "message": "video is being prepared, retry shortly"})
+	}
+}
+
+func (s *server) handleMaster(w http.ResponseWriter, r *http.Request, name string) {
+	s.addCORS(w, r)
+
+	st, known := s.reg.get(name)
+	if !known {
+		// Not in registry — is the source even there?
+		if _, err := os.Stat(filepath.Join(s.cfg.VideosDir, name)); os.IsNotExist(err) {
+			http.Error(w, "video not found", http.StatusNotFound)
+			return
+		}
+		// Source exists but not scanned yet — treat as pending.
+		s.writeNotReady(w, name, videoState{Status: statusPending})
+		return
+	}
+	if st.Status != statusReady {
+		s.writeNotReady(w, name, st)
+		return
 	}
 
-	// Drop lock entries for files whose cache is gone (bounds map growth).
-	s.locks.prune(keep)
+	// Ready — build the master playlist from tiers on disk.
+	var buf strings.Builder
+	buf.WriteString("#EXTM3U\n")
+	for _, q := range qualities {
+		if _, err := os.Stat(filepath.Join(s.cfg.HLSCacheDir, name, q.Name, "index.m3u8")); err != nil {
+			continue
+		}
+		buf.WriteString(fmt.Sprintf(
+			"#EXT-X-STREAM-INF:BANDWIDTH=%d,RESOLUTION=%dx%d,NAME=\"%s\"\n",
+			q.Bandwidth, q.Width, q.Height, q.Name))
+		buf.WriteString(fmt.Sprintf("%s/index.m3u8\n", q.Name))
+	}
+	w.Header().Set("Content-Type", "application/vnd.apple.mpegurl")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Write([]byte(buf.String()))
+}
+
+func (s *server) handleQualityPlaylist(w http.ResponseWriter, r *http.Request, name, qual string) {
+	s.addCORS(w, r)
+	indexPath := filepath.Join(s.cfg.HLSCacheDir, name, qual, "index.m3u8")
+	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+		http.Error(w, "playlist not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/vnd.apple.mpegurl")
+	w.Header().Set("Cache-Control", "no-cache")
+	http.ServeFile(w, r, indexPath)
+}
+
+func (s *server) handleSegment(w http.ResponseWriter, r *http.Request, name, qual, segFile string) {
+	s.addCORS(w, r)
+	segPath := filepath.Join(s.cfg.HLSCacheDir, name, qual, segFile)
+	if _, err := os.Stat(segPath); os.IsNotExist(err) {
+		http.Error(w, "segment not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "video/MP2T")
+	http.ServeFile(w, r, segPath)
+}
+
+// ---------------------------------------------------------------------------
+// Router
+// ---------------------------------------------------------------------------
+
+func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodOptions {
+		s.addCORS(w, r)
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	path := strings.TrimPrefix(r.URL.Path, "/")
+	switch {
+	case path == "health":
+		s.handleHealth(w, r)
+	case path == "videos":
+		s.handleVideos(w, r)
+	case path == "status":
+		s.handleStatus(w, r)
+	case strings.HasPrefix(path, "stream/"):
+		s.routeStream(w, r, strings.TrimPrefix(path, "stream/"))
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func (s *server) routeStream(w http.ResponseWriter, r *http.Request, sub string) {
+	parts := strings.SplitN(sub, "/", 3)
+	if len(parts) < 2 {
+		http.NotFound(w, r)
+		return
+	}
+	name := parts[0]
+	if !isSafeSegment(name) {
+		http.Error(w, "invalid filename", http.StatusBadRequest)
+		return
+	}
+	switch {
+	case len(parts) == 2 && parts[1] == "master.m3u8":
+		s.handleMaster(w, r, name)
+	case len(parts) == 3 && strings.HasSuffix(parts[2], "index.m3u8"):
+		if !isSafeSegment(parts[1]) {
+			http.Error(w, "invalid quality", http.StatusBadRequest)
+			return
+		}
+		s.handleQualityPlaylist(w, r, name, parts[1])
+	case len(parts) == 3 && strings.HasPrefix(parts[2], "seg-") && strings.HasSuffix(parts[2], ".ts"):
+		if !isSafeSegment(parts[1]) || !isSafeSegment(parts[2]) {
+			http.Error(w, "invalid segment path", http.StatusBadRequest)
+			return
+		}
+		s.handleSegment(w, r, name, parts[1], parts[2])
+	default:
+		http.NotFound(w, r)
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -652,8 +679,6 @@ func (s *server) cleanCache() {
 
 func main() {
 	cfg := loadConfig()
-
-	// Ensure cache directory exists.
 	if err := os.MkdirAll(cfg.HLSCacheDir, 0o755); err != nil {
 		log.Fatalf("[tape-streamer] cannot create HLS cache dir %s: %v", cfg.HLSCacheDir, err)
 	}
@@ -663,23 +688,21 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	srv.startCacheCleanup(ctx)
+	var wg sync.WaitGroup
+	srv.startWorkers(ctx, &wg)
+	srv.startScanner(ctx, &wg)
 
-	httpServer := &http.Server{
-		Addr:    ":" + cfg.Port,
-		Handler: srv,
-	}
+	httpServer := &http.Server{Addr: ":" + cfg.Port, Handler: srv}
 
 	log.Printf("[tape-streamer] starting on :%s", cfg.Port)
 	log.Printf("[tape-streamer] videos dir : %s", cfg.VideosDir)
 	log.Printf("[tape-streamer] HLS cache  : %s", cfg.HLSCacheDir)
 	log.Printf("[tape-streamer] segment dur: %ds", cfg.SegmentDuration)
-	log.Printf("[tape-streamer] cache TTL  : %s", cfg.CacheMaxAge)
-	log.Printf("[tape-streamer] max concur : %d", cfg.MaxConcurrent)
+	log.Printf("[tape-streamer] workers    : %d", cfg.MaxConcurrent)
 	log.Printf("[tape-streamer] transcode  : %s ceiling", cfg.TranscodeTimeout)
+	log.Printf("[tape-streamer] rescan     : every %s", cfg.RescanInterval)
 	log.Printf("[tape-streamer] CORS       : %s", cfg.CORSOrigins)
 
-	// Serve until a shutdown signal arrives.
 	go func() {
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("[tape-streamer] server error: %v", err)
@@ -688,13 +711,13 @@ func main() {
 
 	<-ctx.Done()
 	log.Printf("[tape-streamer] shutdown signal received, draining…")
+	stop() // stop receiving signals; ctx cancellation propagates to workers/ffmpeg
 
-	// Give in-flight requests up to 30s to finish; context cancellation above
-	// already signals running FFmpeg processes to terminate.
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	if err := httpServer.Shutdown(shutdownCtx); err != nil {
 		log.Printf("[tape-streamer] graceful shutdown failed: %v", err)
 	}
+	wg.Wait() // let workers observe cancellation and exit
 	log.Printf("[tape-streamer] stopped")
 }
