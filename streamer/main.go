@@ -135,9 +135,7 @@ type quality struct {
 }
 
 var qualities = []quality{
-	{Name: "360p", Width: 640, Height: 360, VideoBitrate: "800k", AudioBitrate: "96k", Bandwidth: 896000},
 	{Name: "720p", Width: 1280, Height: 720, VideoBitrate: "2500k", AudioBitrate: "128k", Bandwidth: 2628000},
-	{Name: "1080p", Width: 1920, Height: 1080, VideoBitrate: "5000k", AudioBitrate: "192k", Bandwidth: 5192000},
 }
 
 // ---------------------------------------------------------------------------
