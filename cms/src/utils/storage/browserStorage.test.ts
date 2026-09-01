@@ -9,27 +9,27 @@ type Session = {
 };
 
 const isSession = (value: unknown): value is Session => {
-    return typeof value === "object"
+  return typeof value === "object"
         && value !== null
         && "token" in value
         && typeof value.token === "string";
 };
 
 describe("browserStorage", () => {
-    it("stores and retrieves plain strings", () => {
-        setStoredString("test-string", "value");
+  it("stores and retrieves plain strings", () => {
+    setStoredString("test-string", "value");
 
-        expect(getStoredString("test-string")).toBe("value");
+    expect(getStoredString("test-string")).toBe("value");
 
-        removeStoredValue("test-string");
-        expect(getStoredString("test-string")).toBeNull();
-    });
+    removeStoredValue("test-string");
+    expect(getStoredString("test-string")).toBeNull();
+  });
 
-    it("returns JSON only when the supplied guard accepts it", () => {
-        setStoredJson("test-session", { token: "abc" });
-        setStoredJson("test-invalid-session", { token: 1 });
+  it("returns JSON only when the supplied guard accepts it", () => {
+    setStoredJson("test-session", { token: "abc" });
+    setStoredJson("test-invalid-session", { token: 1 });
 
-        expect(getStoredJson("test-session", isSession)).toEqual({ token: "abc" });
-        expect(getStoredJson("test-invalid-session", isSession)).toBeNull();
-    });
+    expect(getStoredJson("test-session", isSession)).toEqual({ token: "abc" });
+    expect(getStoredJson("test-invalid-session", isSession)).toBeNull();
+  });
 });

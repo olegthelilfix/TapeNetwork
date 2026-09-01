@@ -8,28 +8,28 @@ import { type ResourceRecord, ResourceTable } from "@/ui/ResourceTable";
 import type { ResourceListFeatureProps } from "./ResourceList.types";
 
 export const ResourceListFeature: FC<ResourceListFeatureProps> = ({ definition }) => {
-    const { tableProps, tableQuery } = useTable<ResourceRecord>({ syncWithLocation: true });
-    const { create, edit } = useNavigation();
-    const { mutate: deleteRecord } = useDelete();
+  const { tableProps, tableQuery } = useTable<ResourceRecord>({ syncWithLocation: true });
+  const { create, edit } = useNavigation();
+  const { mutate: deleteRecord } = useDelete();
 
-    const handleCreate = (): void => {
-        create(definition.name);
-    };
+  const handleCreate = (): void => {
+    create(definition.name);
+  };
 
-    const handleEdit = (id: number): void => {
-        edit(definition.name, id);
-    };
+  const handleEdit = (id: number): void => {
+    edit(definition.name, id);
+  };
 
-    const handleDelete = (id: number): void => {
-        deleteRecord(
-            { resource: definition.name, id },
-            { onSuccess: () => { void tableQuery.refetch(); } },
-        );
-    };
-
-    return (
-        <List createButtonProps={{ onClick: handleCreate }}>
-            <ResourceTable fields={definition.fields} tableProps={tableProps} onEdit={handleEdit} onDelete={handleDelete} />
-        </List>
+  const handleDelete = (id: number): void => {
+    deleteRecord(
+      { resource: definition.name, id },
+      { onSuccess: () => { void tableQuery.refetch(); } },
     );
+  };
+
+  return (
+    <List createButtonProps={{ onClick: handleCreate }}>
+      <ResourceTable fields={definition.fields} tableProps={tableProps} onEdit={handleEdit} onDelete={handleDelete} />
+    </List>
+  );
 };

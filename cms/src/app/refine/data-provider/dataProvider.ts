@@ -6,17 +6,17 @@ import { apiUrl, sessionStorageKeys } from "../apiConfig";
 import { getStoredString } from "@/utils/storage";
 
 export const apiClient = axios.create({
-    baseURL: apiUrl,
+  baseURL: apiUrl,
 });
 
 apiClient.interceptors.request.use((config) => {
-    const token = getStoredString(sessionStorageKeys.token);
+  const token = getStoredString(sessionStorageKeys.token);
 
-    if (token !== null) {
-        config.headers.set("Authorization", `Bearer ${token}`);
-    }
+  if (token !== null) {
+    config.headers.set("Authorization", `Bearer ${token}`);
+  }
 
-    return config;
+  return config;
 });
 
 export const dataProvider = simpleRestProvider(apiUrl, apiClient);

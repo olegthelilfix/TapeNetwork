@@ -1,0 +1,14 @@
+.resource-form-field__control {
+  width: 100%;
+}
+
+.resource-form-field__array-item {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.resource-form-field__array-item-content {
+  flex: 1;
+  min-width: 520px;
+  margin-bottom: 0;
+}

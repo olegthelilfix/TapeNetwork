@@ -13,17 +13,17 @@ import { AppRoutes } from "./router";
 import "@refinedev/antd/dist/reset.css";
 
 export const App: FC = () => {
-    return (
-        <BrowserRouter>
-            <ConfigProvider theme={RefineThemes.Blue}>
-                <AntdApp>
-                    <Refine dataProvider={dataProvider} authProvider={authProvider} routerProvider={routerBindings} notificationProvider={useNotificationProvider} resources={resources} options={{ syncWithLocation: true, warnWhenUnsavedChanges: true, title: { text: "Tape Network CMS" } }}>
-                        <AppRoutes uploadMedia={uploadMedia} />
-                        <UnsavedChangesNotifier />
-                        <DocumentTitleHandler />
-                    </Refine>
-                </AntdApp>
-            </ConfigProvider>
-        </BrowserRouter>
-    );
+  return (
+    <BrowserRouter>
+      <ConfigProvider theme={RefineThemes.Blue}>
+        <AntdApp>
+          <Refine dataProvider={dataProvider} authProvider={authProvider} routerProvider={routerBindings} notificationProvider={useNotificationProvider} resources={resources} options={{ syncWithLocation: true, warnWhenUnsavedChanges: true, title: { text: "Tape Network CMS" } }}>
+            <AppRoutes uploadMedia={uploadMedia} />
+            <UnsavedChangesNotifier />
+            <DocumentTitleHandler />
+          </Refine>
+        </AntdApp>
+      </ConfigProvider>
+    </BrowserRouter>
+  );
 };

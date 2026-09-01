@@ -10,23 +10,23 @@ export type MediaUploadState = {
 };
 
 export const useMediaUpload = (
-    uploadMedia: UploadMedia,
-    onUploadError: () => void,
+  uploadMedia: UploadMedia,
+  onUploadError: () => void,
 ): MediaUploadState => {
-    const [isUploading, setIsUploading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
-    const upload: UploadMedia = async (file) => {
-        setIsUploading(true);
+  const upload: UploadMedia = async (file) => {
+    setIsUploading(true);
 
-        try {
-            return await uploadMedia(file);
-        } catch (error: unknown) {
-            onUploadError();
-            throw error;
-        } finally {
-            setIsUploading(false);
-        }
-    };
+    try {
+      return await uploadMedia(file);
+    } catch (error: unknown) {
+      onUploadError();
+      throw error;
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
-    return { isUploading, upload };
+  return { isUploading, upload };
 };
