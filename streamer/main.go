@@ -55,6 +55,7 @@ type config struct {
 	MaxConcurrent    int
 	TranscodeTimeout time.Duration
 	RescanInterval   time.Duration
+	X264Preset       string
 }
 
 func loadConfig() config {
@@ -65,8 +66,9 @@ func loadConfig() config {
 		SegmentDuration:  envOrDefaultInt("SEGMENT_DURATION", 6),
 		CORSOrigins:      envOrDefault("CORS_ORIGINS", "*"),
 		MaxConcurrent:    envOrDefaultInt("MAX_CONCURRENT", 2),
-		TranscodeTimeout: envOrDefaultDuration("TRANSCODE_TIMEOUT", 30*time.Minute),
+		TranscodeTimeout: envOrDefaultDuration("TRANSCODE_TIMEOUT", 2*time.Hour),
 		RescanInterval:   envOrDefaultDuration("RESCAN_INTERVAL", time.Minute),
+		X264Preset:       envOrDefault("X264_PRESET", "veryfast"),
 	}
 }
 
@@ -447,6 +449,8 @@ func (s *server) transcodeTier(ctx context.Context, name, srcPath string, q qual
 		"-i", srcPath,
 		"-vf", fmt.Sprintf("scale=%d:%d", q.Width, q.Height),
 		"-c:v", "libx264",
+		"-preset", s.cfg.X264Preset,
+		"-threads", "0",
 		"-b:v", q.VideoBitrate,
 		"-c:a", "aac",
 		"-b:a", q.AudioBitrate,
@@ -699,6 +703,7 @@ func main() {
 	log.Printf("[tape-streamer] HLS cache  : %s", cfg.HLSCacheDir)
 	log.Printf("[tape-streamer] segment dur: %ds", cfg.SegmentDuration)
 	log.Printf("[tape-streamer] workers    : %d", cfg.MaxConcurrent)
+	log.Printf("[tape-streamer] x264 preset: %s", cfg.X264Preset)
 	log.Printf("[tape-streamer] transcode  : %s ceiling", cfg.TranscodeTimeout)
 	log.Printf("[tape-streamer] rescan     : every %s", cfg.RescanInterval)
 	log.Printf("[tape-streamer] CORS       : %s", cfg.CORSOrigins)

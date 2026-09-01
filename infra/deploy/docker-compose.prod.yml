@@ -64,6 +64,8 @@ services:
       VIDEOS_DIR: /data/videos
       HLS_CACHE_DIR: /data/hls-cache
       CORS_ORIGINS: ${CORS_ALLOWED_ORIGINS:-*}
+      # e2-medium is CPU-constrained — ultrafast keeps transcoding tractable.
+      X264_PRESET: ${X264_PRESET:-ultrafast}
     volumes:
       - ${VIDEOS_HOST_DIR:-/home/oaleksandrov/videos}:/data/videos
       - ${HLS_CACHE_HOST_DIR:-/home/oaleksandrov/hls-cache}:/data/hls-cache
