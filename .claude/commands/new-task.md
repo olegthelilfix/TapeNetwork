@@ -39,7 +39,7 @@ Parse the JSON. If `gh` fails, tell the user to run `gh auth login` and stop.
 
 Branch name format: `<type>/TP-<number>-<slugified-title>`
 
-- **Type**: `feature/` by default. Use `bugfix/` if the user said "bugfix", "fix", "баг", or if a label contains "bug".
+- **Type**: `feature/` by default. Use `bugfix/` if the user said "bugfix", "fix", or if a label contains "bug".
 - **Ticket ID**: `TP-<issue-number>` (TapeNetwork prefix).
 - **Description**: slugify the issue title — lowercase, spaces→hyphens, drop non-alphanumeric, max 50 chars.
 
@@ -51,7 +51,7 @@ git checkout -b <branch-name>
 
 ## Step 5 — Analyze and present
 
-Present in Russian:
+Present in English:
 
 1. **Issue title and number** as header
 2. **Full description** — formatted for readability
@@ -79,4 +79,4 @@ Then analyze with project context:
 
 Respect `.kiro/steering/ai-commit-policy.md` — commit with AI trailers after changes.
 
-All user-facing output in **Russian**. Branch names and commands in English.
+All user-facing output in **English**.
