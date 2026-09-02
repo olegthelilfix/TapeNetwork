@@ -61,6 +61,8 @@ packages/api-types/ TypeScript types generated from the backend OpenAPI schema
 tasks/              Markdown task board (one .md per task) + generated board.html
 tools/task-mcp/     Task-board CLI + MCP server. See tools/task-mcp/README.md
 prototype/          Original design-canvas prototype (.dc.html) — reference
+qa-compare/         Playwright vs Robot Framework e2e scaffolds. See qa-compare/README.md
+streamer/           Go video transcoding/serving sidecar. See streamer/README.md
 .github/workflows/  CI (backend tests + web/cms builds)
 ```
 
@@ -71,7 +73,32 @@ cd backend && ./gradlew build     # compile + JUnit unit tests
 cd web && npm test              # vitest
 ```
 
+If your default `java` is newer than 21, `./gradlew` can fail with a cryptic
+`IllegalArgumentException: 25`-style error — pin `JAVA_HOME` for the command instead of your
+global default:
+
+```bash
+JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew build   # macOS
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew build       # Linux (path varies by distro)
+```
+```powershell
+$env:JAVA_HOME="C:\Program Files\Zulu\zulu-21"; .\gradlew.bat build   # Windows
+```
+
 CI (`.github/workflows/ci.yml`) runs backend tests and builds web & cms on every push/PR.
+`cms/` and `streamer/` have no automated test suite yet.
+
+### End-to-end (manual)
+
+`qa-compare/` has two throwaway e2e scaffolds (Playwright and Robot Framework) running the
+same smoke + API scenario against a running stack — not wired into CI except as a separate
+`qa-e2e` workflow. See `qa-compare/README.md` for setup; in short, with the stack up
+(`podman compose up --build`):
+
+```bash
+cd qa-compare/playwright && npm install && npx playwright install chromium && npm test
+cd qa-compare/robot && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/rfbrowser init && .venv/bin/robot smoke.robot
+```
 
 ## SEO
 
