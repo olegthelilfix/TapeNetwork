@@ -1,78 +1,78 @@
-# tape-streamer — HLS видео-стриминг сервис
+# tape-streamer — HLS video-streaming service
 
-Самописный сервис для нарезки и раздачи видео по HLS протоколу. Смотрит в папку с видео-файлами, **фоновым процессом заранее** нарезает их на HLS-сегменты через FFmpeg, кэширует результат и отдаёт клиенту по HTTP.
+A homegrown service for segmenting and serving video over the HLS protocol. It watches a folder of video files, **pre-segments them in the background ahead of time** into HLS segments via FFmpeg, caches the result, and serves it to clients over HTTP.
 
-## Что это
+## What this is
 
-Сервис решает одну задачу: взять обычный видеофайл (mp4, mkv, avi) и отдать его браузеру через адаптивный HLS-стрим с несколькими качествами.
+The service solves one problem: take a regular video file (mp4, mkv, avi) and serve it to the browser as an adaptive HLS stream with multiple qualities.
 
-**Модель — предварительная подготовка (pre-transcode), не по запросу:**
-1. При старте (и каждые `RESCAN_INTERVAL`) сканер обходит `VIDEOS_DIR`.
-2. Каждое видео без готового кэша ставится в очередь пулу воркеров (`MAX_CONCURRENT`).
-3. Воркеры нарезают файл на `.ts`-сегменты в нескольких качествах, генерируют `.m3u8` и пишут маркер `.ready`.
-4. FFmpeg **никогда не запускается на request-path** — HTTP только отдаёт готовое.
+**Model — pre-transcode, not on-request:**
+1. On startup (and every `RESCAN_INTERVAL`) a scanner walks `VIDEOS_DIR`.
+2. Every video without a ready cache is queued to a worker pool (`MAX_CONCURRENT`).
+3. Workers segment the file into `.ts` segments at multiple qualities, generate `.m3u8`, and write a `.ready` marker.
+4. FFmpeg **never runs on the request path** — HTTP only serves what's already prepared.
 
-Статусы подготовки: `pending` → `transcoding` → `ready` (или `failed`). Пока видео не `ready`, запросы плейлиста получают `202 Accepted` с `Retry-After`; при ошибке — `503`.
+Preparation statuses: `pending` → `transcoding` → `ready` (or `failed`). While a video isn't `ready`, playlist requests get `202 Accepted` with `Retry-After`; on error — `503`.
 
-После рестарта уже готовые видео (с маркером `.ready`) не перегоняются заново.
+After a restart, videos that are already ready (with a `.ready` marker) are not re-transcoded.
 
 ## API
 
-| Метод | Эндпоинт | Описание |
+| Method | Endpoint | Description |
 |-------|----------|----------|
-| `GET` | `/health` | Проверка здоровья сервиса. Возвращает `200 OK`. |
-| `GET` | `/videos` | Список видеофайлов в `VIDEOS_DIR` со статусом подготовки (`pending`/`transcoding`/`ready`/`failed`) и списком готовых качеств. |
-| `GET` | `/status` | Полный реестр статусов подготовки (ops/debug). |
-| `GET` | `/stream/{name}/master.m3u8` | Мастер-плейлист. `200` если готово; `202` если ещё готовится; `503` если подготовка упала; `404` если файла нет. |
-| `GET` | `/stream/{name}/{quality}/index.m3u8` | Плейлист сегментов для качества (`360p`, `720p`, `1080p`). |
-| `GET` | `/stream/{name}/{quality}/seg-{n}.ts` | Отдельный `.ts`-сегмент с номером `{n}`. |
+| `GET` | `/health` | Service health check. Returns `200 OK`. |
+| `GET` | `/videos` | List of video files in `VIDEOS_DIR` with preparation status (`pending`/`transcoding`/`ready`/`failed`) and the list of ready qualities. |
+| `GET` | `/status` | Full registry of preparation statuses (ops/debug). |
+| `GET` | `/stream/{name}/master.m3u8` | Master playlist. `200` if ready; `202` if still preparing; `503` if preparation failed; `404` if the file doesn't exist. |
+| `GET` | `/stream/{name}/{quality}/index.m3u8` | Segment playlist for a given quality (`360p`, `720p`, `1080p`). |
+| `GET` | `/stream/{name}/{quality}/seg-{n}.ts` | A single `.ts` segment numbered `{n}`. |
 
-## Переменные окружения
+## Environment variables
 
-| Переменная | По умолчанию | Описание |
+| Variable | Default | Description |
 |------------|-------------|----------|
-| `VIDEOS_DIR` | `/data/videos` | Путь к папке с исходными видеофайлами. |
-| `HLS_CACHE_DIR` | `/data/hls-cache` | Путь к папке для хранения нарезанных HLS-сегментов. |
-| `PORT` | `8082` | Порт, на котором слушает сервис. |
-| `SEGMENT_DURATION` | `6` | Длительность одного сегмента в секундах. |
-| `CORS_ORIGINS` | `*` | Разрешённые CORS-источники (через запятую). |
-| `MAX_CONCURRENT` | `2` | Число фоновых воркеров = максимум одновременных FFmpeg. Ограничивает нагрузку на CPU/память. |
-| `X264_PRESET` | `veryfast` | Пресет libx264 (`ultrafast`…`veryslow`). Чем быстрее — тем меньше CPU и больше файлы. На слабом CPU ставьте `ultrafast`. |
-| `TRANSCODE_TIMEOUT` | `2h` | Максимальное время подготовки одного файла. По истечении FFmpeg прерывается, видео помечается `failed`. Принимает секунды или duration-строку. |
-| `RESCAN_INTERVAL` | `1m` | Как часто пересканировать `VIDEOS_DIR` на новые файлы и чистить осиротевший кэш. |
+| `VIDEOS_DIR` | `/data/videos` | Path to the folder with source video files. |
+| `HLS_CACHE_DIR` | `/data/hls-cache` | Path to the folder for storing segmented HLS output. |
+| `PORT` | `8082` | Port the service listens on. |
+| `SEGMENT_DURATION` | `6` | Duration of a single segment, in seconds. |
+| `CORS_ORIGINS` | `*` | Allowed CORS origins (comma-separated). |
+| `MAX_CONCURRENT` | `2` | Number of background workers = max concurrent FFmpeg processes. Limits CPU/memory load. |
+| `X264_PRESET` | `veryfast` | libx264 preset (`ultrafast`…`veryslow`). Faster = less CPU and larger files. On a weak CPU, use `ultrafast`. |
+| `TRANSCODE_TIMEOUT` | `2h` | Maximum time to prepare a single file. Once it elapses, FFmpeg is aborted and the video is marked `failed`. Accepts seconds or a duration string. |
+| `RESCAN_INTERVAL` | `1m` | How often to rescan `VIDEOS_DIR` for new files and clean up orphaned cache entries. |
 
-## Качество
+## Quality
 
-Сервис генерирует **один** вариант качества:
+The service generates a **single** quality variant:
 
-| Качество | Разрешение | Видео-битрейт | Аудио-битрейт |
+| Quality | Resolution | Video bitrate | Audio bitrate |
 |----------|-----------|---------------|---------------|
 | `720p` | 1280×720 | 2500 kbps | 128 kbps |
 
-Если исходник ниже 720p, тир всё равно используется (масштаб вверх FFmpeg не делает — просто кодирует в целевом битрейте). Список качеств задаётся в `qualities` в `main.go` — добавьте туда строки, если нужен адаптивный битрейт.
+If the source is below 720p, the tier is still used (FFmpeg does not upscale — it just encodes at the target bitrate). The list of qualities is defined by `qualities` in `main.go` — add entries there if you need adaptive bitrate.
 
-Качества, превышающие разрешение исходного файла, автоматически пропускаются.
+Qualities that exceed the source file's resolution are skipped automatically.
 
-## Производительность транскодинга
+## Transcoding performance
 
-Софтверное кодирование `libx264` — CPU-bound. Скорость видна в логах как `speed=Nx` (реальное время = `1.0x`). На слабой/burstable VM (например GCP `e2-medium` — 2 shared vCPU) `speed` может упасть до `0.07x`, и подготовка длинного видео не уложится в таймаут.
+Software encoding with `libx264` is CPU-bound. Speed shows up in the logs as `speed=Nx` (real time = `1.0x`). On a weak/burstable VM (e.g. GCP `e2-medium` — 2 shared vCPUs), `speed` can drop to `0.07x`, and preparing a long video may not finish within the timeout.
 
-Рычаги:
-- **`X264_PRESET=ultrafast`** — самый большой выигрыш по скорости (в разы), ценой размера файла. Для экспериментального стенда — норм.
-- **Меньше тиров** — каждый рендишен кодируется отдельно; 3 тира = 3× работа. Можно урезать список качеств в `qualities` (в коде).
-- **`TRANSCODE_TIMEOUT`** — фон не на request-path, так что можно ставить щедро (дефолт `2h`).
-- **Более мощная VM** — единственный кардинальный фикс для realtime-кодирования нескольких рендишенов; на `e2-medium` многопоточный H.264 заведомо медленный. Аппаратного ускорения (NVENC/QSV) на `e2` нет.
+Levers:
+- **`X264_PRESET=ultrafast`** — the biggest speed win (several times over), at the cost of file size. Fine for an experimental setup.
+- **Fewer tiers** — each rendition is encoded separately; 3 tiers = 3× the work. You can trim the quality list in `qualities` (in code).
+- **`TRANSCODE_TIMEOUT`** — the work happens off the request path, so you can be generous with it (default `2h`).
+- **A more powerful VM** — the only real fix for real-time encoding of multiple renditions; on `e2-medium`, multi-threaded H.264 is inherently slow. There's no hardware acceleration (NVENC/QSV) on `e2`.
 
-## Запуск локально
+## Running locally
 
-Требования: Go 1.23+, FFmpeg в `$PATH`.
+Requirements: Go 1.23+, FFmpeg on `$PATH`.
 
 ```bash
 export VIDEOS_DIR=./my-videos
 go run .
 ```
 
-Сервис запустится на `http://localhost:8082`.
+The service will start on `http://localhost:8082`.
 
 ## Docker
 
@@ -81,7 +81,7 @@ docker build -t tape-streamer .
 docker run -p 8082:8082 -v /path/to/videos:/data/videos tape-streamer
 ```
 
-FFmpeg уже включён в образ. Кэш хранится внутри контейнера в `/data/hls-cache` — примонтируйте volume, если хотите сохранять его между перезапусками:
+FFmpeg is already included in the image. The cache is stored inside the container at `/data/hls-cache` — mount a volume if you want it to persist across restarts:
 
 ```bash
 docker run -p 8082:8082 \
@@ -90,9 +90,9 @@ docker run -p 8082:8082 \
   tape-streamer
 ```
 
-## Интеграция с сайтом
+## Integrating with the site
 
-Пример с [hls.js](https://github.com/video-dev/hls.js):
+Example with [hls.js](https://github.com/video-dev/hls.js):
 
 ```html
 <video id="player" controls></video>
@@ -106,38 +106,38 @@ docker run -p 8082:8082 \
     hls.loadSource(src);
     hls.attachMedia(video);
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    // Safari — нативная поддержка HLS
+    // Safari — native HLS support
     video.src = src;
   }
 </script>
 ```
 
-## Архитектура
+## Architecture
 
-Подготовка и раздача разнесены: FFmpeg живёт в фоне, HTTP только отдаёт готовое.
+Preparation and serving are separated: FFmpeg lives in the background, HTTP only serves what's ready.
 
 ```
-        ФОН (при старте + каждые RESCAN_INTERVAL)          HTTP (request-path)
+        BACKGROUND (on startup + every RESCAN_INTERVAL)       HTTP (request path)
   ┌───────────────┐                                    ┌──────────────────────┐
-  │ Scanner       │  находит новые/                    │ GET .../master.m3u8  │
-  │ обход         │  неготовые видео                   └──────────┬───────────┘
+  │ Scanner       │  finds new/                         │ GET .../master.m3u8  │
+  │ walks         │  not-yet-ready videos                └──────────┬───────────┘
   │ VIDEOS_DIR    │────────────┐                                  │
-  └───────────────┘            ▼                          статус видео?
+  └───────────────┘            ▼                            video status?
                         ┌──────────────┐                 ┌────────┼─────────┐
-                        │ Очередь      │              ready   pending/     failed
+                        │ Queue        │              ready   pending/     failed
                         └──────┬───────┘                 │   transcoding      │
                                ▼                          ▼        ▼           ▼
-                   ┌────────────────────────┐        отдача    202 «готовит-  503
-                   │ Пул воркеров            │        плейлиста  ся, повтори»  «ошибка»
-                   │ (MAX_CONCURRENT × FFmpeg)│           из кэша
+                   ┌────────────────────────┐        serve     202 "still    503
+                   │ Worker pool             │        playlist  preparing,   "error"
+                   │ (MAX_CONCURRENT × FFmpeg)│           from cache  retry"
                    │ → .ts + .m3u8 + .ready  │
                    └────────────────────────┘
 ```
 
-Маркер `.ready` (JSON со списком готовых качеств) пишется атомарно после успешной подготовки всех тиров. При рестарте сервис адоптирует видео с маркером как `ready` и не перегоняет заново; полу-нарезанный кэш от прерванной попытки очищается и ставится в очередь снова.
+The `.ready` marker (JSON with the list of ready qualities) is written atomically after all tiers finish preparing successfully. On restart, the service adopts videos with the marker as `ready` and doesn't re-transcode them; a half-segmented cache left over from an interrupted attempt is cleaned up and queued again.
 
-## Очистка кэша
+## Cache cleanup
 
-При каждом пересканировании (`RESCAN_INTERVAL`) сервис удаляет кэш для видео, **исходник которых пропал** из `VIDEOS_DIR` (осиротевшие директории). Готовые видео с существующим исходником хранятся постоянно — в pre-transcode модели это и есть цель.
+On every rescan (`RESCAN_INTERVAL`), the service removes the cache for videos **whose source has disappeared** from `VIDEOS_DIR` (orphaned directories). Ready videos with an existing source are kept indefinitely — in the pre-transcode model, that's the whole point.
 
-Для принудительной переподготовки — удалите нужную папку в `HLS_CACHE_DIR` (или весь кэш) и перезапустите сервис / дождитесь пересканирования.
+To force re-preparation, delete the relevant folder in `HLS_CACHE_DIR` (or the whole cache) and restart the service / wait for the next rescan.
