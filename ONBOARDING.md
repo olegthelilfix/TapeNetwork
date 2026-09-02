@@ -19,7 +19,7 @@ GitHub MCP server to the private repo. Works on **macOS** and **Windows**.
 | **JDK** | **21** (Azul Zulu) | `backend/` is Java 21 / Spring Boot 3, built with **Gradle** |
 | **Podman** | recent | run the whole stack; Postgres comes from a container |
 
-`backend/` builds with the committed Gradle wrapper (`./gradlew`) — you do **not**
+`backend/` builds with the committed Gradle wrapper (`backend/gradlew`) — you do **not**
 need a separate Gradle install. You do **not** need to install Postgres either —
 it runs as a container via compose. Local Node/JDK are only needed for
 per-module development; the full `compose up` build uses containerized
