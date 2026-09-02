@@ -68,6 +68,14 @@ Object flow: **Entity ↔ Model ↔ DTO**.
 
 ## Invariants / gotchas (don't relearn these the hard way)
 
+- **Gradle needs to *run* under JDK 21, not just target it.** `build.gradle.kts` pins
+  `JavaLanguageVersion.of(21)` for the compiled code, but if the JVM launching `./gradlew` itself
+  is newer (e.g. 24/25), Gradle 8.14's embedded Kotlin script compiler fails parsing the build
+  script with a bare `IllegalArgumentException: 25`-style error — not an obvious toolchain
+  message. Fix: pin `JAVA_HOME` for the command only, don't change the global/default Java:
+  - macOS: `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test`
+  - Linux: `JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew test` (path varies by distro/package — check `update-alternatives --list java` or your JDK install dir)
+  - Windows (PowerShell): `$env:JAVA_HOME="C:\Program Files\Zulu\zulu-21"; .\gradlew.bat test`
 - **Flyway owns the schema.** `spring.jpa.hibernate.ddl-auto=none`. Migrations are **forward-only** — never edit an applied `V*.sql`; add a new `V<n>__*.sql`.
 - **Postgres `text[]` arrays → map as `String[]`**, not `List<String>`. With a JSON format-mapper on the classpath Hibernate reads `List<String>` as JSON and chokes on the `{a,b}` array literal. (jsonb → `List<String>` via `@JdbcTypeCode(SqlTypes.JSON)` is fine — that's how `article.body` works.)
 - Entities model FKs as a **read-only `@ManyToOne`** (`@JsonIgnore`, `insertable=false, updatable=false`) **plus a writable scalar `*Id` column**. Public services traverse the association inside `@Transactional`; admin/mappers write the scalar id.
