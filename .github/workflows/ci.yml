@@ -17,9 +17,9 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-          cache: maven
+          cache: gradle
       - name: Build & test
-        run: mvn -B verify
+        run: ./gradlew build
 
   web:
     runs-on: ubuntu-latest

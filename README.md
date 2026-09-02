@@ -11,7 +11,7 @@ catalog and written analysis. Built from the design-canvas prototype in [`protot
 
 ```
                     ┌─────────────┐
-   Postgres ───────▶│   backend   │  Java 21 · Spring Boot · Maven
+   Postgres ───────▶│   backend   │  Java 21 · Spring Boot · Gradle
                     │  (REST API) │  public /api/v1  ·  admin /api/admin
                     └──────┬──────┘  full-text search (Hibernate Search/Lucene) · JWT auth
                            │
@@ -26,7 +26,7 @@ catalog and written analysis. Built from the design-canvas prototype in [`protot
 | Service  | Stack                                        | Port  |
 |----------|----------------------------------------------|-------|
 | postgres | PostgreSQL 16                                | 5432  |
-| backend  | Java 21, Spring Boot 3, Maven, Flyway        | 8080  |
+| backend  | Java 21, Spring Boot 3, Gradle, Flyway       | 8080  |
 | web      | Next.js (App Router), CSS Modules            | 3000  |
 | cms      | Refine + Vite → nginx static                 | 5173  |
 
@@ -67,7 +67,7 @@ prototype/          Original design-canvas prototype (.dc.html) — reference
 ## Testing
 
 ```bash
-cd backend && mvn -B verify     # compile + JUnit unit tests
+cd backend && ./gradlew build     # compile + JUnit unit tests
 cd web && npm test              # vitest
 ```
 

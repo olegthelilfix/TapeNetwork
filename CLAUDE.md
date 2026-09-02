@@ -6,7 +6,7 @@ Guidance for AI agents (and humans) working in this repo. Keep it accurate — u
 
 **Tape Network** — a free (no paywall, no viewer accounts) financial video-streaming site, built from a design-canvas prototype (`prototype/`). Three deployables + Postgres:
 
-- `backend/` — Java 21 / Spring Boot 3 / Maven. Owns data + REST API (public `/api/v1`, admin `/api/admin`), full-text search, auth, media upload.
+- `backend/` — Java 21 / Spring Boot 3 / Gradle. Owns data + REST API (public `/api/v1`, admin `/api/admin`), full-text search, auth, media upload.
 - `web/` — Next.js (App Router) SSR public site. CSS Modules. Talks to `/api/v1`.
 - `cms/` — Refine + Vite SPA (served as static). Editors only. Talks to `/api/admin`.
 - `tasks/` + `tools/task-mcp/` — markdown task board (this repo's mini-Jira) with a CLI and an MCP server. See below.
@@ -32,7 +32,7 @@ Dev admin login (CMS): `admin@tape.local` / `password`.
 
 Per module:
 ```bash
-cd backend && mvn -B verify      # compile + unit tests
+cd backend && ./gradlew build      # compile + unit tests
 cd web && npm ci && npm test && npm run build
 cd cms && npm ci && npm run build
 ```

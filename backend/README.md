@@ -1,6 +1,6 @@
 # backend — Tape Network API
 
-Java 21 · Spring Boot 3 · Maven · PostgreSQL · Flyway · Hibernate Search (Lucene) · MapStruct · JWT.
+Java 21 · Spring Boot 3 · Gradle · PostgreSQL · Flyway · Hibernate Search (Lucene) · MapStruct · JWT.
 
 Serves the **public** content API (`/api/v1`) and the **admin** CMS API (`/api/admin`).
 
@@ -11,7 +11,7 @@ Serves the **public** content API (`/api/v1`) and the **admin** CMS API (`/api/a
 docker compose up --build backend      # or: podman compose up --build backend
 
 # standalone (needs a Postgres on :5432 matching .env):
-mvn spring-boot:run
+./gradlew bootRun
 ```
 
 Swagger UI: http://localhost:8080/swagger-ui.html · OpenAPI JSON: `/v3/api-docs`.
@@ -19,7 +19,7 @@ Swagger UI: http://localhost:8080/swagger-ui.html · OpenAPI JSON: `/v3/api-docs
 ## Test
 
 ```bash
-mvn -B verify
+./gradlew build
 ```
 
 ## Architecture — layered, 3-tier objects

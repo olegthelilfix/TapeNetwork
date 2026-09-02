@@ -1,15 +1,17 @@
 # ---- build ----
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
-COPY pom.xml .
-RUN mvn -q -B dependency:go-offline
+COPY gradlew .
+COPY gradle ./gradle
+COPY settings.gradle.kts build.gradle.kts ./
+RUN chmod +x gradlew && ./gradlew --no-daemon dependencies
 COPY src ./src
-RUN mvn -q -B clean package -DskipTests
+RUN ./gradlew --no-daemon clean bootJar -x test
 
 # ---- run ----
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 RUN mkdir -p /var/lib/tape/search
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/build/libs/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
