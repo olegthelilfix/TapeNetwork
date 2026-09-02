@@ -73,7 +73,7 @@ cd backend && ./gradlew build     # compile + JUnit unit tests
 cd web && npm test              # vitest
 ```
 
-If your default `java` is newer than 21, `./gradlew` can fail with a cryptic
+If your default `java` is newer than 21, running `./gradlew` in `backend/` can fail with a cryptic
 `IllegalArgumentException: 25`-style error — pin `JAVA_HOME` for the command instead of your
 global default:
 
