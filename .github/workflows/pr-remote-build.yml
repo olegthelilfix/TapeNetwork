@@ -68,12 +68,18 @@ jobs:
           echo '::endgroup::'
 
           echo '::group::web — npm ci && test && build'
-          docker run --rm -v "$PWD/web:/app" -w /app \
+          # --network host + explicit DNS: next/font/google fetches IBM Plex
+          # fonts from fonts.googleapis.com at build time, so the container
+          # needs the same outbound reach as the host (default bridge net was
+          # timing out -> NextFontError ETIMEDOUT).
+          docker run --rm --network host --dns 8.8.8.8 --dns 1.1.1.1 \
+            -v "$PWD/web:/app" -w /app \
             node:20-alpine sh -c 'npm ci && npm test && npm run build'
           echo '::endgroup::'
 
           echo '::group::cms — npm ci && build'
-          docker run --rm -v "$PWD/cms:/app" -w /app \
+          docker run --rm --network host --dns 8.8.8.8 --dns 1.1.1.1 \
+            -v "$PWD/cms:/app" -w /app \
             node:20-alpine sh -c 'npm ci && npm run build'
           echo '::endgroup::'
           REMOTE
