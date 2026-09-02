@@ -48,7 +48,7 @@ jobs:
 
           echo '::group::backend — gradle build'
           docker run --rm -v "$PWD/backend:/app" -v /opt/tape/ci/gradle:/root/.gradle -w /app \
-            eclipse-temurin:21-jdk sh -c './gradlew build --no-daemon'
+            azul/zulu-openjdk:21 sh -c './gradlew build --no-daemon'
           echo '::endgroup::'
 
           echo '::group::web — npm ci && test && build'
