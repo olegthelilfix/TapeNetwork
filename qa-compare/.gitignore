@@ -8,4 +8,6 @@ test-results/
 output.xml
 log.html
 report.html
+playwright-log.txt
 /robot/browser/
+/robot/.venv/

@@ -16,17 +16,28 @@ GitHub MCP server to the private repo. Works on **macOS** and **Windows**.
 |---|---|---|
 | **Git** | any recent | clone the repo |
 | **Node.js** | **20 LTS** | `web/` (Next.js 15) + `cms/` (Vite 5) build on `node:20` |
-| **JDK** | **21** (Azul Zulu) | `backend/` is Java 21 / Spring Boot 3 |
-| **Maven** | **3.9+** | build/test the backend (no `mvnw` wrapper in repo) |
+| **JDK** | **21** (Azul Zulu) | `backend/` is Java 21 / Spring Boot 3, built with **Gradle** |
 | **Podman** | recent | run the whole stack; Postgres comes from a container |
 
-You do **not** need to install Postgres — it runs as a container via compose.
-Local Node/JDK/Maven are only needed for per-module development; the full
-`compose up` build uses containerized toolchains.
+`backend/` builds with the committed Gradle wrapper (`backend/gradlew`) — you do **not**
+need a separate Gradle install. You do **not** need to install Postgres either —
+it runs as a container via compose. Local Node/JDK are only needed for
+per-module development; the full `compose up` build uses containerized
+toolchains.
 
 **JDK 21** is installed by downloading it from Azul (same for macOS and Windows):
 👉 https://www.azul.com/downloads/?version=java-21-lts&package=jdk — pick the
 installer for your OS/arch and run it, then reopen your terminal.
+
+> ⚠️ **Multiple JDKs installed?** The Gradle wrapper needs to *run* under JDK 21
+> too (not just build the project as its target) — Gradle 8.14's embedded
+> Kotlin script compiler (used to parse `build.gradle.kts`) fails on newer JDKs
+> with a cryptic `IllegalArgumentException: 25`-style error if your default
+> `java` is, say, JDK 25. If that happens, point `JAVA_HOME` at your JDK 21 for
+> just that command instead of changing your global default:
+> - macOS: `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew build`
+> - Windows (PowerShell): `$env:JAVA_HOME="C:\Program Files\Zulu\zulu-21"; .\gradlew.bat build`
+>   (adjust the path to wherever the Azul installer put it)
 
 ---
 
@@ -38,14 +49,10 @@ installer for your OS/arch and run it, then reopen your terminal.
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-### 2. Install Git, Maven and Podman
+### 2. Install Git and Podman
 
 ```bash
 brew install git
-```
-
-```bash
-brew install maven
 ```
 
 ```bash
@@ -77,10 +84,10 @@ podman machine init && podman machine start
 ### 5. Verify
 
 ```bash
-git --version && node -v && mvn -v && java -version && podman --version
+git --version && node -v && java -version && podman --version
 ```
 
-Expected: node **v20.x**, `openjdk version "21"`, Apache Maven **3.9.x**.
+Expected: node **v20.x**, `openjdk version "21"`.
 
 ➡️ Now jump to [Get the code & run](#get-the-code--run).
 
@@ -91,18 +98,15 @@ Expected: node **v20.x**, `openjdk version "21"`, Apache Maven **3.9.x**.
 Run these in an **Administrator PowerShell**. They use `winget` (built into
 Windows 10/11).
 
-### 1. Install Git and Maven
+### 1. Install Git
 
 ```powershell
 winget install --id Git.Git -e
 ```
 
-```powershell
-winget install --id Apache.Maven -e
-```
-
 > JDK 21 is **not** installed here — download it from Azul (link in the table
-> above) and run the `.msi`.
+> above) and run the `.msi`. Gradle is **not** installed here either — the
+> committed `backend/gradlew.bat` wrapper handles it.
 
 ### 2. Set up nvm and switch to Node 20
 
@@ -133,10 +137,10 @@ winget install --id RedHat.Podman-Desktop -e
 Open a **fresh** PowerShell so PATH updates apply, then:
 
 ```powershell
-git --version ; node -v ; mvn -v ; java -version ; podman --version
+git --version ; node -v ; java -version ; podman --version
 ```
 
-Expected: node **v20.x**, `openjdk version "21"`, Apache Maven **3.9.x**.
+Expected: node **v20.x**, `openjdk version "21"`.
 
 ➡️ Continue to [Get the code & run](#get-the-code--run).
 
@@ -171,8 +175,12 @@ Dev CMS login: `admin@tape.local` / `password`.
 ### 3. Per-module dev (optional)
 
 ```bash
-cd backend && mvn -B verify
+cd backend && ./gradlew build
 ```
+
+> Getting `IllegalArgumentException: 25` (or similar) from Gradle? See the JDK
+> 21 warning in the [prerequisites table](#what-you-need-versions-are-pinned-to-what-the-project-actually-builds-with) above —
+> pin `JAVA_HOME` to JDK 21 for the command instead of your global default.
 
 ```bash
 cd web && npm ci && npm test && npm run build
@@ -198,8 +206,7 @@ bad(){ printf "  \033[31mFAIL\033[0m     %s\n" "$1"; }
 echo "Tape Network — environment check"; echo
 command -v git >/dev/null   && ok "git: $(git --version | cut -d" " -f3)" || bad "git missing"
 node -v 2>/dev/null | grep -q "^v20\." && ok "node $(node -v)" || bad "node 20.x required (got $(node -v 2>/dev/null || echo none))"
-java -version 2>&1 | grep -q "version \"21" && ok "jdk 21" || bad "jdk 21 required (got $(java -version 2>&1 | head -1))"
-mvn -v 2>/dev/null | grep -q "Apache Maven 3.9" && ok "maven $(mvn -v 2>/dev/null | head -1 | cut -d" " -f3)" || bad "maven 3.9+ required"
+java -version 2>&1 | grep -q "version \"21" && ok "jdk 21" || bad "jdk 21 required (got $(java -version 2>&1 | head -1)) — run backend/gradlew with JAVA_HOME pinned to 21 if this is not your default"
 command -v podman >/dev/null && ok "podman: $(podman --version | cut -d" " -f3)" || bad "podman missing"
 [ -n "$GITHUB_PAT" ] && ok "GITHUB_PAT is set" || bad "GITHUB_PAT not set (needed for GitHub MCP)"
 '
@@ -214,7 +221,6 @@ function Bad($m){ Write-Host "  FAIL     $m" -ForegroundColor Red }
 if (Get-Command git -ErrorAction SilentlyContinue) { Ok "git: $((git --version).Split(' ')[2])" } else { Bad "git missing" }
 if ((node -v 2>$null) -match '^v20\.') { Ok "node $(node -v)" } else { Bad "node 20.x required (got $(node -v 2>$null))" }
 if ((java -version 2>&1) -match 'version "21') { Ok "jdk 21" } else { Bad "jdk 21 required" }
-if ((mvn -v 2>$null) -match 'Apache Maven 3\.9') { Ok "maven 3.9+" } else { Bad "maven 3.9+ required" }
 if (Get-Command podman -ErrorAction SilentlyContinue) { Ok "podman present" } else { Bad "podman missing" }
 if ($env:GITHUB_PAT) { Ok "GITHUB_PAT is set" } else { Bad "GITHUB_PAT not set (needed for GitHub MCP)" }
 ```
@@ -310,5 +316,6 @@ You should see `github: … ✔ Connected`.
 
 ---
 
-_Toolchain versions are derived from the repo's Dockerfiles and `pom.xml`. If
-those change, update this guide (and the version table)._
+_Toolchain versions are derived from the repo's Dockerfiles and
+`backend/build.gradle.kts`. If those change, update this guide (and the
+version table)._
