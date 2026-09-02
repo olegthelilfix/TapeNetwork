@@ -2,11 +2,21 @@
 
 TypeScript types generated from the backend OpenAPI schema, shared by `web` and `cms`.
 
-Generation is wired in **stage 3**, roughly:
+The backend exposes two springdoc groups: `user` (`/api/v1/**`, consumed by `web`) and `cms`
+(`/api/admin/**`, consumed by `cms`). Pulling and generating types is a manual, on-demand step —
+not part of any build — so run it whenever the API changes:
 
 ```bash
-# backend must be running (or export the static schema)
-npx openapi-typescript http://localhost:8080/v3/api-docs -o generated/api.ts
+# 1. start a real backend (needs postgres too; compose handles the dependency)
+docker compose up -d postgres backend
+
+# 2. pull the current schema(s) into generated/{user,cms}-openapi.json (+ .yaml)
+cd packages/api-types && npm run pull-openapi
+
+# 3. generate TypeScript types from whichever group you need
+npx openapi-typescript generated/user-openapi.json -o generated/api.ts
 ```
 
-Until then this package is a placeholder; `web` and `cms` use hand-written types.
+`generated/` is committed to the repo so `web`/`cms` can consume it without needing a running
+backend themselves. See `scripts/pull-openapi.mjs` for the pull step; it discovers configured
+groups from `/v3/api-docs/swagger-config` automatically.
