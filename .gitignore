@@ -29,3 +29,6 @@ infra/**/*.tfstate.*
 infra/**/*.tfvars
 !infra/**/*.tfvars.example
 infra/**/.terraform.lock.hcl
+
+# Logs
+log
