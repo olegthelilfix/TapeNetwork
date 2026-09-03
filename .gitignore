@@ -1,6 +1,10 @@
 # env
 .env
 
+# Claude Code local settings — contains GITHUB_PAT, never commit
+# (the committed .example template is the shareable version)
+.claude/settings.local.json
+
 # Java / Gradle
 backend/.gradle/
 backend/build/
@@ -11,7 +15,6 @@ node_modules/
 web/.next/
 web/out/
 cms/dist/
-packages/api-types/generated/
 
 # Search indexes
 **/search-index/
@@ -20,6 +23,7 @@ packages/api-types/generated/
 # OS / editor
 .DS_Store
 .idea/
+!.idea/vcs.xml
 .vscode/
 tasks/board.html
 
@@ -34,3 +38,6 @@ infra/**/.terraform.lock.hcl
 # Logs
 log
 /.claude/settings.local.json
+
+target/
+
