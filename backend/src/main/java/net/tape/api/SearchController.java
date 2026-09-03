@@ -24,6 +24,13 @@ public class SearchController {
         @RequestParam(name = "q", required = false) String q,
         @RequestParam(name = "type", required = false) String type,
         @RequestParam(name = "limit", defaultValue = "8") int limit) {
+        // DEMO ONLY — DO NOT MERGE. Artificial 300ms slowdown to exercise the
+        // perf-compare workflow (should trip the lat_search regression gate).
+        try {
+            Thread.sleep(300);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         return service.search(q, type, limit);
     }
 }
