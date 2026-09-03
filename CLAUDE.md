@@ -18,6 +18,11 @@ logical commit, a message describing what was done, and AI-authorship trailers. 
 [`.kiro/steering/ai-commit-policy.md`](.kiro/steering/ai-commit-policy.md). Read-only requests
 produce no commit; never commit `.env`/build output; don't push to `main` or open a PR unless asked.
 
+Branch and commit-message **conventions** (ticket branch, `[TICKET-ID]` message format) are in
+`CONTRIBUTING.md`, auto-loaded here:
+
+@CONTRIBUTING.md
+
 ## Run / build / test
 
 Whole stack (Docker **or** Podman — this machine uses `podman compose`, which shells out to `docker-compose`):

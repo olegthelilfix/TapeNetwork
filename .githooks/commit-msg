@@ -1,0 +1,32 @@
+#!/bin/sh
+# commit-msg — require a bracketed ticket id so IntelliJ issue-navigation can
+# link the commit (e.g. [TASK-0020], [TP-5], [10]). Merge / revert / fixup /
+# squash commits are exempt. Bypass in a pinch with:  git commit --no-verify
+#
+# Enable once per clone:  git config core.hooksPath .githooks
+
+msg_file="$1"
+subject=$(head -n1 "$msg_file")
+
+# Skip git's own auto-generated messages.
+case "$subject" in
+  "Merge "*|'Revert "'*|"fixup! "*|"squash! "*) exit 0 ;;
+esac
+
+# Accept if a bracketed ticket ref appears anywhere in the message.
+# Mirrors the IntelliJ regex: [ optional LETTERS- , optional leading zeros, 1-9 digit ]
+if grep -Eq '\[([A-Za-z]+-)?0*[1-9][0-9]*\]' "$msg_file"; then
+  exit 0
+fi
+
+cat >&2 <<'EOF'
+✗ Commit rejected: no ticket id found in the message.
+
+  Add a bracketed ticket reference so IntelliJ can auto-link it, e.g.:
+      [TASK-0020] split OpenAPI definitions
+      [10] migrate backend to Gradle
+
+  Format:  [<TICKET-ID>] <imperative summary>
+  Bypass (rarely):  git commit --no-verify
+EOF
+exit 1
