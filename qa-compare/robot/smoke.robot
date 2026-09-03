@@ -9,7 +9,7 @@ ${BASE_URL}       http://localhost:3000
 *** Test Cases ***
 Home Navigates To Shows
     [Tags]  navigation  shows
-    New Browser       chromium    headless=false
+    New Browser       chromium    headless=true
     New Page          ${BASE_URL}/
     Get Title         contains    Tape
     Click             a[href="/shows"] >> nth=0
@@ -19,7 +19,7 @@ Home Navigates To Shows
 
 Home Navigates To Articles
     [Tags]  navigation  articles
-    New Browser       chromium    headless=false
+    New Browser       chromium    headless=true
     New Page          ${BASE_URL}/
     Get Title         contains    Tape
     Click             a[href="/articles"] >> nth=0
@@ -29,7 +29,7 @@ Home Navigates To Articles
 
 Home Navigates To On Demand
     [Tags]  navigation  on-demand
-    New Browser       chromium    headless=false
+    New Browser       chromium    headless=true
     New Page          ${BASE_URL}/
     Get Title         contains    Tape
     Click             a[href="/on-demand"] >> nth=0
