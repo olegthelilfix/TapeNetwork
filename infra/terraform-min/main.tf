@@ -47,7 +47,7 @@ variable "vm_name" {
 
 variable "machine_type" {
   type    = string
-  default = "e2-medium"
+  default = "c2d-standard-4"
 }
 
 variable "boot_disk_size_gb" {
