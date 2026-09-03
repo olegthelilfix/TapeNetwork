@@ -38,6 +38,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <p>The real {@link SecurityConfig}/{@link JwtAuthFilter}/{@link JwtService} beans are imported
  * so the real {@code /api/v1/**}.permitAll() rule (rather than Spring Boot's default deny-all)
  * governs these anonymous requests — see {@code HealthControllerTest}'s Javadoc for why.
+ *
+ * <p>TODO(<a href="https://github.com/olegthelilfix/TapeNetwork/issues/62">#62</a>): this list
+ * endpoint reports its total count in the {@code PagedResponse} JSON body, not an
+ * {@code X-Total-Count} header like the admin CRUD list endpoints do. If issue #62 adds header
+ * parity here, add a matching assertion to the two list tests below.
  */
 @WebMvcTest(ArticleController.class)
 @Import({SecurityConfig.class, JwtAuthFilter.class, JwtService.class})
