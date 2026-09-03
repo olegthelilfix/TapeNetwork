@@ -23,6 +23,7 @@ cms/dist/
 # OS / editor
 .DS_Store
 .idea/
+!.idea/vcs.xml
 .vscode/
 tasks/board.html
 
