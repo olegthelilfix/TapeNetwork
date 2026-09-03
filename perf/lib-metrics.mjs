@@ -4,21 +4,31 @@
 import { readFileSync, existsSync } from 'node:fs';
 
 // Pull the numbers we compare across runs from a k6 summary.json.
+// Generic: auto-discovers every per-group Trend metric (lat_* / page_*) so a
+// new scenario/journey step shows up in the comparison without touching this
+// file. Also captures overall latency, throughput, and error rate.
 export function metricsFromK6(summaryPath) {
   const s = JSON.parse(readFileSync(summaryPath, 'utf8'));
   const m = s.metrics || {};
   const dur = m.http_req_duration?.values || {};
-  const search = m.lat_search?.values || {};
   const reqs = m.http_reqs?.values || {};
   const failed = m.http_req_failed?.values || {};
+
+  // Every custom Trend the scripts define is named lat_* (API) or page_* (web).
+  const groups = {};
+  for (const [name, metric] of Object.entries(m)) {
+    if (!/^(lat|page)_/.test(name)) continue;
+    const v = metric.values || {};
+    groups[name] = { p95: round(v['p(95)']), p99: round(v['p(99)']) };
+  }
+
   return {
-    rps: round(reqs.rate),                       // throughput
+    rps: round(reqs.rate),                 // throughput (informational)
     reqs: reqs.count ?? null,
-    p95: round(dur['p(95)']),                    // overall latency
+    p95: round(dur['p(95)']),              // overall latency (gated)
     p99: round(dur['p(99)']),
-    search_p95: round(search['p(95)']),          // search hotspot
-    search_p99: round(search['p(99)']),
-    error_rate: round(failed.rate, 4),           // 0..1
+    error_rate: round(failed.rate, 4),     // 0..1 (gated)
+    groups,                                // per-group p95/p99 (gated per group)
   };
 }
 

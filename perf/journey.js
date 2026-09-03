@@ -51,6 +51,8 @@ const THINK_MIN = Number(__ENV.THINK_MIN || 1);
 const THINK_MAX = Number(__ENV.THINK_MAX || 3);
 
 export const options = {
+  // Make p99 available in the summary (k6 defaults omit it).
+  summaryTrendStats: ['avg', 'min', 'med', 'p(95)', 'p(99)', 'max'],
   scenarios: {
     user_journey: {
       executor: 'ramping-vus',
