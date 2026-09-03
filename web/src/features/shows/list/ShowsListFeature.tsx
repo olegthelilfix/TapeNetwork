@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import type { FC } from "react";
+
 import type { ShowSummary } from "@/domain/show";
 import { Card } from "@/ui/Card";
 import { CardGrid } from "@/ui/Section";
-import type { FC } from "react";
+
 import styles from "@/ui/ListLayout/ListLayout.module.css";
 
 export type ShowsListFeatureProps = {

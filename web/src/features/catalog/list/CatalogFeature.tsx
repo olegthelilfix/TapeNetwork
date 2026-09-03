@@ -1,7 +1,9 @@
-import Link from "next/link";
 import Image from "next/image";
-import type { CategorySummary } from "@/domain/catalog";
+import Link from "next/link";
 import type { FC } from "react";
+
+import type { CategorySummary } from "@/domain/catalog";
+
 import styles from "./CatalogFeature.module.css";
 
 export type CatalogFeatureProps = {

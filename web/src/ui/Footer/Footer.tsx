@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { FC } from "react";
+
 import { Brand } from "@/ui/Brand";
+
 import styles from "./Footer.module.css";
 
 const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [

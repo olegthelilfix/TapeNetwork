@@ -1,4 +1,7 @@
 import "server-only";
+import * as E from "fp-ts/Either";
+import { pipe } from "fp-ts/function";
+import * as O from "fp-ts/Option";
 
 import type { HomeCardDtoV1 } from "@/api/components/schemas/HomeCardDtoV1";
 import type { HomeResponseDtoV1 } from "@/api/components/schemas/HomeResponseDtoV1";
@@ -19,11 +22,10 @@ import {
     type Ticker,
     type TickerDirection,
 } from "@/domain/ticker";
-import * as E from "fp-ts/Either";
-import * as O from "fp-ts/Option";
-import { pipe } from "fp-ts/function";
+
 import { mapArticleSummaryDto } from "./article.mapper";
 import {
+    type DtoMappingError,
     mapReadonlyArray,
     optionToArray,
     optionToBoolean,
@@ -32,7 +34,6 @@ import {
     optionToNullable,
     requireOneOf,
     requireString,
-    type DtoMappingError,
 } from "./dto.mapper";
 
 const tickerDirections: readonly TickerDirection[] = ["up", "down"];

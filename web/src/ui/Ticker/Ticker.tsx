@@ -1,5 +1,7 @@
-import type { Ticker as TickerItem } from "@/domain/ticker";
 import type { FC } from "react";
+
+import type { Ticker as TickerItem } from "@/domain/ticker";
+
 import styles from "./Ticker.module.css";
 
 type TickerProps = {

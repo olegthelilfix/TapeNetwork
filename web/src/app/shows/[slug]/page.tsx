@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+
 import type { AsyncServerComponent } from "@/app/_types";
 import { ShowDetailsFeature } from "@/features/shows/details";
 import { getShowBySlug, resolveControllerResult } from "@/services/server/controllers";

@@ -1,8 +1,11 @@
-import type { FC } from "react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+import type { FC } from "react";
+
 import type { Article, ArticleSummary } from "@/domain/article";
+
 import { formatDate } from "@/utils/format";
+
 import styles from "./ArticleDetailsFeature.module.css";
 
 export type ArticleDetailsFeatureProps = {

@@ -1,7 +1,8 @@
+import * as E from "fp-ts/Either";
+
 import type { AsyncServerComponent } from "@/app/_types";
 import { SearchFeature } from "@/features/search";
 import { search } from "@/services/server/controllers";
-import * as E from "fp-ts/Either";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Search", robots: { index: false } };

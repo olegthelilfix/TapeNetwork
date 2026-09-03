@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { FC, ReactNode } from "react";
+
 import styles from "./Section.module.css";
 
 type SectionHeaderProps = {

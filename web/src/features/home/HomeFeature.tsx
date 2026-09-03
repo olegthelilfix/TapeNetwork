@@ -1,9 +1,11 @@
-import Link from "next/link";
 import Image from "next/image";
-import type { HomeCardKind, Home } from "@/domain/content";
+import Link from "next/link";
+import type { FC } from "react";
+
+import type { Home,HomeCardKind } from "@/domain/content";
 import type { ShowSummary } from "@/domain/show";
 import { Card } from "@/ui/Card";
-import type { FC } from "react";
+
 import styles from "./HomeFeature.module.css";
 
 const kickerFor = (kind: HomeCardKind, isLive: boolean): string | undefined => {

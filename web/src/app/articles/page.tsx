@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+
 import type { AsyncServerComponent } from "@/app/_types";
 import { ArticlesListFeature } from "@/features/articles/list";
 import {

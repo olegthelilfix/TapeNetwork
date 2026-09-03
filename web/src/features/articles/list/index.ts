@@ -1,2 +1,2 @@
-export { ArticlesListFeature } from "./ArticlesListFeature";
 export type { ArticlesListFeatureProps } from "./ArticlesListFeature";
+export { ArticlesListFeature } from "./ArticlesListFeature";

@@ -1,4 +1,6 @@
 import "server-only";
+import * as E from "fp-ts/Either";
+import { pipe } from "fp-ts/function";
 
 import type { CategoryDetailDtoV1 } from "@/api/components/schemas/CategoryDetailDtoV1";
 import type { CategorySummaryDtoV1 } from "@/api/components/schemas/CategorySummaryDtoV1";
@@ -12,9 +14,9 @@ import {
     type SubcategorySummary,
     type Video,
 } from "@/domain/catalog";
-import * as E from "fp-ts/Either";
-import { pipe } from "fp-ts/function";
+
 import {
+    type DtoMappingError,
     mapReadonlyArray,
     optionToArray,
     optionToIsoString,
@@ -22,7 +24,6 @@ import {
     optionToNullable,
     optionToNumber,
     requireString,
-    type DtoMappingError,
 } from "./dto.mapper";
 
 export const mapVideoDto = (

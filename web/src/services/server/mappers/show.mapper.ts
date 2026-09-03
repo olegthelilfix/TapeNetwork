@@ -1,4 +1,6 @@
 import "server-only";
+import * as E from "fp-ts/Either";
+import { pipe } from "fp-ts/function";
 
 import type { EpisodeDtoV1 } from "@/api/components/schemas/EpisodeDtoV1";
 import type { HostDtoV1 } from "@/api/components/schemas/HostDtoV1";
@@ -10,9 +12,9 @@ import {
     type ShowDetail,
     type ShowSummary,
 } from "@/domain/show";
-import * as E from "fp-ts/Either";
-import { pipe } from "fp-ts/function";
+
 import {
+    type DtoMappingError,
     mapReadonlyArray,
     optionToArray,
     optionToBoolean,
@@ -21,7 +23,6 @@ import {
     optionToNullable,
     optionToNumber,
     requireString,
-    type DtoMappingError,
 } from "./dto.mapper";
 
 export const mapHostDto = (

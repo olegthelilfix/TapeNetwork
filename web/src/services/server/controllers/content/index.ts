@@ -1,3 +1,4 @@
+export type { SearchInput } from "./content.controller";
 export {
     getPlayerBySlug,
     getSchedule,
@@ -5,4 +6,3 @@ export {
     getTicker,
     search,
 } from "./content.controller";
-export type { SearchInput } from "./content.controller";

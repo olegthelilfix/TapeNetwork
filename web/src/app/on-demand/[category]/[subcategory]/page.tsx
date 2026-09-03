@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+
 import type { AsyncServerComponent } from "@/app/_types";
 import { SubcategoryFeature } from "@/features/catalog/subcategory";
 import {

@@ -1,8 +1,10 @@
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+import type { FC } from "react";
+
 import type { ArticlePage } from "@/domain/article";
 import type { CategorySummary } from "@/domain/catalog";
-import type { FC } from "react";
+
 import styles from "./ArticlesListFeature.module.css";
 
 export type ArticlesListFeatureProps = {

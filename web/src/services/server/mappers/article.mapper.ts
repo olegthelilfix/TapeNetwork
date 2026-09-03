@@ -1,4 +1,6 @@
 import "server-only";
+import * as E from "fp-ts/Either";
+import { pipe } from "fp-ts/function";
 
 import type { ArticleDtoV1 } from "@/api/components/schemas/ArticleDtoV1";
 import type { PagedResponseArticleDtoV1 } from "@/api/components/schemas/PagedResponseArticleDtoV1";
@@ -7,9 +9,9 @@ import {
     type ArticlePage,
     type ArticleSummary,
 } from "@/domain/article";
-import * as E from "fp-ts/Either";
-import { pipe } from "fp-ts/function";
+
 import {
+    type DtoMappingError,
     mapReadonlyArray,
     optionToArray,
     optionToIsoString,
@@ -17,7 +19,6 @@ import {
     optionToNullable,
     optionToNumber,
     requireString,
-    type DtoMappingError,
 } from "./dto.mapper";
 
 export const mapArticleSummaryDto = (

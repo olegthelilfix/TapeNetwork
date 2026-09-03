@@ -1,11 +1,12 @@
 import "server-only";
+import * as E from "fp-ts/Either";
 
 import { showControllerController } from "@/api/paths/ShowControllerController";
 import type { ShowDetail, ShowSummary } from "@/domain/show";
 import { serverHttpClient } from "@/services/server/http";
 import { mapShowDetailDto, mapShowSummaryDto } from "@/services/server/mappers";
-import * as E from "fp-ts/Either";
-import { mapGeneratedResult, type ControllerResult } from "../controller.utils";
+
+import { type ControllerResult,mapGeneratedResult } from "../controller.utils";
 
 const generatedController = showControllerController({
     httpClient: serverHttpClient,

@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
 import * as E from "fp-ts/Either";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => {
     return {};

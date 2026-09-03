@@ -1,8 +1,9 @@
 import "server-only";
+import { pipe } from "fp-ts/function";
+import * as TE from "fp-ts/TaskEither";
 
 import type { HTTPClient2, Request } from "@/api/client/client";
-import * as TE from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
+
 import {
     createHttpNetworkError,
     createHttpResponseParsingError,

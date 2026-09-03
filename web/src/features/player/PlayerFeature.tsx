@@ -1,8 +1,11 @@
-import type { FC } from "react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+import type { FC } from "react";
+
 import type { Player } from "@/domain/content";
+
 import { formatDate } from "@/utils/format";
+
 import styles from "./PlayerFeature.module.css";
 
 export type PlayerFeatureProps = {

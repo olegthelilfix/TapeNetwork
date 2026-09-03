@@ -1,6 +1,7 @@
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import type { FC } from "react";
+
 import styles from "./Card.module.css";
 
 export type CardProps = {

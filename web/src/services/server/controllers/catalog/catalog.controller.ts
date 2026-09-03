@@ -1,4 +1,5 @@
 import "server-only";
+import * as E from "fp-ts/Either";
 
 import { catalogControllerController } from "@/api/paths/CatalogControllerController";
 import type {
@@ -14,8 +15,8 @@ import {
     mapSubcategoryDetailDto,
     mapVideoDto,
 } from "@/services/server/mappers";
-import * as E from "fp-ts/Either";
-import { mapGeneratedResult, type ControllerResult } from "../controller.utils";
+
+import { type ControllerResult,mapGeneratedResult } from "../controller.utils";
 
 const generatedController = catalogControllerController({
     httpClient: serverHttpClient,

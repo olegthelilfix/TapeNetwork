@@ -1,16 +1,17 @@
 import "server-only";
-
-import { Int } from "io-ts";
 import * as E from "fp-ts/Either";
+import { pipe } from "fp-ts/function";
 import * as O from "fp-ts/Option";
 import * as TE from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
+import { Int } from "io-ts";
+
 import type { DtoMappingError } from "@/services/server/mappers";
+
 import {
+    type ControllerError,
     createInvalidInputError,
     mapDtoMappingError,
     normalizeControllerError,
-    type ControllerError,
 } from "./controller.errors";
 
 export type ControllerResult<Value> = TE.TaskEither<ControllerError, Value>;

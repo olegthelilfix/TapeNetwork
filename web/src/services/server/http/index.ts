@@ -1,3 +1,9 @@
+export type {
+    HttpError,
+    HttpNetworkError,
+    HttpResponseParsingError,
+    HttpStatusError,
+} from "./http.errors";
 export {
     createHttpNetworkError,
     createHttpResponseParsingError,
@@ -8,9 +14,3 @@ export {
     createServerHttpClient,
     serverHttpClient,
 } from "./serverHttpClient";
-export type {
-    HttpError,
-    HttpNetworkError,
-    HttpResponseParsingError,
-    HttpStatusError,
-} from "./http.errors";

@@ -1,8 +1,10 @@
-import type { FC } from "react";
 import Link from "next/link";
+import type { FC } from "react";
+
 import type { SubcategoryDetail } from "@/domain/catalog";
 import { Card } from "@/ui/Card";
 import { CardGrid } from "@/ui/Section";
+
 import listStyles from "@/ui/ListLayout/ListLayout.module.css";
 
 export type SubcategoryFeatureProps = {

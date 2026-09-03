@@ -1,4 +1,9 @@
 import "server-only";
+import * as E from "fp-ts/Either";
+import { pipe } from "fp-ts/function";
+import * as O from "fp-ts/Option";
+import * as TE from "fp-ts/TaskEither";
+import type { Int } from "io-ts";
 
 import { scheduleControllerController } from "@/api/paths/ScheduleControllerController";
 import { searchControllerController } from "@/api/paths/SearchControllerController";
@@ -16,16 +21,12 @@ import {
     mapSitemapEntryDto,
     mapTickerDto,
 } from "@/services/server/mappers";
-import * as E from "fp-ts/Either";
-import * as O from "fp-ts/Option";
-import * as TE from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
-import type { Int } from "io-ts";
+
 import type { ControllerError } from "../controller.errors";
 import {
+    type ControllerResult,
     mapGeneratedResult,
     toOptionalInteger,
-    type ControllerResult,
 } from "../controller.utils";
 
 export type SearchInput = {

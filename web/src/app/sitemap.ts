@@ -1,6 +1,7 @@
-import type { MetadataRoute } from "next";
-import { getSitemapEntries } from "@/services/server/controllers";
 import * as E from "fp-ts/Either";
+import type { MetadataRoute } from "next";
+
+import { getSitemapEntries } from "@/services/server/controllers";
 
 export const dynamic = "force-dynamic";
 

@@ -1,6 +1,6 @@
 import "server-only";
-
 import * as E from "fp-ts/Either";
+
 import type { ControllerResult } from "./controller.utils";
 
 type ResolveControllerResultOptions = {

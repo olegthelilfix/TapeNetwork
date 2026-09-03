@@ -1,7 +1,9 @@
+import type { FC } from "react";
+
 import type { SearchResult } from "@/domain/content";
 import { Card } from "@/ui/Card";
 import { CardGrid } from "@/ui/Section";
-import type { FC } from "react";
+
 import listStyles from "@/ui/ListLayout/ListLayout.module.css";
 
 export type SearchFeatureProps = {

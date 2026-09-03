@@ -1,10 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
 import * as E from "fp-ts/Either";
 import * as O from "fp-ts/Option";
+import { describe, expect, it, vi } from "vitest";
+
 import type { ArticleDtoV1 } from "@/api/components/schemas/ArticleDtoV1";
 import type { HomeCardDtoV1 } from "@/api/components/schemas/HomeCardDtoV1";
 import type { HomeResponseDtoV1 } from "@/api/components/schemas/HomeResponseDtoV1";
 import type { TickerDtoV1 } from "@/api/components/schemas/TickerDtoV1";
+
 import {
     mapArticleSummaryDto,
     mapHomeDto,

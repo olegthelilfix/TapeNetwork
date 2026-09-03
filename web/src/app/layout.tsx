@@ -1,13 +1,14 @@
-import type { Metadata } from "next";
-import type { ReactElement, ReactNode } from "react";
-import { IBM_Plex_Serif, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/ui/Header";
-import { Ticker } from "@/ui/Ticker";
-import { Footer } from "@/ui/Footer";
+import * as E from "fp-ts/Either";
+import type { Metadata } from "next";
+import { IBM_Plex_Mono,IBM_Plex_Serif } from "next/font/google";
+import type { ReactElement, ReactNode } from "react";
+
 import type { Ticker as TickerItem } from "@/domain/ticker";
 import { getTicker } from "@/services/server/controllers";
-import * as E from "fp-ts/Either";
+import { Footer } from "@/ui/Footer";
+import { Header } from "@/ui/Header";
+import { Ticker } from "@/ui/Ticker";
 
 const serif = IBM_Plex_Serif({
   subsets: ["latin"],

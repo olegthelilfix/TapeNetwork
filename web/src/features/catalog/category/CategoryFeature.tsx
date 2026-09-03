@@ -1,9 +1,11 @@
-import type { FC } from "react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+import type { FC } from "react";
+
 import type { CategoryDetail } from "@/domain/catalog";
-import od from "@/features/catalog/list/CatalogFeature.module.css";
+
 import grid from "./CategoryFeature.module.css";
+import od from "@/features/catalog/list/CatalogFeature.module.css";
 
 export type CategoryFeatureProps = {
   readonly category: CategoryDetail;

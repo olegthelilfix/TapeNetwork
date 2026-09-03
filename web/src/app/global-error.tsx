@@ -1,6 +1,7 @@
 "use client";
 
 import type { FC } from "react";
+
 import styles from "./error.module.css";
 
 type GlobalErrorPageProps = {
