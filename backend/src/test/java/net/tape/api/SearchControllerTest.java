@@ -47,6 +47,7 @@ class SearchControllerTest {
             .andExpect(jsonPath("$", hasSize(1)))
             .andExpect(jsonPath("$[0].type").value("article"))
             .andExpect(jsonPath("$[0].slug").value("earnings-preview"))
+            .andExpect(jsonPath("$[0].id").doesNotExist()) // Public API responses must not leak internal IDs.
             .andExpect(jsonPath("$[0].url").value("/articles/earnings-preview"));
         verify(service).search("earnings", null, 8);
     }
@@ -68,10 +69,13 @@ class SearchControllerTest {
     void searchWithNoQueryReturnsWhateverTheServiceReturns() throws Exception {
         // The blank-query "no results" rule lives in SearchService (mocked here), not the
         // controller — this test only pins the controller's pass-through wiring.
-        when(service.search(null, null, 8)).thenReturn(List.of());
+        when(service.search(null, null, 8)).thenReturn(List.of(new SearchHit(
+            "show", "market-open", "Market Open", "Shows",
+            "/uploads/market-open.jpg", "/shows/market-open")));
 
         mvc.perform(get("/api/v1/search"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$", hasSize(0)));
+            .andExpect(jsonPath("$", hasSize(1)))
+            .andExpect(jsonPath("$[0].id").doesNotExist()); // Public API responses must not leak internal IDs.
     }
 }
