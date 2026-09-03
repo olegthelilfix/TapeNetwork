@@ -1,0 +1,144 @@
+name: Load test (k6, on VM)
+
+# Manually run a load/perf test for a chosen branch against an ISOLATED,
+# throwaway compose stack on the build VM (not the live prod stack). Brings the
+# stack up on non-default ports under its own compose project, runs k6 while
+# sampling per-container CPU/MEM, uploads the reports, then tears the stack down
+# (volumes and all) — always, even if the run fails.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch/tag/SHA to load-test
+        required: true
+        default: master
+      vus:
+        description: Peak virtual users
+        required: false
+        default: '20'
+      ramp:
+        description: Ramp-up duration (e.g. 30s, 1m)
+        required: false
+        default: '30s'
+      duration:
+        description: Steady-state duration (e.g. 1m, 3m)
+        required: false
+        default: '1m'
+
+concurrency:
+  group: perf-run           # one perf stack on the VM at a time
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  loadtest:
+    runs-on: ubuntu-latest
+    env:
+      SSH_USER: ${{ vars.SSH_USER }}
+      VM_HOST: ${{ vars.VM_HOST }}
+      DIR: /tmp/perf-${{ github.run_id }}
+      PROJECT: perf_${{ github.run_id }}
+      # Non-default ports so the perf stack never collides with the live prod
+      # stack or a concurrent PR build on the same host.
+      BACKEND_PORT: '18080'
+      POSTGRES_PORT: '15432'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Package & copy source to VM
+        run: |
+          tar czf src.tgz --exclude=.git --exclude=node_modules --exclude=target --exclude=.next \
+            backend web cms streamer docker-compose.yml perf
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" "mkdir -p '$DIR'"
+          scp -i ~/.ssh/id_deploy src.tgz "$SSH_USER@$VM_HOST:$DIR/src.tgz"
+
+      - name: Bring up isolated stack, run k6 + sample stats
+        run: |
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
+            DIR="$DIR" PROJECT="$PROJECT" \
+            BACKEND_PORT="$BACKEND_PORT" POSTGRES_PORT="$POSTGRES_PORT" \
+            VUS="${{ github.event.inputs.vus }}" \
+            RAMP="${{ github.event.inputs.ramp }}" \
+            DURATION="${{ github.event.inputs.duration }}" \
+            bash <<'REMOTE'
+          set -euxo pipefail
+          cd "$DIR"
+          tar xzf src.tgz
+          mkdir -p perf/results
+
+          # Only the backend (+ its postgres dep) is needed to load /api/v1.
+          # Isolated compose project + non-default host ports = no collision.
+          export BACKEND_PORT POSTGRES_PORT
+          docker compose -p "$PROJECT" up -d --build backend
+
+          # Wait for the API to be healthy (build can be slow on this VM).
+          for i in $(seq 1 60); do
+            if curl -fsS "http://localhost:${BACKEND_PORT}/api/v1/health" >/dev/null 2>&1; then
+              echo "backend healthy"; break
+            fi
+            sleep 5
+            [ "$i" -eq 60 ] && { echo "backend never became healthy"; exit 1; }
+          done
+
+          # Sample per-container CPU/MEM in the background for THIS project only.
+          chmod +x perf/sample-stats.sh
+          perf/sample-stats.sh perf/results/stats.csv 2 "$PROJECT" &
+          SAMPLER=$!
+
+          # Run k6 against the isolated backend on the docker host.
+          set +e
+          docker run --rm --add-host=host.docker.internal:host-gateway \
+            -v "$PWD/perf:/perf" -w /perf \
+            -e BASE_URL="http://host.docker.internal:${BACKEND_PORT}" \
+            -e VUS -e RAMP -e DURATION \
+            grafana/k6 run scenarios.js
+          K6_RC=$?
+          set -e
+
+          # Stop sampling; leave a moment for the last write to flush.
+          kill "$SAMPLER" 2>/dev/null || true
+          sleep 1
+
+          echo "k6 exit code: $K6_RC"
+          # Don't fail the whole job on a threshold breach — the report is the
+          # deliverable. The k6 rc is recorded above for the reader.
+          exit 0
+          REMOTE
+
+      - name: Fetch reports from VM
+        if: always()
+        run: |
+          mkdir -p perf-results
+          scp -i ~/.ssh/id_deploy \
+            "$SSH_USER@$VM_HOST:$DIR/perf/results/*" perf-results/ 2>/dev/null || true
+          ls -la perf-results || true
+
+      - name: Upload perf report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-report-${{ github.event.inputs.ref }}-${{ github.run_id }}
+          path: perf-results/
+          if-no-files-found: warn
+
+      - name: Tear down stack & clean up VM
+        if: always()
+        run: |
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" DIR="$DIR" PROJECT="$PROJECT" bash <<'REMOTE'
+          set -uxo pipefail
+          cd "$DIR" 2>/dev/null && docker compose -p "$PROJECT" down -v --remove-orphans || true
+          # Remove the copied source (root-owned build output) via a throwaway container.
+          docker run --rm -v "$DIR:/w" busybox sh -c 'rm -rf /w/..?* /w/.[!.]* /w/*' 2>/dev/null || true
+          rmdir "$DIR" 2>/dev/null || true
+          REMOTE

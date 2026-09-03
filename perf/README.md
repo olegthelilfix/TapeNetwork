@@ -15,6 +15,7 @@ listings, detail-by-slug lookups, and full-text search (the Lucene hotspot).
 |------|--------------|
 | `scenarios.js` | The k6 test: weighted mix of listings / detail-by-slug / search, per-group latency, pass/fail thresholds, HTML+JSON report. |
 | `generate-endpoints.mjs` | Pulls the live OpenAPI spec (`/v3/api-docs`), lists public GET endpoints, and reports which are covered / excluded / **uncovered**. |
+| `sample-stats.sh` | Samples per-container CPU / memory into a CSV (via `docker stats`) while a load test runs. |
 | `run.sh` | Runs k6 in Docker against a running stack and writes reports to `results/`. |
 | `results/` | Generated reports (git-ignored). |
 
@@ -83,3 +84,47 @@ budgets in `scenarios.js` to your target SLOs.
 > Thresholds are starting points sized for the small seed dataset on a modest
 > VM. Re-baseline them against your target instance before treating a red run as
 > a real regression.
+
+## CI: run against an ephemeral isolated stack
+
+`.github/workflows/perf.yml` (manual, **Actions → Load test (k6, on VM) → Run
+workflow**) runs the suite for a chosen branch against a **throwaway** stack — it
+does NOT touch the live prod stack:
+
+1. ships the branch source to the build VM;
+2. brings up an isolated compose stack (own project name, non-default ports
+   `18080`/`15432`) — only `backend` + its `postgres`;
+3. waits for `/api/v1/health`, then runs k6 while `sample-stats.sh` records
+   per-container CPU/MEM in the background;
+4. uploads the reports as a run artifact;
+5. tears the stack down (`docker compose down -v`) **always**, even on failure —
+   no lingering containers or volumes.
+
+Inputs: `ref` (branch/tag/SHA), `vus`, `ramp`, `duration`.
+
+> A threshold breach does **not** fail the workflow — the report is the
+> deliverable and the k6 exit code is logged. Read the artifact to judge.
+
+## Resource metrics (CPU / memory per service)
+
+`sample-stats.sh <out.csv> [interval] [project]` snapshots `docker stats` on an
+interval into a CSV — the "how did the system behave under load" half of the
+report, alongside k6's "how much load was applied" half. Columns:
+
+```
+ts,container,cpu_pct,mem_used,mem_limit,mem_pct,net_io,block_io
+```
+
+The CI workflow runs it automatically (filtered to the perf project) and includes
+`stats.csv` in the artifact. To sample a local run manually:
+
+```bash
+./sample-stats.sh results/stats.csv 2 &        # sample every 2s
+SAMPLER=$!
+./run.sh
+kill $SAMPLER
+```
+
+Correlate the CSV timestamps with the k6 run window to see which service (and how
+much RAM/CPU) each rendition of load cost — the starting point for capacity
+decisions (issue #30).
