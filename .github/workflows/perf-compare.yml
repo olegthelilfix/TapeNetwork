@@ -50,52 +50,64 @@ jobs:
           chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
-      # ---- master (base) ----
+      # ---- check out BOTH trees (master + PR head) into separate dirs ----
       - name: Checkout master
         uses: actions/checkout@v4
         with:
           ref: master
+          path: base-src
 
-      - name: Run perf on master
-        run: |
-          tar czf src.tgz --exclude=.git --exclude=node_modules --exclude=target --exclude=.next \
-            backend web cms streamer docker-compose.yml perf
-          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" "mkdir -p '$DIR/base'"
-          scp -i ~/.ssh/id_deploy src.tgz "$SSH_USER@$VM_HOST:$DIR/base/src.tgz"
-          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
-            DIR="$DIR/base" PROJECT="$BASE_PROJECT" \
-            BACKEND_PORT="$BASE_BACKEND_PORT" POSTGRES_PORT="$BASE_POSTGRES_PORT" WEB_PORT="$BASE_WEB_PORT" \
-            SUITE="$SUITE" \
-            VUS="$VUS" RAMP="$RAMP" DURATION="$DURATION" \
-            REF="$(git rev-parse HEAD)" LABEL="master" \
-            bash < perf/ci-run-and-record.sh
-
-      # ---- branch (head) ----
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          path: head-src
 
-      - name: Run perf on branch
+      # ---- 4 rounds in symmetric order base,head,head,base ----
+      # Running each leg twice, symmetrically, cancels the position bias where
+      # whichever leg runs second benefits from a warmed VM / warm docker cache
+      # and looks spuriously faster. compare.mjs takes the per-metric median.
+      - name: Run perf x4 (base,head,head,base)
         run: |
-          tar czf src.tgz --exclude=.git --exclude=node_modules --exclude=target --exclude=.next \
-            backend web cms streamer docker-compose.yml perf
-          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" "mkdir -p '$DIR/head'"
-          scp -i ~/.ssh/id_deploy src.tgz "$SSH_USER@$VM_HOST:$DIR/head/src.tgz"
-          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
-            DIR="$DIR/head" PROJECT="$HEAD_PROJECT" \
-            BACKEND_PORT="$HEAD_BACKEND_PORT" POSTGRES_PORT="$HEAD_POSTGRES_PORT" WEB_PORT="$HEAD_WEB_PORT" \
-            SUITE="$SUITE" \
-            VUS="$VUS" RAMP="$RAMP" DURATION="$DURATION" \
-            REF="${{ github.event.pull_request.head.sha }}" LABEL="${{ github.head_ref }}" \
-            bash < perf/ci-run-and-record.sh
+          run_leg() {
+            local leg="$1" round="$2" project="$3" bport="$4" pgport="$5" wport="$6" ref="$7" lbl="$8" srcdir="$9"
+            local rdir="$DIR/${leg}${round}"
+            ( cd "$srcdir" && tar czf /tmp/src-${leg}${round}.tgz \
+                --exclude=.git --exclude=node_modules --exclude=target --exclude=.next \
+                backend web cms streamer docker-compose.yml perf )
+            ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" "mkdir -p '$rdir'"
+            scp -i ~/.ssh/id_deploy /tmp/src-${leg}${round}.tgz "$SSH_USER@$VM_HOST:$rdir/src.tgz"
+            ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
+              DIR="$rdir" PROJECT="${project}_r${round}" \
+              BACKEND_PORT="$bport" POSTGRES_PORT="$pgport" WEB_PORT="$wport" \
+              SUITE="$SUITE" VUS="$VUS" RAMP="$RAMP" DURATION="$DURATION" \
+              REF="$ref" LABEL="$lbl" \
+              bash < head-src/perf/ci-run-and-record.sh
+            # Tear this round's stack down immediately so its ports are free for
+            # the next round (rounds reuse the same host ports per leg).
+            ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
+              "cd '$rdir' 2>/dev/null && docker compose -p '${project}_r${round}' down -v --remove-orphans 2>/dev/null || true"
+          }
+          HEAD_REF="${{ github.event.pull_request.head.sha }}"
+          HEAD_LBL="${{ github.head_ref }}"
+          BASE_REF="$(cd base-src && git rev-parse HEAD)"
+          # order: base, head, head, base
+          run_leg base 1 "$BASE_PROJECT" "$BASE_BACKEND_PORT" "$BASE_POSTGRES_PORT" "$BASE_WEB_PORT" "$BASE_REF" master   base-src
+          run_leg head 1 "$HEAD_PROJECT" "$HEAD_BACKEND_PORT" "$HEAD_POSTGRES_PORT" "$HEAD_WEB_PORT" "$HEAD_REF" "$HEAD_LBL" head-src
+          run_leg head 2 "$HEAD_PROJECT" "$HEAD_BACKEND_PORT" "$HEAD_POSTGRES_PORT" "$HEAD_WEB_PORT" "$HEAD_REF" "$HEAD_LBL" head-src
+          run_leg base 2 "$BASE_PROJECT" "$BASE_BACKEND_PORT" "$BASE_POSTGRES_PORT" "$BASE_WEB_PORT" "$BASE_REF" master   base-src
 
-      # ---- collect both reports ----
-      - name: Fetch both reports from VM
+      # ---- collect all four records ----
+      - name: Fetch reports from VM
         run: |
           mkdir -p report/master report/branch
-          scp -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST:$DIR/base/perf/results/*" report/master/
-          scp -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST:$DIR/head/perf/results/*" report/branch/
+          for r in 1 2; do
+            scp -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST:$DIR/base${r}/perf/results/perf-record.json" report/master/record-${r}.json
+            scp -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST:$DIR/head${r}/perf/results/perf-record.json" report/branch/record-${r}.json
+          done
+          # keep one full report set (round 1) for the HTML artifact
+          scp -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST:$DIR/base1/perf/results/summary.html" report/master/summary.html 2>/dev/null || true
+          scp -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST:$DIR/head1/perf/results/summary.html" report/branch/summary.html 2>/dev/null || true
           ls -R report
 
       - name: Compare & build report
@@ -103,20 +115,18 @@ jobs:
         run: |
           set +e
           node perf/compare.mjs compare \
-            --base report/master/perf-record.json \
-            --head report/branch/perf-record.json \
+            --base report/master/record-1.json --base report/master/record-2.json \
+            --head report/branch/record-1.json --head report/branch/record-2.json \
             --max-regression "$MAX_REGRESSION" --md report/comparison.md
           echo "cmp_rc=$?" >> "$GITHUB_OUTPUT"
           set -e
-          # Prepend a run header so each comment is unambiguously identifiable
-          # (a NEW comment is posted per run, so history is visible in the PR).
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           {
-            echo "🏃 Perf run [\`${{ github.run_id }}\`](${RUN_URL}) · suite \`${SUITE}\` · $(date -u '+%Y-%m-%d %H:%M UTC') · head \`${{ github.event.pull_request.head.sha }}\`"
+            echo "🏃 Perf run [\`${{ github.run_id }}\`](${RUN_URL}) · suite \`${SUITE}\` · 4 rounds (median) · $(date -u '+%Y-%m-%d %H:%M UTC') · head \`${{ github.event.pull_request.head.sha }}\`"
             echo
             cat report/comparison.md
             echo
-            echo "_Full HTML reports (master & branch) + stats.csv: **perf-report** artifact on [this run](${RUN_URL})._"
+            echo "_Full HTML reports + stats.csv: **perf-report** artifact on [this run](${RUN_URL})._"
           } > report/pr-comment.md
           cat report/pr-comment.md >> "$GITHUB_STEP_SUMMARY"
 
@@ -136,17 +146,17 @@ jobs:
           path: report/
           if-no-files-found: warn
 
-      - name: Tear down both stacks & clean up
+      - name: Tear down all stacks & clean up
         if: always()
         run: |
           ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
             DIR="$DIR" BASE_PROJECT="$BASE_PROJECT" HEAD_PROJECT="$HEAD_PROJECT" bash <<'REMOTE'
           set -uxo pipefail
-          for p in "$BASE_PROJECT" "$HEAD_PROJECT"; do
+          for p in "${BASE_PROJECT}_r1" "${BASE_PROJECT}_r2" "${HEAD_PROJECT}_r1" "${HEAD_PROJECT}_r2"; do
             docker compose -p "$p" down -v --remove-orphans 2>/dev/null || true
           done
           docker run --rm -v "$DIR:/w" busybox sh -c 'rm -rf /w/..?* /w/.[!.]* /w/*' 2>/dev/null || true
-          rmdir "$DIR/base" "$DIR/head" "$DIR" 2>/dev/null || true
+          rmdir "$DIR" 2>/dev/null || true
           REMOTE
 
       - name: Fail if regressed
