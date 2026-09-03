@@ -34,6 +34,8 @@ jobs:
           cache: yarn
           cache-dependency-path: web/yarn.lock
       - run: yarn install --frozen-lockfile
+      - run: yarn lint
+      - run: yarn typecheck
       - run: yarn test
       - run: yarn build
 
