@@ -1,0 +1,87 @@
+name: Perf baseline (master)
+
+# Records a perf BASELINE for master: brings up an isolated throwaway stack of
+# the current master on the build VM, runs k6 + samples docker stats, distills
+# the run into perf-record.json, and stores it as a long-retention artifact that
+# perf-compare.yml pulls to diff feature branches against.
+#
+# Runs on push to master (post-merge) and on demand. Not a gate — it just
+# refreshes the baseline whenever master moves.
+on:
+  push:
+    branches: [master]
+    paths-ignore: ['**.md', 'docs/**']
+  workflow_dispatch:
+    inputs:
+      vus: { description: Peak VUs, required: false, default: '20' }
+      ramp: { description: Ramp-up, required: false, default: '30s' }
+      duration: { description: Steady duration, required: false, default: '1m' }
+
+concurrency:
+  group: perf-baseline
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    env:
+      SSH_USER: ${{ vars.SSH_USER }}
+      VM_HOST: ${{ vars.VM_HOST }}
+      DIR: /tmp/perf-base-${{ github.run_id }}
+      PROJECT: perfbase_${{ github.run_id }}
+      BACKEND_PORT: '18081'
+      POSTGRES_PORT: '15433'
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: master }
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Run perf on master (isolated stack) & record
+        run: |
+          tar czf src.tgz --exclude=.git --exclude=node_modules --exclude=target --exclude=.next \
+            backend web cms streamer docker-compose.yml perf
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" "mkdir -p '$DIR'"
+          scp -i ~/.ssh/id_deploy src.tgz "$SSH_USER@$VM_HOST:$DIR/src.tgz"
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
+            DIR="$DIR" PROJECT="$PROJECT" BACKEND_PORT="$BACKEND_PORT" POSTGRES_PORT="$POSTGRES_PORT" \
+            VUS="${{ github.event.inputs.vus || '20' }}" \
+            RAMP="${{ github.event.inputs.ramp || '30s' }}" \
+            DURATION="${{ github.event.inputs.duration || '1m' }}" \
+            REF="${{ github.sha }}" \
+            bash < perf/ci-run-and-record.sh
+
+      - name: Fetch baseline record
+        if: always()
+        run: |
+          mkdir -p baseline
+          scp -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST:$DIR/perf/results/perf-record.json" baseline/ 2>/dev/null || true
+          scp -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST:$DIR/perf/results/*" baseline/ 2>/dev/null || true
+          ls -la baseline || true
+
+      - name: Upload baseline artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-baseline-master
+          path: baseline/
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Tear down & clean up
+        if: always()
+        run: |
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" DIR="$DIR" PROJECT="$PROJECT" bash <<'REMOTE'
+          set -uxo pipefail
+          cd "$DIR" 2>/dev/null && docker compose -p "$PROJECT" down -v --remove-orphans || true
+          docker run --rm -v "$DIR:/w" busybox sh -c 'rm -rf /w/..?* /w/.[!.]* /w/*' 2>/dev/null || true
+          rmdir "$DIR" 2>/dev/null || true
+          REMOTE

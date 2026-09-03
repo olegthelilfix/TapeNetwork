@@ -128,3 +128,45 @@ kill $SAMPLER
 Correlate the CSV timestamps with the k6 run window to see which service (and how
 much RAM/CPU) each rendition of load cost — the starting point for capacity
 decisions (issue #30).
+
+## Regression: compare a branch against master
+
+The flow you asked for — **deploy master → run → record baseline → switch to the
+branch → deploy → run → compare** — is two workflows plus one shared script:
+
+- **`.github/workflows/perf-baseline.yml`** — on push to `master` (and on
+  demand): brings up an isolated master stack, runs k6 + stats, distills the run
+  into `perf-record.json`, and stores it as the `perf-baseline-master` artifact
+  (90-day retention). This is the recorded baseline.
+- **`.github/workflows/perf-compare.yml`** — on a PR labelled **`perf`**: runs
+  the branch on its own isolated stack, downloads the latest master baseline,
+  diffs them with `compare.mjs`, and posts a delta table as a **sticky PR
+  comment**. The check goes **red if latency or error rate regressed by more than
+  `MAX_REGRESSION`%** (default 15). Throughput and per-service CPU/RAM are shown
+  but not gated (too noisy on a shared VM).
+- **`perf/ci-run-and-record.sh`** — the shared remote step both workflows pipe
+  over SSH: up → k6 + sample → `compare.mjs record`. DRY, one place to change.
+
+Both stacks are throwaway (own compose project, ports 18081–18082 / 15433–15434)
+and torn down (`down -v`) in an always-step — the live prod stack is never
+touched.
+
+### Record / compare manually
+
+```bash
+# distill a finished run into a comparable record
+node compare.mjs record --k6 results/summary.json --stats results/stats.csv \
+  --label master --ref "$(git rev-parse HEAD)" --out base.json
+
+# diff two records; exits 1 on regression > 15%
+node compare.mjs compare --base base.json --head head.json --max-regression 15 --md report.md
+```
+
+> **Baseline order matters.** `perf-compare` needs a `perf-baseline-master`
+> artifact to exist — run **Perf baseline (master)** once (or merge to master) so
+> the first comparison has something to diff against. Until then the compare job
+> comments "no baseline found" and passes.
+
+> **Noise.** master and the branch are measured at different times on a shared
+> burstable VM, so treat sub-~15% deltas as noise, not signal — that's why the
+> gate threshold defaults to 15%.
