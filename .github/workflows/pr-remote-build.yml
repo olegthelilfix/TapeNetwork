@@ -51,14 +51,14 @@ jobs:
             maven:3.9-eclipse-temurin-21 mvn -B verify
           echo '::endgroup::'
 
-          echo '::group::web — npm ci && test && build'
+          echo '::group::web — yarn install && test && build'
           docker run --rm -v "$PWD/web:/app" -w /app \
-            node:20-alpine sh -c 'npm ci && npm test && npm run build'
+            node:20-alpine sh -c 'yarn install --frozen-lockfile && yarn test && yarn build'
           echo '::endgroup::'
 
-          echo '::group::cms — npm ci && build'
+          echo '::group::cms — yarn install && build'
           docker run --rm -v "$PWD/cms:/app" -w /app \
-            node:20-alpine sh -c 'npm ci && npm run build'
+            node:20-alpine sh -c 'yarn install --frozen-lockfile && yarn build'
           echo '::endgroup::'
           REMOTE
 
