@@ -212,3 +212,22 @@ node pages-coverage.mjs --fail-on-gap   # exit 1 if a public page isn't journeye
 > Complements, does not replace, the API suite (#5): the API suite isolates
 > backend latency; the journey suite measures the whole service as a user hits
 > it.
+
+## Reducing noise: warm-up + path priming
+
+Cold JVM (no JIT), empty Caffeine/Lucene, cold Next SSR make the first requests
+much slower and inflate p95/p99. Two cheap mitigations run before every measured
+window:
+
+1. **Path priming** (`ci-run-and-record.sh`): after the stack is healthy, each
+   endpoint/page is curled a few times so the first *measured* request isn't a
+   cold-start outlier.
+2. **k6 warm-up scenario** (`scenarios.js` / `journey.js`): a short low-load
+   `warmup` scenario runs first; the measured scenario starts only after it
+   (`startTime: WARMUP`). Warm-up requests are **excluded from the gated
+   `lat_*` / `page_*` trends** (see `get()` / `page()`), so cold-start latency
+   never counts against the thresholds. Tune with `WARMUP` (default `20s`).
+
+What this does NOT fix: burstable-CPU jitter on the shared VM — for that, raise
+`DURATION` or move to a dedicated instance (#30). Sub-~15% deltas are still
+noise; that's why the regression gate defaults to 15%.

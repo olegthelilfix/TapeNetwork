@@ -36,6 +36,9 @@ if [ "$SUITE" = "journey" ]; then
   done
   K6_SCRIPT="journey.js"
   TARGET_ENV=(-e WEB_URL="http://host.docker.internal:${WEB_PORT}")
+  # Prime the real pages once so JIT/SSR/caches are warm before measuring.
+  PRIME_BASE="http://localhost:${WEB_PORT}"
+  PRIME_PATHS=(/ /shows /on-demand /articles /search?q=macro)
 else
   docker compose -p "$PROJECT" up -d --build backend
   for i in $(seq 1 60); do
@@ -47,7 +50,18 @@ else
   done
   K6_SCRIPT="scenarios.js"
   TARGET_ENV=(-e BASE_URL="http://host.docker.internal:${BACKEND_PORT}")
+  # Prime the API endpoints once (warm JIT + Caffeine + Lucene) before measuring.
+  PRIME_BASE="http://localhost:${BACKEND_PORT}/api/v1"
+  PRIME_PATHS=(/shows /on-demand/categories /articles /home /schedule /ticker /search?q=macro)
 fi
+
+# Path priming: hit each endpoint/page a few times so the first measured request
+# isn't a cold-start outlier. Cheap, and complements the k6 warm-up scenario.
+for _ in 1 2 3; do
+  for p in "${PRIME_PATHS[@]}"; do
+    curl -fsS -o /dev/null "${PRIME_BASE}${p}" 2>/dev/null || true
+  done
+done
 
 chmod +x perf/sample-stats.sh
 perf/sample-stats.sh perf/results/stats.csv 2 "$PROJECT" &
@@ -58,7 +72,7 @@ docker run --rm --add-host=host.docker.internal:host-gateway \
   --user "$HOST_UID:$HOST_GID" \
   -v "$PWD/perf:/perf" -w /perf \
   "${TARGET_ENV[@]}" \
-  -e VUS -e RAMP -e DURATION -e THINK_MIN -e THINK_MAX \
+  -e VUS -e RAMP -e DURATION -e WARMUP -e THINK_MIN -e THINK_MAX \
   grafana/k6 run "$K6_SCRIPT"
 K6_RC=$?
 set -e

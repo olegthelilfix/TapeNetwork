@@ -12,6 +12,7 @@
 // Thresholds fail the run (k6 exits non-zero) if latency/error budgets are blown.
 import http from 'k6/http';
 import { check, group } from 'k6';
+import exec from 'k6/execution';
 import { Trend } from 'k6/metrics';
 import { SharedArray } from 'k6/data';
 import { htmlReport } from 'https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js';
@@ -42,14 +43,27 @@ const tSearch = new Trend('lat_search', true);
 const VUS = Number(__ENV.VUS || 20);
 const RAMP = __ENV.RAMP || '30s';
 const DURATION = __ENV.DURATION || '1m';
+const WARMUP = __ENV.WARMUP || '20s';   // warm-up duration (metrics discarded)
 
 export const options = {
   // Make p99 available in the summary (k6 defaults omit it).
   summaryTrendStats: ['avg', 'min', 'med', 'p(95)', 'p(99)', 'max'],
   scenarios: {
+    // Warm-up: prime JIT / Hibernate / Caffeine before measuring. Its requests
+    // are NOT recorded into the gated lat_* trends (see get()), so cold-start
+    // latency doesn't pollute the thresholds.
+    warmup: {
+      executor: 'constant-vus',
+      vus: 3,
+      duration: WARMUP,
+      exec: 'run',
+      tags: { phase: 'warmup' },
+    },
     public_api: {
       executor: 'ramping-vus',
       startVUs: 1,
+      startTime: WARMUP,             // begin only after warm-up finishes
+      exec: 'run',
       stages: [
         { duration: RAMP, target: VUS },
         { duration: DURATION, target: VUS },
@@ -69,20 +83,28 @@ export const options = {
   },
 };
 
+// True during the warm-up scenario — used to skip recording gated metrics.
+function warming() {
+  return exec.scenario.name === 'warmup';
+}
+
 function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
 function get(path, trend, name) {
   const res = http.get(`${API}${path}`, { tags: { name } });
-  if (trend) trend.add(res.timings.duration);
+  // Don't let warm-up requests skew the gated per-group trends.
+  if (trend && !warming()) trend.add(res.timings.duration);
   check(res, { [`${name} 200`]: (r) => r.status === 200 });
   return res;
 }
 
 // Weighted mix reflecting the real read paths web/ hits: mostly listings +
 // detail lookups, a meaningful slice of search (the hotspot we care about).
-export default function () {
+// Shared by the warm-up and measured scenarios; warm-up requests are excluded
+// from the gated trends inside get().
+export function run() {
   const roll = Math.random();
 
   if (roll < 0.35) {
