@@ -2,6 +2,7 @@
 Documentation     Same scenario as ../playwright/tests/smoke.spec.ts — compare the tooling, not the test.
 Library           Browser
 Suite Teardown    Close Browser
+Resource          ../../resources/navigation.resource
 
 *** Variables ***
 ${BASE_URL}       http://localhost:3000
@@ -9,9 +10,7 @@ ${BASE_URL}       http://localhost:3000
 *** Test Cases ***
 Home Navigates To Shows
     [Tags]  navigation  shows
-    New Browser       chromium    headless=true
-    New Page          ${BASE_URL}/
-    Get Title         contains    Tape
+    Start Test Main Page
     Click             a[href="/shows"] >> nth=0
     Wait For Elements State    h1:has-text("Shows")    visible    timeout=10s
     Get Url           contains    /shows
@@ -19,9 +18,7 @@ Home Navigates To Shows
 
 Home Navigates To Articles
     [Tags]  navigation  articles
-    New Browser       chromium    headless=true
-    New Page          ${BASE_URL}/
-    Get Title         contains    Tape
+    Start Test Main Page
     Click             a[href="/articles"] >> nth=0
     Wait For Elements State    h1:has-text("The newsroom")    visible    timeout=10s
     Get Url           contains    /articles
@@ -29,9 +26,7 @@ Home Navigates To Articles
 
 Home Navigates To On Demand
     [Tags]  navigation  on-demand
-    New Browser       chromium    headless=true
-    New Page          ${BASE_URL}/
-    Get Title         contains    Tape
+    Start Test Main Page
     Click             a[href="/on-demand"] >> nth=0
     Wait For Elements State    h1:has-text("Browse the archive")    visible    timeout=10s
     Get Url           contains    /on-demand
