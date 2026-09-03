@@ -57,7 +57,10 @@ jobs:
           # the next build's Gradle is also PID 38, thinks the owner is alive, and
           # blocks until timeout. Under flock nothing else holds it, so drop the
           # stale journal (an access-time cache Gradle rebuilds; deps untouched).
-          rm -rf /opt/tape/ci/gradle/caches/journal-1
+          # The cache is root-owned (written by the build container), so the SSH
+          # user can't rm it directly — do it from a throwaway root container.
+          docker run --rm -v /opt/tape/ci/gradle:/root/.gradle alpine \
+            rm -rf /root/.gradle/caches/journal-1
 
           echo '::group::backend — gradle build'
           docker run --rm -v "$PWD/backend:/app" -v /opt/tape/ci/gradle:/root/.gradle -w /app \
