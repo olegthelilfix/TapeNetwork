@@ -113,7 +113,10 @@ class CatalogControllerTest {
 
         mvc.perform(get("/api/v1/on-demand/subcategories/missing"))
             .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.status").value(404));
+                .andExpect(jsonPath("$.status").value(404))
+            .andExpect(jsonPath("$.error").value("Not Found"))
+            .andExpect(jsonPath("$.message").exists())
+            .andExpect(jsonPath("$.time").exists());
     }
 
     @Test
@@ -138,6 +141,9 @@ class CatalogControllerTest {
 
         mvc.perform(get("/api/v1/on-demand/videos/missing"))
             .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.status").value(404));
+            .andExpect(jsonPath("$.status").value(404))
+            .andExpect(jsonPath("$.error").value("Not Found"))
+            .andExpect(jsonPath("$.message").exists())
+            .andExpect(jsonPath("$.time").exists());
     }
 }

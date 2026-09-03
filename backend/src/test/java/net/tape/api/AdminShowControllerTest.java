@@ -9,11 +9,13 @@ import net.tape.orm.ShowEntity;
 import net.tape.orm.ShowRepository;
 import net.tape.service.ShowMapper;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -22,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -76,6 +79,17 @@ class AdminShowControllerTest {
             .andExpect(status().isUnauthorized());
     }
 
+    /**
+     * The 401 boundary matters most on the write verbs, not the read path — a security
+     * regression that only leaves GET protected and opens up POST/PATCH/DELETE would still
+     * pass a suite that only checks {@code list}. Pin it on delete as the cheapest write verb.
+     */
+    @Test
+    void deleteWithoutAuthorizationHeaderIsRejected() throws Exception {
+        mvc.perform(delete("/api/admin/shows/1"))
+            .andExpect(status().isUnauthorized());
+    }
+
     @Test
     void listWithValidTokenReturnsShowsIncludingId() throws Exception {
         ShowEntity entity = new ShowEntity();
@@ -92,6 +106,43 @@ class AdminShowControllerTest {
             .andExpect(header().string("X-Total-Count", "1"))
             .andExpect(jsonPath("$[0].id").value(1))
             .andExpect(jsonPath("$[0].slug").value("market-open"));
+    }
+
+    /**
+     * {@code listWithValidTokenReturnsShowsIncludingId} above stubs {@code any(Pageable.class)}
+     * and a self-sized page, so it can't tell whether {@code _start}/{@code _end} were parsed
+     * correctly, and its {@code X-Total-Count} assertion can't distinguish
+     * {@code getTotalElements()} from {@code getContent().size()} (both happen to be 1). This
+     * test closes both gaps: it captures the actual {@link Pageable} built from explicit
+     * {@code _start}/{@code _end} params and checks the page number/size math, and it returns a
+     * total (42) that differs from the page's content size (1), so the header assertion only
+     * passes if {@code X-Total-Count} really reflects {@code getTotalElements()}.
+     */
+    @Test
+    void listWithExplicitStartAndEndBuildsCorrectPageRequest() throws Exception {
+        ShowEntity entity = new ShowEntity();
+        entity.setId(1L);
+        entity.setSlug("market-open");
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        // total (100) must stay above offset+pageSize (25+25=50), or PageImpl's constructor
+        // silently recomputes it as offset+content.size() instead of trusting this value.
+        when(repo.findAll(pageableCaptor.capture()))
+            .thenReturn(new PageImpl<>(List.of(entity), PageRequest.of(1, 25), 100));
+        Show model = new Show();
+        model.setId(1L);
+        model.setSlug("market-open");
+        when(mapper.toModel(entity)).thenReturn(model);
+
+        mvc.perform(get("/api/admin/shows")
+                .param("_start", "25")
+                .param("_end", "50")
+                .header("Authorization", authHeader()))
+            .andExpect(status().isOk())
+            .andExpect(header().string("X-Total-Count", "100"));
+
+        Pageable used = pageableCaptor.getValue();
+        assertEquals(1, used.getPageNumber());
+        assertEquals(25, used.getPageSize());
     }
 
     @Test

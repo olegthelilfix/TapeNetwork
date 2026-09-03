@@ -60,6 +60,16 @@ class AdminArticleControllerTest {
             .andExpect(status().isUnauthorized());
     }
 
+    /**
+     * The 401 boundary matters most on the write verbs, not the read path — see
+     * {@code AdminShowControllerTest.deleteWithoutAuthorizationHeaderIsRejected}'s Javadoc.
+     */
+    @Test
+    void deleteWithoutAuthorizationHeaderIsRejected() throws Exception {
+        mvc.perform(delete("/api/admin/articles/1"))
+            .andExpect(status().isUnauthorized());
+    }
+
     @Test
     void listWithValidTokenReturnsArticlesIncludingId() throws Exception {
         Article article = new Article();
