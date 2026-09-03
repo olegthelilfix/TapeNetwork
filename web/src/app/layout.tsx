@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import type { ReactElement, ReactNode } from "react";
 import { IBM_Plex_Serif, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/Header";
-import { Ticker } from "@/components/Ticker";
-import { Footer } from "@/components/Footer";
-import { api } from "@/lib/api/client";
-import type { TickerItem } from "@/lib/api/types";
+import { Header } from "@/ui/Header";
+import { Ticker } from "@/ui/Ticker";
+import { Footer } from "@/ui/Footer";
+import type { Ticker as TickerItem } from "@/domain/ticker";
+import { getTicker } from "@/services/server/controllers";
+import * as E from "fp-ts/Either";
 
 const serif = IBM_Plex_Serif({
   subsets: ["latin"],
@@ -53,10 +55,17 @@ const siteJsonLd = {
   ],
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  let ticker: TickerItem[] = [];
+type RootLayoutProps = {
+  readonly children: ReactNode;
+};
+
+const RootLayout = async ({ children }: RootLayoutProps): Promise<ReactElement> => {
+  let ticker: readonly TickerItem[] = [];
   try {
-    ticker = await api.ticker();
+    const result = await getTicker()();
+    if (E.isRight(result)) {
+      ticker = result.right;
+    }
   } catch {
     // Backend unreachable — render without the ticker rather than failing the whole page.
   }
@@ -75,4 +84,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </body>
     </html>
   );
-}
+};
+
+export default RootLayout;
