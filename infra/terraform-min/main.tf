@@ -94,6 +94,9 @@ resource "google_compute_instance" "vm" {
   zone         = var.zone
   tags         = ["tape"]
 
+  # Machine-type changes require the VM to be stopped; let terraform stop/start it.
+  allow_stopping_for_update = true
+
   boot_disk {
     initialize_params {
       image = "ubuntu-os-cloud/ubuntu-2204-lts"
