@@ -3,6 +3,7 @@ Documentation     Same scenario as ../playwright/tests/smoke.spec.ts — compare
 Library           Browser
 Suite Teardown    Close Browser
 Resource          ../../resources/navigation.resource
+Resource          ../../resources/search.resource
 
 *** Variables ***
 ${BASE_URL}       http://localhost:3000
@@ -31,3 +32,21 @@ Home Navigates To On Demand
     Wait For Elements State    h1:has-text("Browse the archive")    visible    timeout=10s
     Get Url           contains    /on-demand
     Get Text          h1    ==    Browse the archive
+
+Search for Shows Upper case
+    [Tags]  shows   search
+    Start Test Main Page
+    Search For  ${SearchUCMacro}
+    Wait For Elements State    h3:has-text("${SearchUCMacro}")    visible    timeout=10s
+
+Search for Shows Lower case
+    [Tags]  shows   search
+    Start Test Main Page
+    Search For  ${SearchLCMacro}
+    Wait For Elements State    h3:has-text("${SearchLCMacro}")    visible    timeout=10s
+
+Search for Non-existing Term
+    [Tags]  shows   search
+    Start Test Main Page
+    Search For  ${SearchIncorrect}
+    Wait For Elements State    p:has-text("Nothing matched. Try different terms.")    visible    timeout=10s
