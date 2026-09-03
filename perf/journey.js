@@ -11,6 +11,7 @@
 //   SLUGS_*, SEARCH_Q   real seed slugs / terms (shared with scenarios.js)
 import http from 'k6/http';
 import { check, group, sleep } from 'k6';
+import exec from 'k6/execution';
 import { Trend } from 'k6/metrics';
 import { SharedArray } from 'k6/data';
 import { htmlReport } from 'https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js';
@@ -49,14 +50,26 @@ const RAMP = __ENV.RAMP || '30s';
 const DURATION = __ENV.DURATION || '1m';
 const THINK_MIN = Number(__ENV.THINK_MIN || 1);
 const THINK_MAX = Number(__ENV.THINK_MAX || 3);
+const WARMUP = __ENV.WARMUP || '20s';   // warm-up duration (metrics discarded)
 
 export const options = {
   // Make p99 available in the summary (k6 defaults omit it).
   summaryTrendStats: ['avg', 'min', 'med', 'p(95)', 'p(99)', 'max'],
   scenarios: {
+    // Warm-up: prime SSR / JIT / caches before measuring; its page loads are
+    // NOT recorded into the gated page_* trends (see page()).
+    warmup: {
+      executor: 'constant-vus',
+      vus: 2,
+      duration: WARMUP,
+      exec: 'run',
+      tags: { phase: 'warmup' },
+    },
     user_journey: {
       executor: 'ramping-vus',
       startVUs: 1,
+      startTime: WARMUP,
+      exec: 'run',
       stages: [
         { duration: RAMP, target: VUS },
         { duration: DURATION, target: VUS },
@@ -78,13 +91,14 @@ export const options = {
 
 function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
 function think() { sleep(THINK_MIN + Math.random() * (THINK_MAX - THINK_MIN)); }
+function warming() { return exec.scenario.name === 'warmup'; }
 
 // Load a page's HTML document (SSR). Assets under _next are fetched by real
 // browsers separately; k6 is protocol-level, so we measure the document — the
-// server-side cost. name tags it; trend records page latency.
+// server-side cost. name tags it; trend records page latency (except warm-up).
 function page(path, trend, name) {
   const res = http.get(`${WEB}${path}`, { tags: { name } });
-  trend.add(res.timings.duration);
+  if (!warming()) trend.add(res.timings.duration);
   check(res, {
     [`${name} 200`]: (r) => r.status === 200,
     [`${name} is html`]: (r) => (r.headers['Content-Type'] || '').includes('text/html'),
@@ -93,8 +107,9 @@ function page(path, trend, name) {
 }
 
 // One visitor session: land -> browse -> drill in -> watch -> search -> read.
-// Think-time between steps so VUs model humans, not a hammer.
-export default function () {
+// Think-time between steps so VUs model humans, not a hammer. Shared by warm-up
+// and measured scenarios; warm-up page loads are excluded from gated trends.
+export function run() {
   group('journey', () => {
     page('/', pHome, 'home');
     think();
