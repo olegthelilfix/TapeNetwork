@@ -17,6 +17,56 @@ const opt = (name, def) => {
   const i = argv.indexOf(`--${name}`);
   return i >= 0 ? argv[i + 1] : def;
 };
+// All values of a repeatable flag, e.g. --base a.json --base b.json.
+const optAll = (name) => {
+  const out = [];
+  for (let i = 0; i < argv.length; i++) if (argv[i] === `--${name}`) out.push(argv[i + 1]);
+  return out;
+};
+
+function median(nums) {
+  const xs = nums.filter((n) => n != null && !Number.isNaN(n)).sort((a, b) => a - b);
+  if (!xs.length) return null;
+  const mid = Math.floor(xs.length / 2);
+  const m = xs.length % 2 ? xs[mid] : (xs[mid - 1] + xs[mid]) / 2;
+  return Math.round(m * 100) / 100;
+}
+
+// Merge N per-run records (same leg) into one by taking the per-metric median —
+// cancels the position bias where whichever leg runs second looks faster.
+function medianRecord(records) {
+  if (records.length === 1) return records[0];
+  const k6s = records.map((r) => r.k6);
+  const groupNames = [...new Set(k6s.flatMap((k) => Object.keys(k.groups || {})))];
+  const groups = {};
+  for (const g of groupNames) {
+    groups[g] = {
+      p95: median(k6s.map((k) => k.groups?.[g]?.p95)),
+      p99: median(k6s.map((k) => k.groups?.[g]?.p99)),
+    };
+  }
+  const svcNames = [...new Set(records.flatMap((r) => Object.keys(r.peaks || {})))];
+  const peaks = {};
+  for (const s of svcNames) {
+    peaks[s] = {
+      cpu_pct: median(records.map((r) => r.peaks?.[s]?.cpu_pct)),
+      mem_mib: median(records.map((r) => r.peaks?.[s]?.mem_mib)),
+    };
+  }
+  return {
+    label: records[0].label,
+    ref: records[0].ref,
+    runs: records.length,
+    k6: {
+      rps: median(k6s.map((k) => k.rps)),
+      p95: median(k6s.map((k) => k.p95)),
+      p99: median(k6s.map((k) => k.p99)),
+      error_rate: median(k6s.map((k) => k.error_rate)),
+      groups,
+    },
+    peaks,
+  };
+}
 
 if (cmd === 'record') {
   const record = {
@@ -31,8 +81,10 @@ if (cmd === 'record') {
   console.log(`Wrote ${out}`);
   console.log(JSON.stringify(record, null, 2));
 } else if (cmd === 'compare') {
-  const base = JSON.parse(readFileSync(opt('base'), 'utf8'));
-  const head = JSON.parse(readFileSync(opt('head'), 'utf8'));
+  const baseFiles = optAll('base').length ? optAll('base') : [opt('base')];
+  const headFiles = optAll('head').length ? optAll('head') : [opt('head')];
+  const base = medianRecord(baseFiles.map((f) => JSON.parse(readFileSync(f, 'utf8'))));
+  const head = medianRecord(headFiles.map((f) => JSON.parse(readFileSync(f, 'utf8'))));
   const maxReg = Number(opt('max-regression', 15));
 
   let regressed = false;

@@ -231,3 +231,14 @@ window:
 What this does NOT fix: burstable-CPU jitter on the shared VM — for that, raise
 `DURATION` or move to a dedicated instance (#30). Sub-~15% deltas are still
 noise; that's why the regression gate defaults to 15%.
+
+## Cancelling position bias: 4 runs, median
+
+Running base then head once each gives whichever leg runs **second** a warmed VM
+and warm docker cache, so it looks spuriously faster — a directional bias, not
+random noise (untouched groups showed a steady ~-30%). `perf-compare.yml` runs
+each leg **twice in the symmetric order base, head, head, base** and
+`compare.mjs` takes the **per-metric median** of each leg's runs
+(`--base a.json --base b.json --head c.json --head d.json`). The second-place
+advantage now lands on both legs equally and cancels out; a real regression
+(e.g. search) survives the median. Cost: 4 stack bring-ups instead of 2.
