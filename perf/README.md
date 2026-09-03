@@ -14,7 +14,9 @@ listings, detail-by-slug lookups, and full-text search (the Lucene hotspot).
 | File | What it does |
 |------|--------------|
 | `scenarios.js` | The k6 test: weighted mix of listings / detail-by-slug / search, per-group latency, pass/fail thresholds, HTML+JSON report. |
+| `journey.js` | Full-service **user-journey** k6 test (#39): drives the real Next.js **web pages** (SSR, port 3000) with think-time, not the API directly. |
 | `generate-endpoints.mjs` | Pulls the live OpenAPI spec (`/v3/api-docs`), lists public GET endpoints, and reports which are covered / excluded / **uncovered**. |
+| `pages-coverage.mjs` | Scans `web/src/app` routes and reports which pages the journey covers / excludes / **misses** (frontend counterpart of the endpoint checker). |
 | `sample-stats.sh` | Samples per-container CPU / memory into a CSV (via `docker stats`) while a load test runs. |
 | `run.sh` | Runs k6 in Docker against a running stack and writes reports to `results/`. |
 | `results/` | Generated reports (git-ignored). |
@@ -167,3 +169,46 @@ node compare.mjs compare --base base.json --head head.json --max-regression 15 -
 
 > **Noise.** Even back-to-back on the same burstable VM, treat sub-~15% deltas as
 > noise, not signal — that's why the gate threshold defaults to 15%.
+
+## Full-service user-journey suite (`journey.js`, #39)
+
+Where `scenarios.js` hits the backend API directly, `journey.js` drives the
+**real web frontend** (Next.js SSR pages on port 3000) along a plausible visitor
+path with think-time: home → shows → a show → on-demand → category → subcategory
+→ watch an episode → search → articles. Page latency then reflects the whole
+chain a user feels — SSR render + the web→backend fetch + the HTML document.
+
+Run it via the shared harness by setting `SUITE=journey`:
+
+```bash
+# manual workflow: Actions → Load test (k6, on VM) → suite = journey
+# locally against a running stack (web on :3000):
+SUITE=journey WEB_URL=http://localhost:3000 docker run --rm \
+  --add-host=host.docker.internal:host-gateway -v "$PWD:/perf" -w /perf \
+  -e WEB_URL -e VUS -e RAMP -e DURATION -e THINK_MIN -e THINK_MAX \
+  grafana/k6 run journey.js
+```
+
+Extra env: `THINK_MIN`/`THINK_MAX` (seconds of think-time between steps, default
+1..3), `SLUGS_WATCH` (episode slugs for the watch step). Thresholds are per
+journey-step (`page_home`, `page_listing`, `page_detail`, `page_search`,
+`page_watch`) and sized higher than the API suite — SSR with `force-dynamic`
+re-renders every request, so page loads are hundreds of ms, not tens.
+
+Check page coverage against the app's real routes:
+
+```bash
+node pages-coverage.mjs --fail-on-gap   # exit 1 if a public page isn't journeyed
+```
+
+### In CI
+
+- **`perf.yml`** takes a `suite` input (`scenarios` | `journey`).
+- **`perf-compare.yml`** runs the API suite on the `perf` label and the
+  user-journey suite on the **`perf-journey`** label. The `journey` suite brings
+  up `web` + `backend` + `postgres` (not backend alone), so runs are heavier and
+  slower than the API suite.
+
+> Complements, does not replace, the API suite (#5): the API suite isolates
+> backend latency; the journey suite measures the whole service as a user hits
+> it.

@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # Runs ON THE VM (piped over ssh stdin by the perf workflows). Expects these
 # env vars set by the ssh command: DIR PROJECT BACKEND_PORT POSTGRES_PORT
-# VUS RAMP DURATION REF [LABEL].
+# VUS RAMP DURATION REF [LABEL] [SUITE] [WEB_PORT].
+#
+# SUITE=scenarios (default) — load the backend API (/api/v1) directly.
+# SUITE=journey             — bring up the web frontend too and drive real
+#                             SSR pages as a user journey (issue #39).
 #
 # Brings up an isolated throwaway stack of the shipped source, runs k6 while
 # sampling docker stats, and distills the run into perf/results/perf-record.json
@@ -15,17 +19,35 @@ mkdir -p perf/results
 # 'permission denied'.
 HOST_UID="$(id -u)"; HOST_GID="$(id -g)"
 
+SUITE="${SUITE:-scenarios}"
 export BACKEND_PORT POSTGRES_PORT
-docker compose -p "$PROJECT" up -d --build backend
 
-# Wait for the API (build is slow on this VM).
-for i in $(seq 1 60); do
-  if curl -fsS "http://localhost:${BACKEND_PORT}/api/v1/health" >/dev/null 2>&1; then
-    echo "backend healthy"; break
-  fi
-  sleep 5
-  [ "$i" -eq 60 ] && { echo "backend never became healthy"; exit 1; }
-done
+if [ "$SUITE" = "journey" ]; then
+  export WEB_PORT
+  # web depends on backend, which depends on postgres — compose brings all up.
+  docker compose -p "$PROJECT" up -d --build web
+  # web is baked to talk to the API at build time; give SSR a moment.
+  for i in $(seq 1 60); do
+    if curl -fsS "http://localhost:${WEB_PORT}/" >/dev/null 2>&1; then
+      echo "web healthy"; break
+    fi
+    sleep 5
+    [ "$i" -eq 60 ] && { echo "web never became healthy"; exit 1; }
+  done
+  K6_SCRIPT="journey.js"
+  TARGET_ENV=(-e WEB_URL="http://host.docker.internal:${WEB_PORT}")
+else
+  docker compose -p "$PROJECT" up -d --build backend
+  for i in $(seq 1 60); do
+    if curl -fsS "http://localhost:${BACKEND_PORT}/api/v1/health" >/dev/null 2>&1; then
+      echo "backend healthy"; break
+    fi
+    sleep 5
+    [ "$i" -eq 60 ] && { echo "backend never became healthy"; exit 1; }
+  done
+  K6_SCRIPT="scenarios.js"
+  TARGET_ENV=(-e BASE_URL="http://host.docker.internal:${BACKEND_PORT}")
+fi
 
 chmod +x perf/sample-stats.sh
 perf/sample-stats.sh perf/results/stats.csv 2 "$PROJECT" &
@@ -35,9 +57,9 @@ set +e
 docker run --rm --add-host=host.docker.internal:host-gateway \
   --user "$HOST_UID:$HOST_GID" \
   -v "$PWD/perf:/perf" -w /perf \
-  -e BASE_URL="http://host.docker.internal:${BACKEND_PORT}" \
-  -e VUS -e RAMP -e DURATION \
-  grafana/k6 run scenarios.js
+  "${TARGET_ENV[@]}" \
+  -e VUS -e RAMP -e DURATION -e THINK_MIN -e THINK_MAX \
+  grafana/k6 run "$K6_SCRIPT"
 K6_RC=$?
 set -e
 
