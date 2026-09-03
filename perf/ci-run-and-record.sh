@@ -10,6 +10,10 @@ set -euxo pipefail
 cd "$DIR"
 tar xzf src.tgz
 mkdir -p perf/results
+# perf/results is owned by the SSH 'deploy' user; run the k6/node containers as
+# that same uid:gid (below) so their writes land as deploy and don't hit
+# 'permission denied'.
+HOST_UID="$(id -u)"; HOST_GID="$(id -g)"
 
 export BACKEND_PORT POSTGRES_PORT
 docker compose -p "$PROJECT" up -d --build backend
@@ -29,6 +33,7 @@ SAMPLER=$!
 
 set +e
 docker run --rm --add-host=host.docker.internal:host-gateway \
+  --user "$HOST_UID:$HOST_GID" \
   -v "$PWD/perf:/perf" -w /perf \
   -e BASE_URL="http://host.docker.internal:${BACKEND_PORT}" \
   -e VUS -e RAMP -e DURATION \
@@ -40,9 +45,15 @@ kill "$SAMPLER" 2>/dev/null || true
 sleep 1
 echo "k6 exit code: $K6_RC"
 
+# k6's handleSummary must have produced the report; if not, fail loudly here
+# rather than with a cryptic ENOENT inside compare.mjs.
+if [ ! -f perf/results/summary.json ]; then
+  echo "ERROR: k6 did not write results/summary.json (see k6 output above)"; exit 1
+fi
+
 # Distill into a compact, comparable record (Node ships in the k6 image? no —
 # use a small node container against the mounted perf dir).
-docker run --rm -v "$PWD/perf:/perf" -w /perf node:20-alpine \
+docker run --rm --user "$HOST_UID:$HOST_GID" -v "$PWD/perf:/perf" -w /perf node:20-alpine \
   node compare.mjs record \
     --k6 results/summary.json --stats results/stats.csv \
     --label "${LABEL:-run}" --ref "${REF:-}" --out results/perf-record.json
