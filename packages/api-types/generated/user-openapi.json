@@ -1,0 +1,926 @@
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "Tape Network API",
+    "description" : "Public content API (/api/v1) and CMS admin API (/api/admin).",
+    "version" : "v1"
+  },
+  "servers" : [ {
+    "url" : "http://localhost:8080",
+    "description" : "Generated server url"
+  } ],
+  "paths" : {
+    "/api/v1/watch/{slug}" : {
+      "get" : {
+        "tags" : [ "watch-controller" ],
+        "operationId" : "watch",
+        "parameters" : [ {
+          "name" : "slug",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlayerDtoV1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ticker" : {
+      "get" : {
+        "tags" : [ "ticker-controller" ],
+        "operationId" : "list",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TickerDtoV1"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sitemap-data" : {
+      "get" : {
+        "tags" : [ "sitemap-controller" ],
+        "operationId" : "entries",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SitemapEntry"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/shows" : {
+      "get" : {
+        "tags" : [ "show-controller" ],
+        "operationId" : "list_1",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ShowSummaryDtoV1"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/shows/{slug}" : {
+      "get" : {
+        "tags" : [ "show-controller" ],
+        "operationId" : "bySlug",
+        "parameters" : [ {
+          "name" : "slug",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShowDetailDtoV1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search" : {
+      "get" : {
+        "tags" : [ "search-controller" ],
+        "operationId" : "search",
+        "parameters" : [ {
+          "name" : "q",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "type",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 8
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SearchHit"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schedule" : {
+      "get" : {
+        "tags" : [ "schedule-controller" ],
+        "operationId" : "list_2",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ScheduleItemDtoV1"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/on-demand/videos/{slug}" : {
+      "get" : {
+        "tags" : [ "catalog-controller" ],
+        "operationId" : "video",
+        "parameters" : [ {
+          "name" : "slug",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VideoDtoV1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/on-demand/subcategories/{slug}" : {
+      "get" : {
+        "tags" : [ "catalog-controller" ],
+        "operationId" : "subcategory",
+        "parameters" : [ {
+          "name" : "slug",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SubcategoryDetailDtoV1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/on-demand/categories" : {
+      "get" : {
+        "tags" : [ "catalog-controller" ],
+        "operationId" : "categories",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CategorySummaryDtoV1"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/on-demand/categories/{slug}" : {
+      "get" : {
+        "tags" : [ "catalog-controller" ],
+        "operationId" : "category",
+        "parameters" : [ {
+          "name" : "slug",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CategoryDetailDtoV1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/home" : {
+      "get" : {
+        "tags" : [ "home-controller" ],
+        "operationId" : "home",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HomeResponseDtoV1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health" : {
+      "get" : {
+        "tags" : [ "health-controller" ],
+        "operationId" : "health",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/articles" : {
+      "get" : {
+        "tags" : [ "article-controller" ],
+        "operationId" : "list_3",
+        "parameters" : [ {
+          "name" : "category",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "page",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 12
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PagedResponseArticleDtoV1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/articles/{slug}" : {
+      "get" : {
+        "tags" : [ "article-controller" ],
+        "operationId" : "bySlug_1",
+        "parameters" : [ {
+          "name" : "slug",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ArticleDtoV1"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "PlayerDtoV1" : {
+        "type" : "object",
+        "properties" : {
+          "kind" : {
+            "type" : "string"
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "showName" : {
+            "type" : "string"
+          },
+          "showSlug" : {
+            "type" : "string"
+          },
+          "durationLabel" : {
+            "type" : "string"
+          },
+          "imageUrl" : {
+            "type" : "string"
+          },
+          "live" : {
+            "type" : "boolean"
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "publishedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "videoUrl" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TickerDtoV1" : {
+        "type" : "object",
+        "properties" : {
+          "symbol" : {
+            "type" : "string"
+          },
+          "price" : {
+            "type" : "string"
+          },
+          "change" : {
+            "type" : "string"
+          },
+          "direction" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SitemapEntry" : {
+        "type" : "object",
+        "properties" : {
+          "loc" : {
+            "type" : "string"
+          },
+          "lastmod" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ShowSummaryDtoV1" : {
+        "type" : "object",
+        "properties" : {
+          "slug" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "tagline" : {
+            "type" : "string"
+          },
+          "blurb" : {
+            "type" : "string"
+          },
+          "scheduleSlot" : {
+            "type" : "string"
+          },
+          "imageUrl" : {
+            "type" : "string"
+          }
+        }
+      },
+      "EpisodeDtoV1" : {
+        "type" : "object",
+        "properties" : {
+          "slug" : {
+            "type" : "string"
+          },
+          "epNo" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "durationSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "durationLabel" : {
+            "type" : "string"
+          },
+          "views" : {
+            "type" : "string"
+          },
+          "live" : {
+            "type" : "boolean"
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "imageUrl" : {
+            "type" : "string"
+          }
+        }
+      },
+      "HostDtoV1" : {
+        "type" : "object",
+        "properties" : {
+          "initials" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ShowDetailDtoV1" : {
+        "type" : "object",
+        "properties" : {
+          "slug" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "tagline" : {
+            "type" : "string"
+          },
+          "blurb" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "scheduleSlot" : {
+            "type" : "string"
+          },
+          "episodesCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "hoursPerWeek" : {
+            "type" : "string"
+          },
+          "monthlyViews" : {
+            "type" : "string"
+          },
+          "imageUrl" : {
+            "type" : "string"
+          },
+          "hosts" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/HostDtoV1"
+            }
+          },
+          "episodes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/EpisodeDtoV1"
+            }
+          }
+        }
+      },
+      "SearchHit" : {
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "subtitle" : {
+            "type" : "string"
+          },
+          "imageUrl" : {
+            "type" : "string"
+          },
+          "url" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ScheduleItemDtoV1" : {
+        "type" : "object",
+        "properties" : {
+          "timeEt" : {
+            "type" : "string"
+          },
+          "showName" : {
+            "type" : "string"
+          },
+          "showSlug" : {
+            "type" : "string"
+          },
+          "hostsLabel" : {
+            "type" : "string"
+          },
+          "live" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "VideoDtoV1" : {
+        "type" : "object",
+        "properties" : {
+          "slug" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "durationSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "durationLabel" : {
+            "type" : "string"
+          },
+          "showName" : {
+            "type" : "string"
+          },
+          "categoryName" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "imageUrl" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SubcategoryDetailDtoV1" : {
+        "type" : "object",
+        "properties" : {
+          "slug" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "blurb" : {
+            "type" : "string"
+          },
+          "categorySlug" : {
+            "type" : "string"
+          },
+          "categoryName" : {
+            "type" : "string"
+          },
+          "videos" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/VideoDtoV1"
+            }
+          }
+        }
+      },
+      "CategorySummaryDtoV1" : {
+        "type" : "object",
+        "properties" : {
+          "slug" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "blurb" : {
+            "type" : "string"
+          },
+          "imageUrl" : {
+            "type" : "string"
+          },
+          "subcategoryCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "videoCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "subNames" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "CategoryDetailDtoV1" : {
+        "type" : "object",
+        "properties" : {
+          "slug" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "blurb" : {
+            "type" : "string"
+          },
+          "subcategories" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SubcategorySummaryDtoV1"
+            }
+          }
+        }
+      },
+      "SubcategorySummaryDtoV1" : {
+        "type" : "object",
+        "properties" : {
+          "slug" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "blurb" : {
+            "type" : "string"
+          },
+          "imageUrl" : {
+            "type" : "string"
+          },
+          "videoCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "ArticleDtoV1" : {
+        "type" : "object",
+        "properties" : {
+          "slug" : {
+            "type" : "string"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "dek" : {
+            "type" : "string"
+          },
+          "author" : {
+            "type" : "string"
+          },
+          "body" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "readMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "imageUrl" : {
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "HomeCardDtoV1" : {
+        "type" : "object",
+        "properties" : {
+          "refType" : {
+            "type" : "string"
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "subtitle" : {
+            "type" : "string"
+          },
+          "durationLabel" : {
+            "type" : "string"
+          },
+          "imageUrl" : {
+            "type" : "string"
+          },
+          "live" : {
+            "type" : "boolean"
+          },
+          "views" : {
+            "type" : "string"
+          }
+        }
+      },
+      "HomeResponseDtoV1" : {
+        "type" : "object",
+        "properties" : {
+          "liveNow" : {
+            "$ref" : "#/components/schemas/HomeCardDtoV1"
+          },
+          "featured" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/HomeCardDtoV1"
+            }
+          },
+          "mostWatched" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/HomeCardDtoV1"
+            }
+          },
+          "upNext" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/HomeCardDtoV1"
+            }
+          },
+          "ticker" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TickerDtoV1"
+            }
+          },
+          "schedule" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ScheduleItemDtoV1"
+            }
+          },
+          "latestArticles" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ArticleDtoV1"
+            }
+          }
+        }
+      },
+      "PagedResponseArticleDtoV1" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ArticleDtoV1"
+            }
+          },
+          "page" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      }
+    }
+  }
+}

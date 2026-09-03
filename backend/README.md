@@ -1,6 +1,6 @@
 # backend — Tape Network API
 
-Java 21 · Spring Boot 3 · Maven · PostgreSQL · Flyway · Hibernate Search (Lucene) · MapStruct · JWT.
+Java 21 · Spring Boot 3 · Gradle · PostgreSQL · Flyway · Hibernate Search (Lucene) · MapStruct · JWT.
 
 Serves the **public** content API (`/api/v1`) and the **admin** CMS API (`/api/admin`).
 
@@ -11,7 +11,7 @@ Serves the **public** content API (`/api/v1`) and the **admin** CMS API (`/api/a
 docker compose up --build backend      # or: podman compose up --build backend
 
 # standalone (needs a Postgres on :5432 matching .env):
-mvn spring-boot:run
+./gradlew bootRun
 ```
 
 Swagger UI: http://localhost:8080/swagger-ui.html · OpenAPI JSON: `/v3/api-docs`.
@@ -19,7 +19,19 @@ Swagger UI: http://localhost:8080/swagger-ui.html · OpenAPI JSON: `/v3/api-docs
 ## Test
 
 ```bash
-mvn -B verify
+./gradlew build
+```
+
+If your default `java` is newer than 21 (e.g. 24/25), Gradle 8.14's embedded Kotlin
+script compiler can fail parsing `build.gradle.kts` with a bare `IllegalArgumentException: 25`.
+Pin `JAVA_HOME` for the invocation instead of changing your global default:
+
+```bash
+JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew build   # macOS
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew build       # Linux (path varies by distro)
+```
+```powershell
+$env:JAVA_HOME="C:\Program Files\Zulu\zulu-21"; .\gradlew.bat build   # Windows
 ```
 
 ## Architecture — layered, 3-tier objects

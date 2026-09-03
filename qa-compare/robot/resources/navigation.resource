@@ -1,0 +1,13 @@
+*** Settings ***
+Library           Browser
+
+*** Variables ***
+${BASE_URL}       http://localhost:3000
+${Browser}        edge
+
+*** Keywords ***
+
+Start Test Main Page
+    New Browser       chromium    headless=true
+    New Page          ${BASE_URL}/
+    Get Title         contains    Tape

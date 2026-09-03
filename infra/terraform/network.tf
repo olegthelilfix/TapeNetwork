@@ -14,9 +14,13 @@ resource "google_compute_firewall" "http" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "443", "8080", "8081"] # web, (tls), backend API, cms
+    ports    = ["80", "443", "8080", "8081", "8082"] # web, (tls), backend API, cms, streamer
   }
 
+  # NOTE: 8082 (streamer) serves video over plain HTTP with no auth — anyone
+  # can list (/videos) and stream any file in VIDEOS_DIR. Acceptable for the
+  # experimental launch; before shipping anything private, front it with the
+  # web/reverse-proxy tier (TLS + auth) or restrict source_ranges.
   source_ranges = ["0.0.0.0/0"]
   target_tags   = ["tape"]
 }

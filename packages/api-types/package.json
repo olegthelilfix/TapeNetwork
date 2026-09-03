@@ -1,0 +1,8 @@
+{
+  "name": "@tape/api-types",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "pull-openapi": "node scripts/pull-openapi.mjs"
+  }
+}

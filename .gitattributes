@@ -1,0 +1,8 @@
+# Line-ending policy.
+#
+# Machine-generated OpenAPI specs are always written with LF by
+# packages/api-types/scripts/pull-openapi.mjs. Without this, Windows'
+# core.autocrlf=true rewrites them to CRLF on checkout, so the next re-pull
+# (which writes LF again) shows the whole file as "modified" — phantom diffs
+# with no real content change. Pin them to LF so every OS agrees.
+packages/api-types/generated/*.json text eol=lf

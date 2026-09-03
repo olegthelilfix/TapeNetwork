@@ -60,7 +60,22 @@ services:
     depends_on:
       - backend
 
+  streamer:
+    build:
+      context: ./streamer
+    environment:
+      VIDEOS_DIR: /data/videos
+      HLS_CACHE_DIR: /data/hls-cache
+      CORS_ORIGINS: ${CORS_ALLOWED_ORIGINS:-*}
+    volumes:
+      - videodata:/data/videos
+      - hlscache:/data/hls-cache
+    ports:
+      - "${STREAMER_PORT:-8082}:8082"
+
 volumes:
   pgdata:
   searchdata:
   mediadata:
+  videodata:
+  hlscache:

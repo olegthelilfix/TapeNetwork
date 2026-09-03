@@ -1,0 +1,156 @@
+name: Perf compare (master vs branch)
+
+# In ONE run: bring up master and the PR branch on separate isolated throwaway
+# stacks, load-test both back-to-back on the same VM (identical conditions ->
+# low noise), then publish BOTH reports and their comparison to the PR — as a
+# sticky comment and as a single downloadable artifact.
+#
+# Triggered by the 'perf' label so it doesn't run on every push.
+on:
+  pull_request:
+    types: [labeled, synchronize]
+
+concurrency:
+  group: perf-compare-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  compare:
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'perf') || contains(github.event.pull_request.labels.*.name, 'perf-journey') }}
+    runs-on: ubuntu-latest
+    env:
+      SSH_USER: ${{ vars.SSH_USER }}
+      VM_HOST: ${{ vars.VM_HOST }}
+      DIR: /tmp/perf-${{ github.run_id }}
+      MAX_REGRESSION: '15'
+      # two isolated stacks, distinct projects + ports, one run
+      BASE_PROJECT: perfbase_${{ github.run_id }}
+      HEAD_PROJECT: perfhead_${{ github.run_id }}
+      BASE_BACKEND_PORT: '18081'
+      BASE_POSTGRES_PORT: '15433'
+      HEAD_BACKEND_PORT: '18082'
+      HEAD_POSTGRES_PORT: '15434'
+      BASE_WEB_PORT: '13001'
+      HEAD_WEB_PORT: '13002'
+      # 'perf-journey' label runs the full-service user journey (web pages);
+      # plain 'perf' runs the API suite.
+      SUITE: ${{ contains(github.event.pull_request.labels.*.name, 'perf-journey') && 'journey' || 'scenarios' }}
+      VUS: '20'
+      RAMP: '30s'
+      DURATION: '1m'
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      # ---- master (base) ----
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Run perf on master
+        run: |
+          tar czf src.tgz --exclude=.git --exclude=node_modules --exclude=target --exclude=.next \
+            backend web cms streamer docker-compose.yml perf
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" "mkdir -p '$DIR/base'"
+          scp -i ~/.ssh/id_deploy src.tgz "$SSH_USER@$VM_HOST:$DIR/base/src.tgz"
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
+            DIR="$DIR/base" PROJECT="$BASE_PROJECT" \
+            BACKEND_PORT="$BASE_BACKEND_PORT" POSTGRES_PORT="$BASE_POSTGRES_PORT" WEB_PORT="$BASE_WEB_PORT" \
+            SUITE="$SUITE" \
+            VUS="$VUS" RAMP="$RAMP" DURATION="$DURATION" \
+            REF="$(git rev-parse HEAD)" LABEL="master" \
+            bash < perf/ci-run-and-record.sh
+
+      # ---- branch (head) ----
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Run perf on branch
+        run: |
+          tar czf src.tgz --exclude=.git --exclude=node_modules --exclude=target --exclude=.next \
+            backend web cms streamer docker-compose.yml perf
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" "mkdir -p '$DIR/head'"
+          scp -i ~/.ssh/id_deploy src.tgz "$SSH_USER@$VM_HOST:$DIR/head/src.tgz"
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
+            DIR="$DIR/head" PROJECT="$HEAD_PROJECT" \
+            BACKEND_PORT="$HEAD_BACKEND_PORT" POSTGRES_PORT="$HEAD_POSTGRES_PORT" WEB_PORT="$HEAD_WEB_PORT" \
+            SUITE="$SUITE" \
+            VUS="$VUS" RAMP="$RAMP" DURATION="$DURATION" \
+            REF="${{ github.event.pull_request.head.sha }}" LABEL="${{ github.head_ref }}" \
+            bash < perf/ci-run-and-record.sh
+
+      # ---- collect both reports ----
+      - name: Fetch both reports from VM
+        run: |
+          mkdir -p report/master report/branch
+          scp -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST:$DIR/base/perf/results/*" report/master/
+          scp -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST:$DIR/head/perf/results/*" report/branch/
+          ls -R report
+
+      - name: Compare & build report
+        id: cmp
+        run: |
+          set +e
+          node perf/compare.mjs compare \
+            --base report/master/perf-record.json \
+            --head report/branch/perf-record.json \
+            --max-regression "$MAX_REGRESSION" --md report/comparison.md
+          echo "cmp_rc=$?" >> "$GITHUB_OUTPUT"
+          set -e
+          # Prepend a run header so each comment is unambiguously identifiable
+          # (a NEW comment is posted per run, so history is visible in the PR).
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          {
+            echo "🏃 Perf run [\`${{ github.run_id }}\`](${RUN_URL}) · suite \`${SUITE}\` · $(date -u '+%Y-%m-%d %H:%M UTC') · head \`${{ github.event.pull_request.head.sha }}\`"
+            echo
+            cat report/comparison.md
+            echo
+            echo "_Full HTML reports (master & branch) + stats.csv: **perf-report** artifact on [this run](${RUN_URL})._"
+          } > report/pr-comment.md
+          cat report/pr-comment.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment on PR (new comment per run — keeps history)
+        if: always()
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --repo "${{ github.repository }}" --body-file report/pr-comment.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Upload both reports + comparison
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-report-${{ github.event.pull_request.number }}-${{ github.run_id }}
+          path: report/
+          if-no-files-found: warn
+
+      - name: Tear down both stacks & clean up
+        if: always()
+        run: |
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
+            DIR="$DIR" BASE_PROJECT="$BASE_PROJECT" HEAD_PROJECT="$HEAD_PROJECT" bash <<'REMOTE'
+          set -uxo pipefail
+          for p in "$BASE_PROJECT" "$HEAD_PROJECT"; do
+            docker compose -p "$p" down -v --remove-orphans 2>/dev/null || true
+          done
+          docker run --rm -v "$DIR:/w" busybox sh -c 'rm -rf /w/..?* /w/.[!.]* /w/*' 2>/dev/null || true
+          rmdir "$DIR/base" "$DIR/head" "$DIR" 2>/dev/null || true
+          REMOTE
+
+      - name: Fail if regressed
+        if: steps.cmp.outputs.cmp_rc != '0'
+        run: |
+          echo "Perf regressed beyond ${MAX_REGRESSION}% vs master — see the PR comment."
+          exit 1

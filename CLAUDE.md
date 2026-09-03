@@ -6,7 +6,7 @@ Guidance for AI agents (and humans) working in this repo. Keep it accurate — u
 
 **Tape Network** — a free (no paywall, no viewer accounts) financial video-streaming site, built from a design-canvas prototype (`prototype/`). Three deployables + Postgres:
 
-- `backend/` — Java 21 / Spring Boot 3 / Maven. Owns data + REST API (public `/api/v1`, admin `/api/admin`), full-text search, auth, media upload.
+- `backend/` — Java 21 / Spring Boot 3 / Gradle. Owns data + REST API (public `/api/v1`, admin `/api/admin`), full-text search, auth, media upload.
 - `web/` — Next.js (App Router) SSR public site. CSS Modules. Talks to `/api/v1`.
 - `cms/` — Refine + Vite SPA (served as static). Editors only. Talks to `/api/admin`.
 - `tasks/` + `tools/task-mcp/` — markdown task board (this repo's mini-Jira) with a CLI and an MCP server. See below.
@@ -17,6 +17,11 @@ After any request that changes tracked files, **commit the result before ending 
 logical commit, a message describing what was done, and AI-authorship trailers. Full rule:
 [`.kiro/steering/ai-commit-policy.md`](.kiro/steering/ai-commit-policy.md). Read-only requests
 produce no commit; never commit `.env`/build output; don't push to `main` or open a PR unless asked.
+
+Branch and commit-message **conventions** (ticket branch, `[TICKET-ID]` message format) are in
+`CONTRIBUTING.md`, auto-loaded here:
+
+@CONTRIBUTING.md
 
 ## Run / build / test
 
@@ -32,7 +37,7 @@ Dev admin login (CMS): `admin@tape.local` / `password`.
 
 Per module:
 ```bash
-cd backend && mvn -B verify      # compile + unit tests
+cd backend && ./gradlew build      # compile + unit tests
 cd web && npm ci && npm test && npm run build
 cd cms && npm ci && npm run build
 ```
@@ -68,6 +73,14 @@ Object flow: **Entity ↔ Model ↔ DTO**.
 
 ## Invariants / gotchas (don't relearn these the hard way)
 
+- **Gradle needs to *run* under JDK 21, not just target it.** `build.gradle.kts` pins
+  `JavaLanguageVersion.of(21)` for the compiled code, but if the JVM launching `./gradlew` itself
+  is newer (e.g. 24/25), Gradle 8.14's embedded Kotlin script compiler fails parsing the build
+  script with a bare `IllegalArgumentException: 25`-style error — not an obvious toolchain
+  message. Fix: pin `JAVA_HOME` for the command only, don't change the global/default Java:
+  - macOS: `cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test`
+  - Linux: `cd backend && JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew test` (path varies by distro/package — check `update-alternatives --list java` or your JDK install dir)
+  - Windows (PowerShell): `cd backend; $env:JAVA_HOME="C:\Program Files\Zulu\zulu-21"; .\gradlew.bat test`
 - **Flyway owns the schema.** `spring.jpa.hibernate.ddl-auto=none`. Migrations are **forward-only** — never edit an applied `V*.sql`; add a new `V<n>__*.sql`.
 - **Postgres `text[]` arrays → map as `String[]`**, not `List<String>`. With a JSON format-mapper on the classpath Hibernate reads `List<String>` as JSON and chokes on the `{a,b}` array literal. (jsonb → `List<String>` via `@JdbcTypeCode(SqlTypes.JSON)` is fine — that's how `article.body` works.)
 - Entities model FKs as a **read-only `@ManyToOne`** (`@JsonIgnore`, `insertable=false, updatable=false`) **plus a writable scalar `*Id` column**. Public services traverse the association inside `@Transactional`; admin/mappers write the scalar id.

@@ -44,24 +44,45 @@ jobs:
           set -euxo pipefail
           cd "$DIR"
           tar xzf src.tgz
-          mkdir -p /opt/tape/ci/m2   # cache maven deps between runs
+          mkdir -p /opt/tape/ci/gradle   # cache Gradle deps between runs
 
-          echo '::group::backend — mvn verify'
-          docker run --rm -v "$PWD/backend:/app" -v /opt/tape/ci/m2:/root/.m2 -w /app \
-            maven:3.9-eclipse-temurin-21 mvn -B verify
+          # Shared Gradle cache mount can't take concurrent runs (journal-1.lock
+          # contention). Serialize builds on this VM instead of racing them.
+          exec 9>/opt/tape/ci/build.lock
+          flock 9
+
+          # Gradle's journal lock records the owner by PID, but every container
+          # runs Gradle at the same low PID (fresh PID namespace). A build killed
+          # before releasing the lock leaves journal-1.lock claiming "PID 38" —
+          # the next build's Gradle is also PID 38, thinks the owner is alive, and
+          # blocks until timeout. Under flock nothing else holds it, so drop the
+          # stale journal (an access-time cache Gradle rebuilds; deps untouched).
+          # The cache is root-owned (written by the build container), so the SSH
+          # user can't rm it directly — do it from a throwaway root container.
+          docker run --rm -v /opt/tape/ci/gradle:/root/.gradle alpine \
+            rm -rf /root/.gradle/caches/journal-1
+
+          echo '::group::backend — gradle build'
+          docker run --rm -v "$PWD/backend:/app" -v /opt/tape/ci/gradle:/root/.gradle -w /app \
+            azul/zulu-openjdk:21 sh -c './gradlew build --no-daemon'
           echo '::endgroup::'
 
           echo '::group::web — yarn install && test && build'
-          docker run --rm -v "$PWD/web:/app" -w /app \
+          # --network host + explicit DNS: next/font/google fetches IBM Plex
+          # fonts from fonts.googleapis.com at build time, so the container
+          # needs the same outbound reach as the host (default bridge net was
+          # timing out -> NextFontError ETIMEDOUT).
+          docker run --rm --network host --dns 8.8.8.8 --dns 1.1.1.1 \
+            -v "$PWD/web:/app" -w /app \
             node:20-alpine sh -c 'yarn install --frozen-lockfile && yarn test && yarn build'
           echo '::endgroup::'
 
           echo '::group::cms — yarn install && build'
-          docker run --rm -v "$PWD/cms:/app" -w /app \
+          docker run --rm --network host --dns 8.8.8.8 --dns 1.1.1.1 \
+            -v "$PWD/cms:/app" -w /app \
             node:20-alpine sh -c 'yarn install --frozen-lockfile && yarn build'
           echo '::endgroup::'
           REMOTE
-
       - name: Clean up VM
         if: always()
         run: |
