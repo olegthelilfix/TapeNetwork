@@ -35,19 +35,3 @@ export type ShowDetail = ShowSummary & {
     readonly hosts: readonly Host[];
     readonly episodes: readonly Episode[];
 };
-
-export const createHost = (input: Host): Host => {
-    return input;
-};
-
-export const createEpisode = (input: Episode): Episode => {
-    return input;
-};
-
-export const createShowSummary = (input: ShowSummary): ShowSummary => {
-    return input;
-};
-
-export const createShowDetail = (input: ShowDetail): ShowDetail => {
-    return input;
-};

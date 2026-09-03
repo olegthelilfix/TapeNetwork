@@ -6,11 +6,6 @@ import type { SubcategoryDetailDtoV1 } from "@/api/components/schemas/Subcategor
 import type { SubcategorySummaryDtoV1 } from "@/api/components/schemas/SubcategorySummaryDtoV1";
 import type { VideoDtoV1 } from "@/api/components/schemas/VideoDtoV1";
 import {
-    createCategoryDetail,
-    createCategorySummary,
-    createSubcategoryDetail,
-    createSubcategorySummary,
-    createVideo,
     type CategoryDetail,
     type CategorySummary,
     type SubcategoryDetail,
@@ -42,7 +37,7 @@ export const mapVideoDto = (
             requireString("Video", "title", optionToNullable(dto.title)),
         ),
         E.map(({ slug, title }) =>
-            createVideo({
+            ({
                 slug,
                 title,
                 description: optionToNullable(dto.description),
@@ -70,7 +65,7 @@ export const mapSubcategorySummaryDto = (
             requireString("Subcategory", "name", optionToNullable(dto.name)),
         ),
         E.map(({ slug, name }) =>
-            createSubcategorySummary({
+            ({
                 slug,
                 name,
                 blurb: optionToNullable(dto.blurb),
@@ -93,7 +88,7 @@ export const mapCategorySummaryDto = (
             requireString("Category", "name", optionToNullable(dto.name)),
         ),
         E.map(({ slug, name }) =>
-            createCategorySummary({
+            ({
                 slug,
                 name,
                 blurb: optionToNullable(dto.blurb),
@@ -124,7 +119,7 @@ export const mapCategoryDetailDto = (
             ),
         ),
         E.map(({ slug, name, subcategories }) =>
-            createCategoryDetail({
+            ({
                 slug,
                 name,
                 subcategories,
@@ -161,7 +156,7 @@ export const mapSubcategoryDetailDto = (
         ),
         E.bind("videos", () => mapReadonlyArray(optionToArray(dto.videos), mapVideoDto)),
         E.map(({ slug, name, categorySlug, categoryName, videos }) =>
-            createSubcategoryDetail({
+            ({
                 slug,
                 name,
                 categorySlug,

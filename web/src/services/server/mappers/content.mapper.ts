@@ -8,20 +8,14 @@ import type { SearchHit } from "@/api/components/schemas/SearchHit";
 import type { SitemapEntry as SitemapEntryDto } from "@/api/components/schemas/SitemapEntry";
 import type { TickerDtoV1 } from "@/api/components/schemas/TickerDtoV1";
 import {
-    createHome,
-    createHomeCard,
-    createPlayer,
-    createSearchResult,
-    createSitemapEntry,
     type Home,
     type HomeCard,
     type Player,
     type SearchResult,
     type SitemapEntry,
 } from "@/domain/content";
-import { createScheduleItem, type ScheduleItem } from "@/domain/schedule";
+import type { ScheduleItem } from "@/domain/schedule";
 import {
-    createTicker,
     type Ticker,
     type TickerDirection,
 } from "@/domain/ticker";
@@ -57,7 +51,7 @@ export const mapScheduleItemDto = (
     return pipe(
         requireString("Schedule item", "timeEt", optionToNullable(dto.timeEt)),
         E.map((timeEt) =>
-            createScheduleItem({
+            ({
                 timeEt,
                 showName: optionToNullable(dto.showName),
                 showSlug: optionToNullable(dto.showSlug),
@@ -91,7 +85,7 @@ export const mapTickerDto = (
             ),
         ),
         E.map(({ symbol, price, change, direction }) =>
-            createTicker({ symbol, price, change, direction }),
+            ({ symbol, price, change, direction }),
         ),
     );
 };
@@ -116,7 +110,7 @@ export const mapHomeCardDto = (
             requireString("Home card", "title", optionToNullable(dto.title)),
         ),
         E.map(({ kind, slug, title }) =>
-            createHomeCard({
+            ({
                 kind,
                 slug,
                 title,
@@ -162,7 +156,7 @@ export const mapHomeDto = (
                 schedule,
                 latestArticles,
             }) =>
-                createHome({
+                ({
                     liveNow,
                     featured,
                     mostWatched,
@@ -195,7 +189,7 @@ export const mapPlayerDto = (
             requireString("Player", "title", optionToNullable(dto.title)),
         ),
         E.map(({ kind, slug, title }) =>
-            createPlayer({
+            ({
                 kind,
                 slug,
                 title,
@@ -236,7 +230,7 @@ export const mapSearchHitDto = (
             requireString("Search result", "url", optionToNullable(dto.url)),
         ),
         E.map(({ kind, slug, title, url }) =>
-            createSearchResult({
+            ({
                 kind,
                 slug,
                 title,
@@ -264,7 +258,7 @@ export const mapSitemapEntryDto = (
     return pipe(
         requireString("Sitemap entry", "loc", optionToNullable(dto.loc)),
         E.map((location) =>
-            createSitemapEntry({
+            ({
                 location,
                 lastModified: optionToNullable(dto.lastmod),
             }),

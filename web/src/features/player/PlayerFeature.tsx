@@ -1,46 +1,16 @@
-import type { Metadata } from "next";
+import type { FC } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Player } from "@/domain/content";
-import { getPlayerBySlug } from "@/services/server/controllers";
-import { resolveControllerResult } from "@/features/server/resolveControllerResult";
-import type { AsyncServerComponent } from "@/features/server";
 import { formatDate } from "@/utils/format";
 import styles from "./PlayerFeature.module.css";
 
-export const dynamic = "force-dynamic";
-
-const load = (slug: string): Promise<Player> => {
-  return resolveControllerResult(getPlayerBySlug(slug));
+export type PlayerFeatureProps = {
+  readonly player: Player;
 };
 
-type PlayerFeatureProps = {
-  readonly params: Promise<{ slug: string }>;
-};
-
-export const generateMetadata = async ({
-  params,
-}: PlayerFeatureProps): Promise<Metadata> => {
-  try {
-    const { slug } = await params;
-    const p = await resolveControllerResult(getPlayerBySlug(slug));
-    const img = p.imageUrl;
-    return {
-      title: p.title,
-      description: p.description ?? undefined,
-      alternates: { canonical: `/watch/${p.slug}` },
-      openGraph: { title: p.title, type: "video.other", images: img ? [img] : undefined },
-    };
-  } catch {
-    return { title: "Not found" };
-  }
-};
-
-const PlayerFeature: AsyncServerComponent<PlayerFeatureProps> = async ({
-  params,
-}) => {
-  const { slug } = await params;
-  const p = await load(slug);
+export const PlayerFeature: FC<PlayerFeatureProps> = ({ player }) => {
+  const p = player;
   const img = p.imageUrl;
   const jsonLd = {
     "@context": "https://schema.org",
@@ -105,5 +75,3 @@ const PlayerFeature: AsyncServerComponent<PlayerFeatureProps> = async ({
     </div>
   );
 };
-
-export default PlayerFeature;

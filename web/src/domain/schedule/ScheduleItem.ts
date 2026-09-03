@@ -5,7 +5,3 @@ export type ScheduleItem = {
     readonly hostsLabel: string | null;
     readonly isLive: boolean;
 };
-
-export const createScheduleItem = (input: ScheduleItem): ScheduleItem => {
-    return input;
-};

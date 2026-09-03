@@ -1,11 +1,15 @@
 import "server-only";
 
-import type { ControllerResult } from "@/services/server/controllers";
 import * as E from "fp-ts/Either";
-import { notFound } from "next/navigation";
+import type { ControllerResult } from "./controller.utils";
+
+type ResolveControllerResultOptions = {
+    readonly onNotFound: () => never;
+};
 
 export const resolveControllerResult = async <Value>(
     result: ControllerResult<Value>,
+    { onNotFound }: ResolveControllerResultOptions,
 ): Promise<Value> => {
     const response = await result();
 
@@ -14,7 +18,7 @@ export const resolveControllerResult = async <Value>(
     }
 
     if (response.left.type === "not-found") {
-        notFound();
+        return onNotFound();
     }
 
     throw new Error(`Controller request failed: ${response.left.type}`);

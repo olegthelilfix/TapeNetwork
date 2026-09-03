@@ -1,21 +1,15 @@
 import type { Metadata } from "next";
-import { getShows } from "@/services/server/controllers";
-import { resolveControllerResult } from "@/features/server/resolveControllerResult";
-import type { AsyncServerComponent } from "@/features/server";
+import type { ShowSummary } from "@/domain/show";
 import { Card } from "@/ui/Card";
 import { CardGrid } from "@/ui/Section";
+import type { FC } from "react";
 import styles from "@/ui/ListLayout/ListLayout.module.css";
 
-export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = {
-  title: "Shows",
-  description: "Every Tape Network show — markets, macro, options, technicals and long-form interviews.",
-  alternates: { canonical: "/shows" },
+export type ShowsListFeatureProps = {
+  readonly shows: readonly ShowSummary[];
 };
 
-const ShowsListFeature: AsyncServerComponent<Record<never, never>> = async () => {
-  const shows = await resolveControllerResult(getShows());
+export const ShowsListFeature: FC<ShowsListFeatureProps> = ({ shows }) => {
   return (
     <>
       <header className={styles.intro}>
@@ -36,5 +30,3 @@ const ShowsListFeature: AsyncServerComponent<Record<never, never>> = async () =>
     </>
   );
 };
-
-export default ShowsListFeature;

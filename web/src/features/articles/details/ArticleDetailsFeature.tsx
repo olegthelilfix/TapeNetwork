@@ -1,58 +1,21 @@
-import type { Metadata } from "next";
+import type { FC } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Article, ArticleSummary } from "@/domain/article";
-import { getArticleBySlug, getArticles } from "@/services/server/controllers";
-import { resolveControllerResult } from "@/features/server/resolveControllerResult";
-import type { AsyncServerComponent } from "@/features/server";
 import { formatDate } from "@/utils/format";
 import styles from "./ArticleDetailsFeature.module.css";
 
-export const dynamic = "force-dynamic";
-
-const load = (slug: string): Promise<Article> => {
-  return resolveControllerResult(getArticleBySlug(slug));
+export type ArticleDetailsFeatureProps = {
+  readonly article: Article;
+  readonly relatedArticles: readonly ArticleSummary[];
 };
 
-type ArticleDetailsFeatureProps = {
-  readonly params: Promise<{ slug: string }>;
-};
-
-export const generateMetadata = async ({
-  params,
-}: ArticleDetailsFeatureProps): Promise<Metadata> => {
-  try {
-    const { slug } = await params;
-    const a = await resolveControllerResult(getArticleBySlug(slug));
-    const img = a.imageUrl;
-    return {
-      title: a.title,
-      description: a.dek ?? undefined,
-      alternates: { canonical: `/articles/${a.slug}` },
-      openGraph: {
-        title: a.title,
-        description: a.dek ?? undefined,
-        type: "article",
-        images: img ? [img] : undefined,
-      },
-    };
-  } catch {
-    return { title: "Article not found" };
-  }
-};
-
-const ArticleDetailsFeature: AsyncServerComponent<ArticleDetailsFeatureProps> = async ({
-  params,
+export const ArticleDetailsFeature: FC<ArticleDetailsFeatureProps> = ({
+  article,
+  relatedArticles,
 }) => {
-  const { slug } = await params;
-  const a = await load(slug);
-  let related: ArticleSummary[] = [];
-  try {
-    const page = await resolveControllerResult(getArticles({ size: 6 }));
-    related = page.items.filter((x) => x.slug !== a.slug).slice(0, 3);
-  } catch {
-    /* related is optional */
-  }
+  const a = article;
+  const related = relatedArticles;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -115,5 +78,3 @@ const ArticleDetailsFeature: AsyncServerComponent<ArticleDetailsFeatureProps> = 
     </>
   );
 };
-
-export default ArticleDetailsFeature;

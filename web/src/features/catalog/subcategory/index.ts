@@ -1,5 +1,2 @@
-export {
-    default as SubcategoryFeature,
-    dynamic,
-    generateMetadata,
-} from "./SubcategoryFeature";
+export { SubcategoryFeature } from "./SubcategoryFeature";
+export type { SubcategoryFeatureProps } from "./SubcategoryFeature";

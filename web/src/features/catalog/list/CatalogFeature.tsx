@@ -1,21 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { getCategories } from "@/services/server/controllers";
-import { resolveControllerResult } from "@/features/server/resolveControllerResult";
-import type { AsyncServerComponent } from "@/features/server";
+import type { CategorySummary } from "@/domain/catalog";
+import type { FC } from "react";
 import styles from "./CatalogFeature.module.css";
 
-export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = {
-  title: "On Demand",
-  description: "The full Tape Network catalog — macro, options, technicals, earnings and long-form, by category.",
-  alternates: { canonical: "/on-demand" },
+export type CatalogFeatureProps = {
+  readonly categories: readonly CategorySummary[];
 };
 
-const CatalogFeature: AsyncServerComponent<Record<never, never>> = async () => {
-  const categories = await resolveControllerResult(getCategories());
+export const CatalogFeature: FC<CatalogFeatureProps> = ({ categories }) => {
   return (
     <>
       <header className={styles.intro}>
@@ -53,5 +46,3 @@ const CatalogFeature: AsyncServerComponent<Record<never, never>> = async () => {
     </>
   );
 };
-
-export default CatalogFeature;

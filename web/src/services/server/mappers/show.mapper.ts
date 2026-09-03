@@ -5,10 +5,6 @@ import type { HostDtoV1 } from "@/api/components/schemas/HostDtoV1";
 import type { ShowDetailDtoV1 } from "@/api/components/schemas/ShowDetailDtoV1";
 import type { ShowSummaryDtoV1 } from "@/api/components/schemas/ShowSummaryDtoV1";
 import {
-    createEpisode,
-    createHost,
-    createShowDetail,
-    createShowSummary,
     type Episode,
     type Host,
     type ShowDetail,
@@ -34,7 +30,7 @@ export const mapHostDto = (
     return pipe(
         requireString("Host", "name", optionToNullable(dto.name)),
         E.map((name) =>
-            createHost({
+            ({
                 name,
                 initials: optionToNullable(dto.initials),
                 role: optionToNullable(dto.role),
@@ -55,7 +51,7 @@ export const mapEpisodeDto = (
             requireString("Episode", "title", optionToNullable(dto.title)),
         ),
         E.map(({ slug, title }) =>
-            createEpisode({
+            ({
                 slug,
                 title,
                 episodeNumber: optionToNullable(dto.epNo),
@@ -84,7 +80,7 @@ export const mapShowSummaryDto = (
             requireString("Show", "name", optionToNullable(dto.name)),
         ),
         E.map(({ slug, name }) =>
-            createShowSummary({
+            ({
                 slug,
                 name,
                 tagline: optionToNullable(dto.tagline),
@@ -107,7 +103,7 @@ export const mapShowDetailDto = (
             mapReadonlyArray(optionToArray(dto.episodes), mapEpisodeDto),
         ),
         E.map(({ summary, hosts, episodes }) =>
-            createShowDetail({
+            ({
                 ...summary,
                 hosts,
                 episodes,

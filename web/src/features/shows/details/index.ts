@@ -1,5 +1,2 @@
-export {
-    default as ShowDetailsFeature,
-    dynamic,
-    generateMetadata,
-} from "./ShowDetailsFeature";
+export { ShowDetailsFeature } from "./ShowDetailsFeature";
+export type { ShowDetailsFeatureProps } from "./ShowDetailsFeature";

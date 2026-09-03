@@ -1,5 +1,2 @@
-export {
-    default as PlayerFeature,
-    dynamic,
-    generateMetadata,
-} from "./PlayerFeature";
+export { PlayerFeature } from "./PlayerFeature";
+export type { PlayerFeatureProps } from "./PlayerFeature";

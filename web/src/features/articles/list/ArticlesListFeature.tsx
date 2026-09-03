@@ -1,32 +1,22 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { getArticles, getCategories } from "@/services/server/controllers";
-import { resolveControllerResult } from "@/features/server/resolveControllerResult";
-import type { AsyncServerComponent } from "@/features/server";
+import type { ArticlePage } from "@/domain/article";
+import type { CategorySummary } from "@/domain/catalog";
+import type { FC } from "react";
 import styles from "./ArticlesListFeature.module.css";
 
-export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = {
-  title: "Articles",
-  description: "Written analysis from the Tape Network desk — macro, options, technicals and earnings.",
-  alternates: { canonical: "/articles" },
+export type ArticlesListFeatureProps = {
+  readonly activeCategory: string;
+  readonly categories: readonly CategorySummary[];
+  readonly page: ArticlePage;
 };
 
-type ArticlesListFeatureProps = {
-  readonly searchParams: Promise<{ category?: string }>;
-};
-
-const ArticlesListFeature: AsyncServerComponent<ArticlesListFeatureProps> = async ({
-  searchParams,
+export const ArticlesListFeature: FC<ArticlesListFeatureProps> = ({
+  activeCategory,
+  categories,
+  page,
 }) => {
-  const { category } = await searchParams;
-  const active = category ?? "";
-  const [categories, page] = await Promise.all([
-    resolveControllerResult(getCategories()),
-    resolveControllerResult(getArticles({ category: active || undefined, size: 24 })),
-  ]);
+  const active = activeCategory;
 
   return (
     <>
@@ -79,5 +69,3 @@ const ArticlesListFeature: AsyncServerComponent<ArticlesListFeatureProps> = asyn
     </>
   );
 };
-
-export default ArticlesListFeature;

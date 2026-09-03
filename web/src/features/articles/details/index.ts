@@ -1,5 +1,2 @@
-export {
-    default as ArticleDetailsFeature,
-    dynamic,
-    generateMetadata,
-} from "./ArticleDetailsFeature";
+export { ArticleDetailsFeature } from "./ArticleDetailsFeature";
+export type { ArticleDetailsFeatureProps } from "./ArticleDetailsFeature";

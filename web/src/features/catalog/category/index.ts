@@ -1,5 +1,2 @@
-export {
-    default as CategoryFeature,
-    dynamic,
-    generateMetadata,
-} from "./CategoryFeature";
+export { CategoryFeature } from "./CategoryFeature";
+export type { CategoryFeatureProps } from "./CategoryFeature";

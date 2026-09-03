@@ -2,37 +2,22 @@ import Link from "next/link";
 import Image from "next/image";
 import type { HomeCardKind, Home } from "@/domain/content";
 import type { ShowSummary } from "@/domain/show";
-import { getHome, getShows } from "@/services/server/controllers";
-import { resolveControllerResult } from "@/features/server/resolveControllerResult";
-import type { AsyncServerComponent } from "@/features/server";
 import { Card } from "@/ui/Card";
+import type { FC } from "react";
 import styles from "./HomeFeature.module.css";
-
-export const dynamic = "force-dynamic";
-
-export const metadata = { alternates: { canonical: "/" } };
 
 const kickerFor = (kind: HomeCardKind, isLive: boolean): string | undefined => {
   if (isLive) return undefined;
   return kind === "video" ? "CLIP" : "REPLAY";
 };
 
-const HomeFeature: AsyncServerComponent<Record<never, never>> = async () => {
-  let data: Home | null = null;
-  let shows: readonly ShowSummary[] = [];
-  try {
-    [data, shows] = await Promise.all([
-      resolveControllerResult(getHome()),
-      resolveControllerResult(getShows()),
-    ]);
-  } catch {
-    return (
-      <div className={styles.offline}>
-        <h1>Backend unreachable</h1>
-        <p>Start the API (<code>docker compose up</code>) and reload.</p>
-      </div>
-    );
-  }
+export type HomeFeatureProps = {
+  readonly home: Home;
+  readonly shows: readonly ShowSummary[];
+};
+
+export const HomeFeature: FC<HomeFeatureProps> = ({ home, shows }) => {
+  const data = home;
 
   const hero = data.liveNow ?? data.featured[0] ?? null;
   const heroSrc = hero?.imageUrl ?? null;
@@ -202,5 +187,3 @@ const HomeFeature: AsyncServerComponent<Record<never, never>> = async () => {
     </>
   );
 };
-
-export default HomeFeature;

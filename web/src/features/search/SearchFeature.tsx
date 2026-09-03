@@ -1,35 +1,16 @@
-import type { Metadata } from "next";
 import type { SearchResult } from "@/domain/content";
-import { search } from "@/services/server/controllers";
-import type { AsyncServerComponent } from "@/features/server";
 import { Card } from "@/ui/Card";
 import { CardGrid } from "@/ui/Section";
-import * as E from "fp-ts/Either";
+import type { FC } from "react";
 import listStyles from "@/ui/ListLayout/ListLayout.module.css";
 
-export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = {
-  title: "Search",
-  robots: { index: false },
+export type SearchFeatureProps = {
+  readonly query: string;
+  readonly results: readonly SearchResult[];
 };
 
-type SearchFeatureProps = {
-  readonly searchParams: Promise<{ q?: string }>;
-};
-
-const SearchFeature: AsyncServerComponent<SearchFeatureProps> = async ({
-  searchParams,
-}) => {
-  const { q: rawQ } = await searchParams;
-  const q = (rawQ ?? "").trim();
-  let results: readonly SearchResult[] = [];
-  if (q) {
-    const result = await search({ query: q, limit: 12 })();
-    if (E.isRight(result)) {
-      results = result.right;
-    }
-  }
+export const SearchFeature: FC<SearchFeatureProps> = ({ query, results }) => {
+  const q = query;
 
   return (
     <>
@@ -58,5 +39,3 @@ const SearchFeature: AsyncServerComponent<SearchFeatureProps> = async ({
     </>
   );
 };
-
-export default SearchFeature;

@@ -1,5 +1,2 @@
-export {
-    default as SearchFeature,
-    dynamic,
-    metadata,
-} from "./SearchFeature";
+export { SearchFeature } from "./SearchFeature";
+export type { SearchFeatureProps } from "./SearchFeature";

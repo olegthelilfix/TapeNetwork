@@ -3,9 +3,6 @@ import "server-only";
 import type { ArticleDtoV1 } from "@/api/components/schemas/ArticleDtoV1";
 import type { PagedResponseArticleDtoV1 } from "@/api/components/schemas/PagedResponseArticleDtoV1";
 import {
-    createArticle,
-    createArticlePage,
-    createArticleSummary,
     type Article,
     type ArticlePage,
     type ArticleSummary,
@@ -35,7 +32,7 @@ export const mapArticleSummaryDto = (
             requireString("Article", "title", optionToNullable(dto.title)),
         ),
         E.map(({ slug, title }) =>
-            createArticleSummary({
+            ({
                 slug,
                 title,
                 category: optionToNullable(dto.category),
@@ -55,7 +52,7 @@ export const mapArticleDto = (
     return pipe(
         mapArticleSummaryDto(dto),
         E.map((summary) =>
-            createArticle({
+            ({
                 ...summary,
                 body: optionToArray(dto.body),
             }),
@@ -69,7 +66,7 @@ export const mapArticlePageDto = (
     return pipe(
         mapReadonlyArray(optionToArray(dto.items), mapArticleSummaryDto),
         E.map((items) =>
-            createArticlePage({
+            ({
                 items,
                 page: optionToNumber(dto.page),
                 size: optionToNumber(dto.size),

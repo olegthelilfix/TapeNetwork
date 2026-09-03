@@ -1,44 +1,16 @@
-import type { Metadata } from "next";
+import type { FC } from "react";
 import Link from "next/link";
 import type { SubcategoryDetail } from "@/domain/catalog";
-import { getSubcategoryBySlug } from "@/services/server/controllers";
-import { resolveControllerResult } from "@/features/server/resolveControllerResult";
-import type { AsyncServerComponent } from "@/features/server";
 import { Card } from "@/ui/Card";
 import { CardGrid } from "@/ui/Section";
 import listStyles from "@/ui/ListLayout/ListLayout.module.css";
 
-export const dynamic = "force-dynamic";
-
-const load = (slug: string): Promise<SubcategoryDetail> => {
-  return resolveControllerResult(getSubcategoryBySlug(slug));
+export type SubcategoryFeatureProps = {
+  readonly subcategory: SubcategoryDetail;
 };
 
-type SubcategoryFeatureProps = {
-  readonly params: Promise<{ category: string; subcategory: string }>;
-};
-
-export const generateMetadata = async ({
-  params,
-}: SubcategoryFeatureProps): Promise<Metadata> => {
-  try {
-    const { subcategory } = await params;
-    const s = await resolveControllerResult(getSubcategoryBySlug(subcategory));
-    return {
-      title: `${s.name} · ${s.categoryName}`,
-      description: s.blurb ?? undefined,
-      alternates: { canonical: `/on-demand/${s.categorySlug}/${s.slug}` },
-    };
-  } catch {
-    return { title: "Not found" };
-  }
-};
-
-const SubcategoryFeature: AsyncServerComponent<SubcategoryFeatureProps> = async ({
-  params,
-}) => {
-  const { subcategory } = await params;
-  const s = await load(subcategory);
+export const SubcategoryFeature: FC<SubcategoryFeatureProps> = ({ subcategory }) => {
+  const s = subcategory;
   return (
     <>
       <div className={listStyles.breadcrumb}>
@@ -64,5 +36,3 @@ const SubcategoryFeature: AsyncServerComponent<SubcategoryFeatureProps> = async 
     </>
   );
 };
-
-export default SubcategoryFeature;

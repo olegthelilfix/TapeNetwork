@@ -24,3 +24,4 @@ export {
 } from "./show";
 export type { ControllerError } from "./controller.errors";
 export type { ControllerResult } from "./controller.utils";
+export { resolveControllerResult } from "./resolveControllerResult";

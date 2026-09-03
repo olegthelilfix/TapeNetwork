@@ -1,44 +1,16 @@
-import type { Metadata } from "next";
+import type { FC } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { CategoryDetail } from "@/domain/catalog";
-import { getCategoryBySlug } from "@/services/server/controllers";
-import { resolveControllerResult } from "@/features/server/resolveControllerResult";
-import type { AsyncServerComponent } from "@/features/server";
 import od from "@/features/catalog/list/CatalogFeature.module.css";
 import grid from "./CategoryFeature.module.css";
 
-export const dynamic = "force-dynamic";
-
-const load = (slug: string): Promise<CategoryDetail> => {
-  return resolveControllerResult(getCategoryBySlug(slug));
+export type CategoryFeatureProps = {
+  readonly category: CategoryDetail;
 };
 
-type CategoryFeatureProps = {
-  readonly params: Promise<{ category: string }>;
-};
-
-export const generateMetadata = async ({
-  params,
-}: CategoryFeatureProps): Promise<Metadata> => {
-  try {
-    const { category } = await params;
-    const c = await resolveControllerResult(getCategoryBySlug(category));
-    return {
-      title: c.name,
-      description: c.blurb ?? undefined,
-      alternates: { canonical: `/on-demand/${c.slug}` },
-    };
-  } catch {
-    return { title: "Category not found" };
-  }
-};
-
-const CategoryFeature: AsyncServerComponent<CategoryFeatureProps> = async ({
-  params,
-}) => {
-  const { category } = await params;
-  const c = await load(category);
+export const CategoryFeature: FC<CategoryFeatureProps> = ({ category }) => {
+  const c = category;
   return (
     <>
       <header className={od.intro}>
@@ -72,5 +44,3 @@ const CategoryFeature: AsyncServerComponent<CategoryFeatureProps> = async ({
     </>
   );
 };
-
-export default CategoryFeature;

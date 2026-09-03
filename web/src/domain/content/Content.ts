@@ -57,23 +57,3 @@ export type SitemapEntry = {
     readonly location: string;
     readonly lastModified: string | null;
 };
-
-export const createHomeCard = (input: HomeCard): HomeCard => {
-    return input;
-};
-
-export const createHome = (input: Home): Home => {
-    return input;
-};
-
-export const createPlayer = (input: Player): Player => {
-    return input;
-};
-
-export const createSearchResult = (input: SearchResult): SearchResult => {
-    return input;
-};
-
-export const createSitemapEntry = (input: SitemapEntry): SitemapEntry => {
-    return input;
-};

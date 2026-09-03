@@ -1,46 +1,16 @@
-import type { Metadata } from "next";
+import type { FC } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { ShowDetail } from "@/domain/show";
-import { getShowBySlug } from "@/services/server/controllers";
-import { resolveControllerResult } from "@/features/server/resolveControllerResult";
-import type { AsyncServerComponent } from "@/features/server";
 import { formatDate } from "@/utils/format";
 import styles from "./ShowDetailsFeature.module.css";
 
-export const dynamic = "force-dynamic";
-
-const load = (slug: string): Promise<ShowDetail> => {
-  return resolveControllerResult(getShowBySlug(slug));
+export type ShowDetailsFeatureProps = {
+  readonly show: ShowDetail;
 };
 
-type ShowDetailsFeatureProps = {
-  readonly params: Promise<{ slug: string }>;
-};
-
-export const generateMetadata = async ({
-  params,
-}: ShowDetailsFeatureProps): Promise<Metadata> => {
-  try {
-    const { slug } = await params;
-    const s = await resolveControllerResult(getShowBySlug(slug));
-    const img = s.imageUrl;
-    return {
-      title: s.name,
-      description: s.blurb ?? undefined,
-      alternates: { canonical: `/shows/${s.slug}` },
-      openGraph: { title: s.name, description: s.blurb ?? undefined, images: img ? [img] : undefined },
-    };
-  } catch {
-    return { title: "Show not found" };
-  }
-};
-
-const ShowDetailsFeature: AsyncServerComponent<ShowDetailsFeatureProps> = async ({
-  params,
-}) => {
-  const { slug } = await params;
-  const s = await load(slug);
+export const ShowDetailsFeature: FC<ShowDetailsFeatureProps> = ({ show }) => {
+  const s = show;
   const stats = [
     { v: s.episodeCount ? s.episodeCount.toLocaleString("en-US") : "—", k: "Episodes" },
     { v: s.hoursPerWeek ?? "—", k: "Live per week" },
@@ -127,5 +97,3 @@ const ShowDetailsFeature: AsyncServerComponent<ShowDetailsFeatureProps> = async 
     </>
   );
 };
-
-export default ShowDetailsFeature;

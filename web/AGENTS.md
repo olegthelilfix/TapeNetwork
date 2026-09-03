@@ -497,6 +497,34 @@ feature
 server controller
 ```
 
+## Route Files and Features
+
+Use named exports as the default for handwritten modules.
+
+Default exports are reserved for Next.js route conventions, such as:
+
+```text
+page.tsx
+layout.tsx
+loading.tsx
+error.tsx
+global-error.tsx
+not-found.tsx
+```
+
+Feature modules must not default-export a complete route page or expose route-only
+exports such as `metadata`, `generateMetadata`, `dynamic`, `revalidate`, or
+`generateStaticParams`.
+
+Route-only data loading, metadata, route parameters, redirects, and not-found
+decisions belong in `app/**`. Features expose named, typed modules for a meaningful
+reusable behaviour or part of a page. A feature may receive domain data from its
+route, or perform its own application orchestration when that behaviour is reusable.
+
+For example, keep a page-level layout as route composition and extract a chart
+sidebar, search result list, player, or schedule panel as named features when their
+behaviour and ownership are reusable.
+
 ---
 
 # Next.js App Router

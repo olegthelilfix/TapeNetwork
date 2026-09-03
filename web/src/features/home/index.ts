@@ -1,5 +1,2 @@
-export {
-    default as HomeFeature,
-    dynamic,
-    metadata,
-} from "./HomeFeature";
+export { HomeFeature } from "./HomeFeature";
+export type { HomeFeatureProps } from "./HomeFeature";

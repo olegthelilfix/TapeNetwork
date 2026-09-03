@@ -20,17 +20,3 @@ export type ArticlePage = {
     readonly total: number;
     readonly totalPages: number;
 };
-
-export const createArticleSummary = (
-    input: ArticleSummary,
-): ArticleSummary => {
-    return input;
-};
-
-export const createArticle = (input: Article): Article => {
-    return input;
-};
-
-export const createArticlePage = (input: ArticlePage): ArticlePage => {
-    return input;
-};

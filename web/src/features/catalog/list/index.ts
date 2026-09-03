@@ -1,5 +1,2 @@
-export {
-    default as CatalogFeature,
-    dynamic,
-    metadata,
-} from "./CatalogFeature";
+export { CatalogFeature } from "./CatalogFeature";
+export type { CatalogFeatureProps } from "./CatalogFeature";
