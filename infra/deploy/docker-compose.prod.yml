@@ -1,5 +1,5 @@
 # Production stack for the VM. Unlike the root docker-compose.yml, this pulls
-# prebuilt images from Artifact Registry (no build:). Image refs and secrets come
+# prebuilt images from GHCR (no build:). Image refs and secrets come
 # from the .env file the deploy pipeline writes next to this file on the VM.
 services:
   postgres:
