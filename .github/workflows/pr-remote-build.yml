@@ -46,6 +46,11 @@ jobs:
           tar xzf src.tgz
           mkdir -p /opt/tape/ci/gradle   # cache Gradle deps between runs
 
+          # Shared Gradle cache mount can't take concurrent runs (journal-1.lock
+          # contention). Serialize builds on this VM instead of racing them.
+          exec 9>/opt/tape/ci/build.lock
+          flock 9
+
           echo '::group::backend — gradle build'
           docker run --rm -v "$PWD/backend:/app" -v /opt/tape/ci/gradle:/root/.gradle -w /app \
             azul/zulu-openjdk:21 sh -c './gradlew build --no-daemon'
