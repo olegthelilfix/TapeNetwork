@@ -114,7 +114,7 @@ jobs:
         id: cmp
         run: |
           set +e
-          node perf/compare.mjs compare \
+          node head-src/perf/compare.mjs compare \
             --base report/master/record-1.json --base report/master/record-2.json \
             --head report/branch/record-1.json --head report/branch/record-2.json \
             --max-regression "$MAX_REGRESSION" --md report/comparison.md
