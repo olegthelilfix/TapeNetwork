@@ -108,18 +108,25 @@ jobs:
             --max-regression "$MAX_REGRESSION" --md report/comparison.md
           echo "cmp_rc=$?" >> "$GITHUB_OUTPUT"
           set -e
+          # Prepend a run header so each comment is unambiguously identifiable
+          # (a NEW comment is posted per run, so history is visible in the PR).
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           {
+            echo "🏃 Perf run [\`${{ github.run_id }}\`](${RUN_URL}) · suite \`${SUITE}\` · $(date -u '+%Y-%m-%d %H:%M UTC') · head \`${{ github.event.pull_request.head.sha }}\`"
+            echo
             cat report/comparison.md
             echo
-            echo "Full HTML reports (master & branch) are attached as the **perf-report** artifact on this run."
-          } >> "$GITHUB_STEP_SUMMARY"
+            echo "_Full HTML reports (master & branch) + stats.csv: **perf-report** artifact on [this run](${RUN_URL})._"
+          } > report/pr-comment.md
+          cat report/pr-comment.md >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Comment on PR (comparison + report link)
+      - name: Comment on PR (new comment per run — keeps history)
         if: always()
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          header: perf-compare
-          path: report/comparison.md
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --repo "${{ github.repository }}" --body-file report/pr-comment.md
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Upload both reports + comparison
         if: always()

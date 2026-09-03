@@ -44,6 +44,8 @@ const RAMP = __ENV.RAMP || '30s';
 const DURATION = __ENV.DURATION || '1m';
 
 export const options = {
+  // Make p99 available in the summary (k6 defaults omit it).
+  summaryTrendStats: ['avg', 'min', 'med', 'p(95)', 'p(99)', 'max'],
   scenarios: {
     public_api: {
       executor: 'ramping-vus',
