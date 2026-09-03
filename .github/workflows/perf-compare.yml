@@ -48,7 +48,8 @@ jobs:
       # ---- master (base) ----
       - name: Checkout master
         uses: actions/checkout@v4
-        with: { ref: master }
+        with:
+          ref: master
 
       - name: Run perf on master
         run: |
@@ -66,7 +67,8 @@ jobs:
       # ---- branch (head) ----
       - name: Checkout PR branch
         uses: actions/checkout@v4
-        with: { ref: ${{ github.event.pull_request.head.sha }} }
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Run perf on branch
         run: |
