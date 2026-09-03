@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   compare:
-    if: contains(github.event.pull_request.labels.*.name, 'perf')
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'perf') || contains(github.event.pull_request.labels.*.name, 'perf-journey') }}
     runs-on: ubuntu-latest
     env:
       SSH_USER: ${{ vars.SSH_USER }}
@@ -34,6 +34,11 @@ jobs:
       BASE_POSTGRES_PORT: '15433'
       HEAD_BACKEND_PORT: '18082'
       HEAD_POSTGRES_PORT: '15434'
+      BASE_WEB_PORT: '13001'
+      HEAD_WEB_PORT: '13002'
+      # 'perf-journey' label runs the full-service user journey (web pages);
+      # plain 'perf' runs the API suite.
+      SUITE: ${{ contains(github.event.pull_request.labels.*.name, 'perf-journey') && 'journey' || 'scenarios' }}
       VUS: '20'
       RAMP: '30s'
       DURATION: '1m'
@@ -59,7 +64,8 @@ jobs:
           scp -i ~/.ssh/id_deploy src.tgz "$SSH_USER@$VM_HOST:$DIR/base/src.tgz"
           ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
             DIR="$DIR/base" PROJECT="$BASE_PROJECT" \
-            BACKEND_PORT="$BASE_BACKEND_PORT" POSTGRES_PORT="$BASE_POSTGRES_PORT" \
+            BACKEND_PORT="$BASE_BACKEND_PORT" POSTGRES_PORT="$BASE_POSTGRES_PORT" WEB_PORT="$BASE_WEB_PORT" \
+            SUITE="$SUITE" \
             VUS="$VUS" RAMP="$RAMP" DURATION="$DURATION" \
             REF="$(git rev-parse HEAD)" LABEL="master" \
             bash < perf/ci-run-and-record.sh
@@ -78,7 +84,8 @@ jobs:
           scp -i ~/.ssh/id_deploy src.tgz "$SSH_USER@$VM_HOST:$DIR/head/src.tgz"
           ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
             DIR="$DIR/head" PROJECT="$HEAD_PROJECT" \
-            BACKEND_PORT="$HEAD_BACKEND_PORT" POSTGRES_PORT="$HEAD_POSTGRES_PORT" \
+            BACKEND_PORT="$HEAD_BACKEND_PORT" POSTGRES_PORT="$HEAD_POSTGRES_PORT" WEB_PORT="$HEAD_WEB_PORT" \
+            SUITE="$SUITE" \
             VUS="$VUS" RAMP="$RAMP" DURATION="$DURATION" \
             REF="${{ github.event.pull_request.head.sha }}" LABEL="${{ github.head_ref }}" \
             bash < perf/ci-run-and-record.sh
