@@ -1,6 +1,10 @@
 # env
 .env
 
+# Claude Code local settings — contains GITHUB_PAT, never commit
+# (the committed .example template is the shareable version)
+.claude/settings.local.json
+
 # Java / Gradle
 backend/.gradle/
 backend/build/

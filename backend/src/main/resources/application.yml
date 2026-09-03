@@ -45,8 +45,6 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
   writer-with-default-pretty-printer: true
-  cache:
-    disabled: true
 
 tape:
   cors:

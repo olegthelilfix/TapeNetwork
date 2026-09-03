@@ -8,27 +8,43 @@
 // baseUrl defaults to $OPENAPI_BASE_URL or http://localhost:8080
 
 import { mkdir, writeFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const baseUrl = (process.argv[2] || process.env.OPENAPI_BASE_URL || "http://localhost:8080").replace(/\/+$/, "");
 const outDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "generated");
 
-async function fetchText(url) {
+/**
+ * Fetch a URL and return its body as text, throwing on a non-OK response.
+ * @param {string} url
+ * @returns {Promise<string>}
+ */
+const fetchText = async (url) => {
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`GET ${url} -> ${res.status} ${res.statusText}`);
   }
   return res.text();
-}
+};
 
-async function writeSpec(baseName, jsonUrl) {
+/**
+ * Pull a single spec and write it to generated/<baseName>.json.
+ * @param {string} baseName
+ * @param {string} jsonUrl
+ * @returns {Promise<void>}
+ */
+const writeSpec = async (baseName, jsonUrl) => {
   const json = await fetchText(jsonUrl);
   await writeFile(path.join(outDir, `${baseName}.json`), json);
   console.log(`wrote ${baseName}.json`);
-}
+};
 
-async function main() {
+/**
+ * Discover springdoc groups from swagger-config and pull each one, falling back
+ * to the single /v3/api-docs schema when no groups are configured.
+ * @returns {Promise<void>}
+ */
+const main = async () => {
   await mkdir(outDir, { recursive: true });
 
   let groups = [];
@@ -52,7 +68,7 @@ async function main() {
     const absoluteUrl = url.startsWith("http") ? url : `${baseUrl}${url}`;
     await writeSpec(`${name}-openapi`, absoluteUrl);
   }
-}
+};
 
 main().catch((err) => {
   console.error(err.message);
