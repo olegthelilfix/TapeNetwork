@@ -1,5 +1,5 @@
 # ---- build ----
-FROM eclipse-temurin:21-jdk AS build
+FROM azul/zulu-openjdk:21 AS build
 WORKDIR /app
 COPY gradlew .
 COPY gradle ./gradle
@@ -9,7 +9,7 @@ COPY src ./src
 RUN ./gradlew --no-daemon clean bootJar -x test
 
 # ---- run ----
-FROM eclipse-temurin:21-jre
+FROM azul/zulu-openjdk:21
 WORKDIR /app
 RUN mkdir -p /var/lib/tape/search
 COPY --from=build /app/build/libs/*.jar app.jar

@@ -33,3 +33,4 @@ infra/**/.terraform.lock.hcl
 
 # Logs
 log
+/.claude/settings.local.json
