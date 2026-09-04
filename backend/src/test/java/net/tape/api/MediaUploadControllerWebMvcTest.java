@@ -27,7 +27,6 @@ import java.util.Comparator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -132,12 +131,19 @@ class MediaUploadControllerWebMvcTest {
         mvc.perform(multipart("/api/admin/media/upload").file(file).header("Authorization", authHeader()))
             .andExpect(status().isOk());
 
+        // mediaDir is shared across every test method in this class (one @DynamicPropertySource
+        // per class, not per test). Another test's upload (e.g. logo.png) may already sit here.
+        // Match on this test's own sanitized suffix instead of "the first file found" - an
+        // arbitrary pick would make this test's outcome depend on filesystem listing order and
+        // on which other tests already ran.
         Path written;
         try (var files = Files.list(mediaDir)) {
-            written = files.findFirst().orElseThrow();
+            written = files
+                .filter(path -> path.getFileName().toString().endsWith("_.._.._evil_logo.PNG"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No sanitized file found in " + mediaDir));
         }
         String storedName = written.getFileName().toString();
-        assertTrue(storedName.endsWith("_.._.._evil_logo.PNG"));
         assertFalse(storedName.contains("/"));
     }
 }
