@@ -14,6 +14,12 @@ public class ArticleController {
         this.service = service; this.mapper = mapper;
     }
 
+    /**
+     * Returns pagination in the response body ({@link PagedResponse}), not an
+     * {@code X-Total-Count} header. No current or planned consumer needs header-based totals; the
+     * admin API uses that header instead, because its CMS client (Refine's {@code simple-rest} data
+     * provider) requires it. See {@link AbstractCrudController#list} for that contrast.
+     */
     @GetMapping
     public PagedResponse<ArticleDtoV1> list(
         @RequestParam(required = false) String category,
