@@ -83,6 +83,10 @@ Object flow: **Entity ↔ Model ↔ DTO**.
 - **Search**: Hibernate Search (Lucene). `@Indexed` on `ShowEntity`/`EpisodeEntity`/`VideoEntity`/`ArticleEntity`; `SearchIndexInitializer` mass-indexes seeded rows at startup (Flyway seeds bypass ORM events). `SearchHit` is a flat cross-entity result — the one place we don't use the 3-tier.
 - **Media**: uploads go to `tape.media.dir`, served at `/uploads/**`; seed images are stored as relative `uploads/…` (the web resolves them to `/uploads/…`).
 - **Frontends** consume field *names*, not ids — keep public DTO field names stable when refactoring.
+- **Pagination shape differs by API on purpose**: admin list endpoints return `X-Total-Count`
+  (required by the CMS's Refine `simple-rest` data provider); public list endpoints embed
+  pagination in the JSON body (`PagedResponse`) instead. See the Javadoc on
+  `AbstractCrudController.list()` and `ArticleController.list()` for the full reasoning.
 
 ## Video / live / ticker are v1 stubs
 
