@@ -90,6 +90,24 @@ class AdminShowControllerTest {
             .andExpect(status().isUnauthorized());
     }
 
+    /** Same rationale as {@link #deleteWithoutAuthorizationHeaderIsRejected} above. */
+    @Test
+    void createWithoutAuthorizationHeaderIsRejected() throws Exception {
+        mvc.perform(post("/api/admin/shows")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    /** Same rationale as {@link #deleteWithoutAuthorizationHeaderIsRejected} above. */
+    @Test
+    void updateWithoutAuthorizationHeaderIsRejected() throws Exception {
+        mvc.perform(patch("/api/admin/shows/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isUnauthorized());
+    }
+
     @Test
     void listWithValidTokenReturnsShowsIncludingId() throws Exception {
         ShowEntity entity = new ShowEntity();
@@ -168,7 +186,10 @@ class AdminShowControllerTest {
 
         mvc.perform(get("/api/admin/shows/99").header("Authorization", authHeader()))
             .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.status").value(404));
+            .andExpect(jsonPath("$.status").value(404))
+            .andExpect(jsonPath("$.error").value("Not Found"))
+            .andExpect(jsonPath("$.message").exists())
+            .andExpect(jsonPath("$.time").exists());
     }
 
     @Test

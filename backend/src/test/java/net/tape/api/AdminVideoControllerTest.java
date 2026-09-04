@@ -74,6 +74,24 @@ class AdminVideoControllerTest {
             .andExpect(status().isUnauthorized());
     }
 
+    /** Same rationale as {@code AdminShowControllerTest.deleteWithoutAuthorizationHeaderIsRejected}'s Javadoc. */
+    @Test
+    void createWithoutAuthorizationHeaderIsRejected() throws Exception {
+        mvc.perform(post("/api/admin/videos")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    /** Same rationale as {@code AdminShowControllerTest.deleteWithoutAuthorizationHeaderIsRejected}'s Javadoc. */
+    @Test
+    void updateWithoutAuthorizationHeaderIsRejected() throws Exception {
+        mvc.perform(patch("/api/admin/videos/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isUnauthorized());
+    }
+
     @Test
     void listWithValidTokenReturnsVideosIncludingId() throws Exception {
         Video video = new Video();
@@ -107,7 +125,10 @@ class AdminVideoControllerTest {
 
         mvc.perform(get("/api/admin/videos/99").header("Authorization", authHeader()))
             .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.status").value(404));
+            .andExpect(jsonPath("$.status").value(404))
+            .andExpect(jsonPath("$.error").value("Not Found"))
+            .andExpect(jsonPath("$.message").exists())
+            .andExpect(jsonPath("$.time").exists());
     }
 
     @Test

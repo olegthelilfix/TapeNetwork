@@ -70,6 +70,24 @@ class AdminArticleControllerTest {
             .andExpect(status().isUnauthorized());
     }
 
+    /** Same rationale as {@code AdminShowControllerTest.deleteWithoutAuthorizationHeaderIsRejected}'s Javadoc. */
+    @Test
+    void createWithoutAuthorizationHeaderIsRejected() throws Exception {
+        mvc.perform(post("/api/admin/articles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    /** Same rationale as {@code AdminShowControllerTest.deleteWithoutAuthorizationHeaderIsRejected}'s Javadoc. */
+    @Test
+    void updateWithoutAuthorizationHeaderIsRejected() throws Exception {
+        mvc.perform(patch("/api/admin/articles/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isUnauthorized());
+    }
+
     @Test
     void listWithValidTokenReturnsArticlesIncludingId() throws Exception {
         Article article = new Article();
@@ -90,7 +108,10 @@ class AdminArticleControllerTest {
 
         mvc.perform(get("/api/admin/articles/99").header("Authorization", authHeader()))
             .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.status").value(404));
+            .andExpect(jsonPath("$.status").value(404))
+            .andExpect(jsonPath("$.error").value("Not Found"))
+            .andExpect(jsonPath("$.message").exists())
+            .andExpect(jsonPath("$.time").exists());
     }
 
     @Test

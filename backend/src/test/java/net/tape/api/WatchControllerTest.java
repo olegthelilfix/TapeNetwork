@@ -56,6 +56,8 @@ class WatchControllerTest {
         mvc.perform(get("/api/v1/watch/missing"))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.status").value(404))
-            .andExpect(jsonPath("$.error").value("Not Found"));
+            .andExpect(jsonPath("$.error").value("Not Found"))
+            .andExpect(jsonPath("$.message").exists())
+            .andExpect(jsonPath("$.time").exists());
     }
 }
