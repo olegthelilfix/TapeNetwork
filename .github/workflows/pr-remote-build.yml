@@ -74,7 +74,7 @@ jobs:
           # timing out -> NextFontError ETIMEDOUT).
           docker run --rm --network host --dns 8.8.8.8 --dns 1.1.1.1 \
             -v "$PWD/web:/app" -w /app \
-            node:20-alpine sh -c 'yarn install --frozen-lockfile && yarn test && yarn build'
+            node:20-alpine sh -c 'yarn install --frozen-lockfile && yarn build && yarn test'
           echo '::endgroup::'
 
           echo '::group::cms — yarn install && build'
