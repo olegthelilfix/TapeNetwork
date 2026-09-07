@@ -1,7 +1,7 @@
 import { generate } from '@devexperts/swagger-codegen-ts';
 import { serialize } from '@devexperts/swagger-codegen-ts/dist/language/typescript/3.0';
 import { OpenapiObjectCodec } from '@devexperts/swagger-codegen-ts/dist/schema/3.0/openapi-object';
-import { rm, writeFile, readFile } from 'node:fs/promises';
+import { readFile,rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const devApiSpecUrl = 'http://localhost:8080/v3/api-docs';
