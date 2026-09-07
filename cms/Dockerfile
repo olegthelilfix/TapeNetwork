@@ -3,10 +3,10 @@ FROM node:20-alpine AS build
 WORKDIR /app
 ARG VITE_ADMIN_API_URL
 ENV VITE_ADMIN_API_URL=$VITE_ADMIN_API_URL
-COPY package.json package-lock.json* ./
-RUN npm install
+COPY package.json yarn.lock* ./
+RUN yarn install --frozen-lockfile
 COPY . .
-RUN npm run build
+RUN yarn build
 
 # ---- serve (static) ----
 FROM nginx:1.27-alpine AS run
