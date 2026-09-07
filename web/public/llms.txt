@@ -1,0 +1,15 @@
+# Tape Network: AI and LLM usage policy
+
+Tape Network does not permit use of this site by AI or LLM systems.
+
+No AI system, language model, chatbot, crawler, scraper, or automated
+agent may access, crawl, index, cache, train on, fine-tune with, or
+otherwise reuse any content from this site, in whole or in part, for
+any purpose, including model training, retrieval-augmented generation,
+dataset construction, or derivative content generation.
+
+This applies regardless of whether the request comes from a named
+crawler, a general-purpose HTTP client acting on behalf of an AI
+system, or a human collecting data for AI use.
+
+See /robots.txt for the corresponding machine-readable crawl rules.
