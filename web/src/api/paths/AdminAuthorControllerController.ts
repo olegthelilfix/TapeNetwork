@@ -1,0 +1,279 @@
+import { ResponseValidationError, HTTPClient, HTTPClient1, HTTPClient2 } from '../client/client';
+import { Author, AuthorIO } from '../components/schemas/Author';
+import { JsonNode, JsonNodeIO } from '../components/schemas/JsonNode';
+import { serializePrimitiveParameter } from '../utils/openapi-3-utils';
+import { getResponseTypeFromMediaType } from '../utils/utils';
+import { either, option } from 'fp-ts';
+import { compact } from 'fp-ts/lib/Array';
+import { HKT, Kind, Kind2, URIS, URIS2 } from 'fp-ts/lib/HKT';
+import { Option, fromEither } from 'fp-ts/lib/Option';
+import { pipe } from 'fp-ts/lib/pipeable';
+import { Int, array, string, type } from 'io-ts';
+import { optionFromNullable } from 'io-ts-types/lib/optionFromNullable';
+
+export interface AdminAuthorControllerController<F> {
+	readonly getOne_10: (id: Int) => HKT<F, Author>;
+
+	readonly put_10: (id: Int, parameters: { body: JsonNode }) => HKT<F, Author>;
+
+	readonly delete_10: (id: Int) => HKT<F, Author>;
+
+	readonly update_10: (id: Int, parameters: { body: JsonNode }) => HKT<F, Author>;
+
+	readonly list_10: (parameters: {
+		query: { _start: Option<Int>; _end: Option<Int>; _sort: Option<string>; _order: Option<string> };
+	}) => HKT<F, Array<Author>>;
+
+	readonly create_10: (parameters: { body: JsonNode }) => HKT<F, Author>;
+}
+
+export interface AdminAuthorControllerController1<F extends URIS> {
+	readonly getOne_10: (id: Int) => Kind<F, Author>;
+
+	readonly put_10: (id: Int, parameters: { body: JsonNode }) => Kind<F, Author>;
+
+	readonly delete_10: (id: Int) => Kind<F, Author>;
+
+	readonly update_10: (id: Int, parameters: { body: JsonNode }) => Kind<F, Author>;
+
+	readonly list_10: (parameters: {
+		query: { _start: Option<Int>; _end: Option<Int>; _sort: Option<string>; _order: Option<string> };
+	}) => Kind<F, Array<Author>>;
+
+	readonly create_10: (parameters: { body: JsonNode }) => Kind<F, Author>;
+}
+
+export interface AdminAuthorControllerController2<F extends URIS2> {
+	readonly getOne_10: (id: Int) => Kind2<F, Error, Author>;
+
+	readonly put_10: (id: Int, parameters: { body: JsonNode }) => Kind2<F, Error, Author>;
+
+	readonly delete_10: (id: Int) => Kind2<F, Error, Author>;
+
+	readonly update_10: (id: Int, parameters: { body: JsonNode }) => Kind2<F, Error, Author>;
+
+	readonly list_10: (parameters: {
+		query: { _start: Option<Int>; _end: Option<Int>; _sort: Option<string>; _order: Option<string> };
+	}) => Kind2<F, Error, Array<Author>>;
+
+	readonly create_10: (parameters: { body: JsonNode }) => Kind2<F, Error, Author>;
+}
+
+export function adminAuthorControllerController<F extends URIS2>(e: {
+	httpClient: HTTPClient2<F>;
+}): AdminAuthorControllerController2<F>;
+export function adminAuthorControllerController<F extends URIS>(e: {
+	httpClient: HTTPClient1<F>;
+}): AdminAuthorControllerController1<F>;
+export function adminAuthorControllerController<F>(e: {
+	httpClient: HTTPClient<F>;
+}): AdminAuthorControllerController<F>;
+export function adminAuthorControllerController<F>(e: {
+	httpClient: HTTPClient<F>;
+}): AdminAuthorControllerController<F> {
+	return {
+		getOne_10: id => {
+			const accept = '*/*';
+
+			const responseType = getResponseTypeFromMediaType(accept);
+			const requestHeaders = {
+				Accept: accept,
+			};
+
+			return e.httpClient.chain(
+				e.httpClient.request({
+					url: `/api/admin/authors/${encodeURIComponent(Int.encode(id).toString())}`,
+					method: 'GET',
+					responseType,
+
+					headers: { ...requestHeaders },
+				}),
+				value =>
+					pipe(
+						AuthorIO.decode(value),
+						either.mapLeft(ResponseValidationError.create),
+						either.fold(
+							error => e.httpClient.throwError(error),
+							decoded => e.httpClient.of(decoded),
+						),
+					),
+			);
+		},
+
+		put_10: (id, parameters) => {
+			const body = JsonNodeIO.encode(parameters.body);
+
+			const accept = '*/*';
+
+			const responseType = getResponseTypeFromMediaType(accept);
+			const requestHeaders = {
+				Accept: accept,
+				'Content-type': 'application/json',
+			};
+
+			return e.httpClient.chain(
+				e.httpClient.request({
+					url: `/api/admin/authors/${encodeURIComponent(Int.encode(id).toString())}`,
+					method: 'PUT',
+					responseType,
+
+					body,
+					headers: { ...requestHeaders },
+				}),
+				value =>
+					pipe(
+						AuthorIO.decode(value),
+						either.mapLeft(ResponseValidationError.create),
+						either.fold(
+							error => e.httpClient.throwError(error),
+							decoded => e.httpClient.of(decoded),
+						),
+					),
+			);
+		},
+
+		delete_10: id => {
+			const accept = '*/*';
+
+			const responseType = getResponseTypeFromMediaType(accept);
+			const requestHeaders = {
+				Accept: accept,
+			};
+
+			return e.httpClient.chain(
+				e.httpClient.request({
+					url: `/api/admin/authors/${encodeURIComponent(Int.encode(id).toString())}`,
+					method: 'DELETE',
+					responseType,
+
+					headers: { ...requestHeaders },
+				}),
+				value =>
+					pipe(
+						AuthorIO.decode(value),
+						either.mapLeft(ResponseValidationError.create),
+						either.fold(
+							error => e.httpClient.throwError(error),
+							decoded => e.httpClient.of(decoded),
+						),
+					),
+			);
+		},
+
+		update_10: (id, parameters) => {
+			const body = JsonNodeIO.encode(parameters.body);
+
+			const accept = '*/*';
+
+			const responseType = getResponseTypeFromMediaType(accept);
+			const requestHeaders = {
+				Accept: accept,
+				'Content-type': 'application/json',
+			};
+
+			return e.httpClient.chain(
+				e.httpClient.request({
+					url: `/api/admin/authors/${encodeURIComponent(Int.encode(id).toString())}`,
+					method: 'PATCH',
+					responseType,
+
+					body,
+					headers: { ...requestHeaders },
+				}),
+				value =>
+					pipe(
+						AuthorIO.decode(value),
+						either.mapLeft(ResponseValidationError.create),
+						either.fold(
+							error => e.httpClient.throwError(error),
+							decoded => e.httpClient.of(decoded),
+						),
+					),
+			);
+		},
+
+		list_10: parameters => {
+			const query = compact([
+				pipe(
+					optionFromNullable(Int).encode(parameters.query['_start']),
+					option.fromNullable,
+					option.chain(value => fromEither(serializePrimitiveParameter('form', '_start', value))),
+				),
+				pipe(
+					optionFromNullable(Int).encode(parameters.query['_end']),
+					option.fromNullable,
+					option.chain(value => fromEither(serializePrimitiveParameter('form', '_end', value))),
+				),
+				pipe(
+					optionFromNullable(string).encode(parameters.query['_sort']),
+					option.fromNullable,
+					option.chain(value => fromEither(serializePrimitiveParameter('form', '_sort', value))),
+				),
+				pipe(
+					optionFromNullable(string).encode(parameters.query['_order']),
+					option.fromNullable,
+					option.chain(value => fromEither(serializePrimitiveParameter('form', '_order', value))),
+				),
+			]).join('&');
+
+			const accept = '*/*';
+
+			const responseType = getResponseTypeFromMediaType(accept);
+			const requestHeaders = {
+				Accept: accept,
+			};
+
+			return e.httpClient.chain(
+				e.httpClient.request({
+					url: `/api/admin/authors`,
+					method: 'GET',
+					responseType,
+					query,
+
+					headers: { ...requestHeaders },
+				}),
+				value =>
+					pipe(
+						array(AuthorIO).decode(value),
+						either.mapLeft(ResponseValidationError.create),
+						either.fold(
+							error => e.httpClient.throwError(error),
+							decoded => e.httpClient.of(decoded),
+						),
+					),
+			);
+		},
+
+		create_10: parameters => {
+			const body = JsonNodeIO.encode(parameters.body);
+
+			const accept = '*/*';
+
+			const responseType = getResponseTypeFromMediaType(accept);
+			const requestHeaders = {
+				Accept: accept,
+				'Content-type': 'application/json',
+			};
+
+			return e.httpClient.chain(
+				e.httpClient.request({
+					url: `/api/admin/authors`,
+					method: 'POST',
+					responseType,
+
+					body,
+					headers: { ...requestHeaders },
+				}),
+				value =>
+					pipe(
+						AuthorIO.decode(value),
+						either.mapLeft(ResponseValidationError.create),
+						either.fold(
+							error => e.httpClient.throwError(error),
+							decoded => e.httpClient.of(decoded),
+						),
+					),
+			);
+		},
+	};
+}
