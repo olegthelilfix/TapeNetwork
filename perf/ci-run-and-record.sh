@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Runs ON THE VM (piped over ssh stdin by the perf workflows). Expects these
 # env vars set by the ssh command: DIR PROJECT BACKEND_PORT POSTGRES_PORT
-# VUS RAMP DURATION REF [LABEL] [SUITE] [WEB_PORT].
+# VUS RAMP DURATION REF [LABEL] [SUITE] [WEB_PORT]
+# [PRESSURE] [PRESSURE_RATE] [PRESSURE_RAMP] [PRESSURE_DURATION] [PRESSURE_MAX_VUS].
 #
 # SUITE=scenarios (default) — load the backend API (/api/v1) directly.
 # SUITE=journey             — bring up the web frontend too and drive real
@@ -73,6 +74,7 @@ docker run --rm --add-host=host.docker.internal:host-gateway \
   -v "$PWD/perf:/perf" -w /perf \
   "${TARGET_ENV[@]}" \
   -e VUS -e RAMP -e DURATION -e WARMUP -e THINK_MIN -e THINK_MAX \
+  -e PRESSURE -e PRESSURE_RATE -e PRESSURE_RAMP -e PRESSURE_DURATION -e PRESSURE_MAX_VUS \
   grafana/k6 run "$K6_SCRIPT"
 K6_RC=$?
 set -e

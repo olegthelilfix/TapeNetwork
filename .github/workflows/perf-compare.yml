@@ -42,6 +42,15 @@ jobs:
       VUS: '20'
       RAMP: '30s'
       DURATION: '1m'
+      # Pool-pressure profile: a fixed-rate hammer on /search so a
+      # Hikari pool-size change actually moves the perf-compare numbers. Always
+      # on for this workflow only (not perf.yml's manual run). See run_leg()'s
+      # tar step below for why perf/ is sourced from head-src for both legs.
+      PRESSURE: '1'
+      PRESSURE_RATE: '200'
+      PRESSURE_RAMP: '15s'
+      PRESSURE_DURATION: '1m'
+      PRESSURE_MAX_VUS: '300'
     steps:
       - name: Set up SSH
         run: |
@@ -72,15 +81,25 @@ jobs:
           run_leg() {
             local leg="$1" round="$2" project="$3" bport="$4" pgport="$5" wport="$6" ref="$7" lbl="$8" srcdir="$9"
             local rdir="$DIR/${leg}${round}"
-            ( cd "$srcdir" && tar czf /tmp/src-${leg}${round}.tgz \
+            # perf/ always comes from head-src, for BOTH legs (base included):
+            # the base leg has to run the branch's own scenarios.js (the one
+            # with PRESSURE/pool_pressure handling), or it produces zero
+            # lat_pool_pressure samples no matter what the Hikari config does.
+            # backend/web/cms/streamer/docker-compose.yml still come from each
+            # leg's own $srcdir, unchanged (base-src for master, head-src for
+            # the branch).
+            tar czf /tmp/src-${leg}${round}.tgz \
                 --exclude=.git --exclude=node_modules --exclude=target --exclude=.next \
-                backend web cms streamer docker-compose.yml perf )
+                -C "$srcdir" backend web cms streamer docker-compose.yml \
+                -C "$PWD/head-src" perf
             ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" "mkdir -p '$rdir'"
             scp -i ~/.ssh/id_deploy /tmp/src-${leg}${round}.tgz "$SSH_USER@$VM_HOST:$rdir/src.tgz"
             ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
               DIR="$rdir" PROJECT="${project}_r${round}" \
               BACKEND_PORT="$bport" POSTGRES_PORT="$pgport" WEB_PORT="$wport" \
               SUITE="$SUITE" VUS="$VUS" RAMP="$RAMP" DURATION="$DURATION" \
+              PRESSURE="$PRESSURE" PRESSURE_RATE="$PRESSURE_RATE" PRESSURE_RAMP="$PRESSURE_RAMP" \
+              PRESSURE_DURATION="$PRESSURE_DURATION" PRESSURE_MAX_VUS="$PRESSURE_MAX_VUS" \
               REF="$ref" LABEL="$lbl" \
               bash < head-src/perf/ci-run-and-record.sh
             # Tear this round's stack down immediately so its ports are free for

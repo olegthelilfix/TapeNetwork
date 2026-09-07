@@ -47,6 +47,209 @@ All load parameters are env vars (nothing hardcoded):
 | `SEARCH_Q` | seed terms | Comma-list of search terms (hits) |
 | `SLUGS_SHOWS` / `SLUGS_CATEGORIES` / `SLUGS_SUBCATEGORIES` | seed slugs | Comma-lists of real slugs to hit |
 
+## Pool-pressure profile
+
+`public_api` above never drives real Hikari-pool contention: `ShowService`,
+`CatalogService`, `ScheduleService`, and `TickerService` all wrap their reads
+in `@Cacheable` (Caffeine, TTL `tape.cache.public-ttl-seconds`), and
+`ArticleStore`/`VideoStore` read from `CachedContentStore`, an in-memory map
+populated once at startup and never re-queried per request. None of those
+reach Postgres per request. `/api/v1/home` is also uncached and already part
+of the default mix's listings group, but its indexed repository lookups are
+lighter than a Lucene-backed search. `/api/v1/search?type=show` and
+`type=episode` are the heavier lever: both open a `Search.session(em)` call
+that hydrates matched rows from Postgres on every request. So an optional
+`pool_pressure` scenario hammers exactly those two, at a fixed arrival rate,
+to make a pool-size change (`maximum-pool-size`, `minimum-idle`, …) show up as
+a measurable latency delta.
+
+Off by default; enable with `PRESSURE=1`:
+
+```bash
+PRESSURE=1 PRESSURE_DURATION=30s ./run.sh
+```
+
+| Var | Default | Meaning |
+|-----|---------|---------|
+| `PRESSURE` | unset | Set to `1` to add the `pool_pressure` scenario |
+| `PRESSURE_RATE` | `200` | Target requests/sec once ramped up |
+| `PRESSURE_RAMP` | `15s` | Ramp-up duration to `PRESSURE_RATE` |
+| `PRESSURE_DURATION` | `1m` | Steady-state duration at `PRESSURE_RATE` |
+| `PRESSURE_MAX_VUS` | `300` | VU ceiling backing the arrival rate |
+
+`pool_pressure` uses a `ramping-arrival-rate` executor (not more VUs on
+`public_api`'s `ramping-vus`), so requests arrive at a fixed rate regardless of
+how long each one takes. Once that rate exceeds what the pool can drain,
+queueing shows up directly as latency in the new `lat_pool_pressure` `Trend`.
+It starts only after `public_api`'s own stages finish (an offset computed from
+`WARMUP`/`RAMP`/`DURATION`, not a hardcoded number), so the two scenarios never
+overlap and neither one's numbers move because the other was retuned. Its own
+ramp-up and ramp-down samples are excluded from `lat_pool_pressure` too (the
+same pattern as `public_api`'s `warmup` exclusion), so the reported percentiles
+reflect the `PRESSURE_RATE` steady-state window, not the transition into or
+out of it.
+
+Because `pool_pressure` pushes traffic on purpose to stress the pool, the existing
+`http_req_failed`/`http_req_duration` thresholds are now tag-scoped to
+`{scenario:'public_api'}`. Otherwise, a PR with nothing to do with Hikari
+could turn them red just because `PRESSURE=1` is on. `lat_search`/
+`lat_listing`/`lat_detail` didn't need scoping (only `public_api`'s `run()`
+writes to them). `lat_pool_pressure` carries no k6 threshold in
+`scenarios.js`: it's the metric a perf-compare run is meant to observe, not
+a limit this k6 run enforces on its own.
+
+That's not the whole story, though: `perf/compare.mjs`'s own per-group
+pass/fail check auto-discovers every `lat_*`/`page_*` group from the k6
+summary, `lat_pool_pressure` included, so leaving it alone there would still
+fail the PR check on a slow pool-pressure run. `compare.mjs` explicitly
+excludes `lat_pool_pressure` via its `INFORMATIONAL_GROUPS` set (the same
+pattern peak CPU/memory already use): the group's p95/p99 still render in the
+sticky PR comment's per-group table, marked `(info)`, but a red row there
+never sets the check's exit code. See "Regression: master vs branch" below.
+
+> **Fixed: the backend used to fail to start with these env vars set.**
+> Bringing the backend up with all six `SPRING_DATASOURCE_HIKARI_*` vars set
+> (exactly as `docker-compose.yml`/`.env.example` declare them) used to crash
+> on boot. Spring Boot 3.4.4 threw `IllegalStateException: The configuration
+> of the pool is sealed once started` while binding `spring.datasource.hikari.*`.
+> Root cause: Spring Boot's default auto-configuration builds a lazy
+> `HikariDataSource` first and binds Hikari properties onto it afterward; in
+> this app, Flyway's own bean creation reached that DataSource early enough
+> to open its first connection (sealing the pool) before the second-phase
+> binding of `connection-timeout` (and, by extension, whatever came after it)
+> finished. Fixed in `backend/src/main/java/net/tape/application/DataSourceConfig.java`:
+> `spring.datasource.hikari.*` now binds onto a plain `HikariConfig` (never a
+> live pool) before a single, fully-configured `HikariDataSource` is
+> constructed from it. No window remains for an early consumer to seal the
+> pool mid-bind. Confirmed fixed via a bare `./gradlew bootRun` with all six
+> vars set: the pool starts under the configured name (`TapeHikariPool`),
+> `/actuator/health` returns `UP`, and the full backend test suite still
+> passes.
+>
+> **Answered (2026-09-08): `PRESSURE_RATE=200` does not saturate the pool
+> locally.** Three short local runs (podman on a laptop, not a controlled
+> benchmark) measured `lat_pool_pressure` p95/p99 at three arrival rates. At
+> 20 req/s (control): p95 8.86ms, p99 12.79ms. At 200 req/s (the documented
+> default): p95 2.69ms, p99 3.63ms. At 2000 req/s (10x the default,
+> exploratory): p95 1.55ms, p99 3.16ms. Latency did not rise with rate. The
+> 20 req/s run was actually the slowest of the three, so this looks like
+> run-to-run noise, not queueing. These runs also showed the local default
+> pool size is `maximum-pool-size=20`/`minimum-idle=10` (per
+> `.env.example`/`docker-compose.yml`), not the 10-connection pool this note
+> used to assume.
+>
+> Why: the `pool_pressure` search query averages under 2ms per request here.
+> By Little's Law (roughly: the number of requests in flight at once equals
+> the arrival rate multiplied by how long each request takes), saturating
+> even a 10-connection pool needs an arrival rate in the thousands of
+> requests per second. That's well past the
+> documented default, and past the 2000 req/s run above, which still showed
+> no queueing. With this seed dataset and query cost, `PRESSURE_RATE=200`/
+> `PRESSURE_MAX_VUS=300` don't exercise real pool contention.
+>
+> This needs re-baselining. Two short laptop runs plus one exploratory run
+> aren't enough to pick a new default with confidence, but they do rule out
+> the current one: it produces a flat, non-saturating result, and so does a
+> rate 10x higher. Before trusting a `lat_pool_pressure` delta, try one of:
+> push `PRESSURE_RATE` well past 2000 (these runs don't show where it starts
+> to saturate); shrink the tested pool to a few connections so a moderate
+> rate can exhaust it; or add a synthetic slow path so per-request latency is
+> large enough for Little's Law to make saturation reachable at a realistic
+> rate.
+>
+> **Follow-up (2026-09-08): found a rate that saturates, and it shows the
+> pool-size change working.** Stepped `PRESSURE_RATE` up from the 2000 req/s
+> ceiling above, in short runs (`PRESSURE_RAMP=10s`, `PRESSURE_DURATION=20s`).
+> The VU ceiling was `PRESSURE_MAX_VUS=1000` for the 5000 req/s run and `1500`
+> for the 6000 and 8000 req/s runs, backend at the branch's default
+> `maximum-pool-size=20`:
+>
+> | rate | p95 | p99 | avg |
+> |---|---|---|---|
+> | 2000 (prior run, for reference) | 1.55ms | 3.16ms | n/a |
+> | 5000 | 6.29ms | 10.66ms | 2.26ms |
+> | 6000 | 17.88ms | 26.93ms | 5.40ms |
+> | 8000 | 112.43ms | 159.00ms | 33.34ms |
+>
+> Latency finally rises with rate, confirming the pool can be made to queue
+> locally. But 6000 turned out to be a bad choice for an actual before/after
+> comparison: it sits right at the *start* of the knee, the point where
+> latency starts climbing sharply as the rate goes up. At that point, the
+> real difference a pool-size change makes is about as big as the random
+> swings between repeated runs of the exact same setup, on this machine (an
+> active laptop: IDE, browser, and a second agent session running throughout,
+> `uptime` load average 6-7 during these tests, not a quiet CI VM). Three
+> same-config (pool=20) runs at 6000 gave `lat_pool_pressure` p95 of 17.88ms,
+> 34.09ms, and 57.53ms: a spread of more than 3x with *no change to the pool
+> at all*. One direct pool=10-vs-pool=20 pair at 6000 even came out backwards
+> (pool=20 slower on p95). 8000 req/s was the first rate where the gap
+> between pool=10 and pool=20 was clearly bigger than that run-to-run noise,
+> so it's the rate used below.
+>
+> **Before/after at `PRESSURE_RATE=8000`** (`PRESSURE_RAMP=10s`,
+> `PRESSURE_DURATION=20s`, `PRESSURE_MAX_VUS=1500`, `DURATION=20s RAMP=10s` for
+> `public_api`), backend restarted between pool sizes, 3 runs per side:
+>
+> | pool size | run | avg | p95 | p99 | max | dropped iters | http_req_failed |
+> |---|---|---|---|---|---|---|---|
+> | 10 | 1 | 105.41ms | 283.25ms | 419.20ms | 4.77s | 17% | 0.07% |
+> | 10 | 2 | 98.63ms  | 250.45ms | 319.09ms | 690ms | 22% | 0.03% |
+> | 10 | 3 | 118.85ms | 306.67ms | 415.90ms | 816ms | 29% | 0.02% |
+> | 20 (branch default) | 1 | 27.49ms | 88.17ms  | 139.65ms | 332ms | 16% | 0.12% |
+> | 20 (branch default) | 2 | 35.47ms | 121.62ms | 252.54ms | 714ms | 19% | 0.03% |
+> | 20 (branch default) | 3 | 33.34ms | 112.43ms | 159.00ms | 314ms | 12% | 0.05% |
+>
+> `SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=10` for the "before" rows
+> (HikariCP's real stock default: what `master` effectively runs, since it
+> never sets this property); no override for "after" (the branch's
+> `maximum-pool-size=20`). Averaged across each side's 3 runs: pool=10 lands
+> at **avg ≈ 108ms / p95 ≈ 280ms / p99 ≈ 385ms**; pool=20 at **avg ≈ 32ms /
+> p95 ≈ 107ms / p99 ≈ 184ms**. That's roughly 3.4x on avg, 2.6x on p95, and
+> 2.1x on p99: the expected direction, and, unlike the 6000 req/s runs,
+> clearly bigger than the run-to-run noise. Pool=10's *lowest* p95 (250ms) is
+> still more than double pool=20's *highest* p95 (122ms), and the two sides'
+> p99 ranges (319-420ms vs. 140-253ms) don't overlap.
+>
+> One reason to trust this result, not dismiss it as a fluke that happens to
+> favor pool=20: `dropped_iterations` (how often k6's arrival-rate executor
+> gave up on scheduling a request it couldn't fit in time) ran 12-29% across
+> these runs, and ran *higher* on the pool=10 side. A dropped iteration never
+> records a `lat_pool_pressure` sample, so the worse pool=10 got, the more
+> its slowest would-be requests were silently left out of its own
+> percentiles. If anything, that makes pool=10 look better than it really is,
+> so the true gap is probably bigger than the numbers above show, not
+> smaller. `http_req_failed` on top of that stayed under 0.15% on every run
+> (a handful of client-side `dial: i/o timeout` errors each time, consistent
+> with the podman-machine network stack under load, not the application), so
+> these aren't failure-driven percentiles either.
+>
+> Limits of this test, plainly: this is a laptop running podman (not the
+> target CI VM), under real background load throughout, from 6 short runs (3
+> per side), not a multi-hour controlled benchmark. `PRESSURE_RATE=8000` is
+> 40x the current documented default and needed `PRESSURE_MAX_VUS=1500` (5x
+> the 300 default). Pool=10's runs used nearly the whole allocation
+> (`vus_max` 1467-1520 out of 1500+20), so k6's own VU ceiling was close to
+> becoming a second limiting factor on top of the pool itself; raising
+> `PRESSURE_MAX_VUS` further would be worth checking before treating
+> 8000/1500 as final. The CI VM's specs are unknown to this session, so the
+> actual rate needed to saturate it there (which could be higher or lower)
+> has to be found the same way: step the rate, watch for the knee, and
+> confirm the before/after gap clearly beats the run-to-run noise. Don't
+> assume it's 8000 there too.
+>
+> Recommendation (for the user to decide, not applied here): the current
+> `PRESSURE_RATE=200` / `PRESSURE_MAX_VUS=300` defaults in `scenarios.js` and
+> `perf-compare.yml` do not put real pressure on the pool and would not catch
+> a Hikari-pool regression. Every `perf`-labeled PR currently gets a
+> `lat_pool_pressure` row that can't move. If the goal is for that row to
+> mean something, raising both substantially is worth doing (this session's
+> results point to somewhere in the 6000-8000+ req/s / 1000-1500+ VU range as
+> a starting point to re-verify on the actual CI VM). The tradeoff:
+> `perf-compare.yml` already roughly doubles per-leg wall time with
+> `PRESSURE=1` on, and a much higher rate adds real CPU and network load to
+> the CI runner on top of that, so it's worth confirming the CI VM can
+> generate and absorb that rate before locking it in.
+
 ## Check OpenAPI coverage
 
 Ensures new public endpoints don't silently escape the load test:
@@ -86,6 +289,10 @@ budgets in `scenarios.js` to your target SLOs.
 > Thresholds are starting points sized for the small seed dataset on a modest
 > VM. Re-baseline them against your target instance before treating a red run as
 > a real regression.
+
+> The `http_req_failed`/`http_req_duration` rows above are scoped to the
+> `public_api` scenario (see "Pool-pressure profile" above) so an optional
+> `PRESSURE=1` run doesn't fail them on its own deliberately-heavy traffic.
 
 ## CI: run against an ephemeral isolated stack
 
@@ -147,14 +354,38 @@ does the whole thing in **one run**:
 Running master and branch back-to-back on the same VM keeps conditions identical
 (low noise) and means there's no separate baseline artifact to manage — both
 reports live on the PR. The check goes **red if latency or error rate regressed
-by more than `MAX_REGRESSION`%** (default 15); throughput and per-service CPU/RAM
-are shown but not gated (too noisy).
+by more than `MAX_REGRESSION`%** (default 15); throughput, per-service CPU/RAM,
+and `lat_pool_pressure` are shown in the comment but not gated (see "Pool-pressure
+profile" above for why that one group is deliberately excluded from the
+per-group pass/fail check).
 
 `perf/ci-run-and-record.sh` is the shared remote step (up → k6 + sample →
 `compare.mjs record`), invoked once per stack — DRY, one place to change.
 
 Both stacks are throwaway (own compose project, ports 18081–18082 / 15433–15434)
 and never touch the live prod stack.
+
+**`PRESSURE=1` is always on for this workflow** (job-level `env:`),
+so every `perf`-labeled PR's comment carries a `lat_pool_pressure` row. That
+requires one deliberate exception to "master's tree, branch's tree": `perf/`
+itself is packaged from **`head-src` for both legs**, while `backend`/`web`/
+`cms`/`streamer`/`docker-compose.yml` still come from each leg's own checkout
+(`base-src` for master, `head-src` for the branch), unchanged. Reason: master's
+own `perf/scenarios.js` predates the `PRESSURE`/`pool_pressure` code, so a base
+leg built from `base-src/perf` would run a script that never adds the
+`pool_pressure` scenario at all. The sticky comment's base-side
+`lat_pool_pressure` cell would read `n/a` unconditionally, regardless of
+whether the Hikari change helped. Holding `perf/` constant across both legs
+makes the Hikari config the only variable under test; this is safe only
+because this kind of change adds no public endpoint the master backend lacks,
+so the (branch-versioned) k6 script still finds everything it calls when run
+against the (master-versioned) backend.
+
+Turning `PRESSURE=1` on by default roughly doubles each leg's k6 wall time
+(about 120s to about 205s at the defaults: `public_api`'s own WARMUP + RAMP +
+DURATION + ramp-down already sums to ~120s, and `pool_pressure` adds
+`PRESSURE_RAMP` + `PRESSURE_DURATION` + its own 10s ramp-down after that), across
+4 legs, for every future `perf`-labeled PR.
 
 ### Record / compare manually
 

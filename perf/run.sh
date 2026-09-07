@@ -5,6 +5,7 @@
 #   ./run.sh                         # defaults (localhost:8080, 20 VUs, 1m)
 #   BASE_URL=http://34.13.255.70:8080 ./run.sh
 #   VUS=50 RAMP=1m DURATION=3m ./run.sh
+#   PRESSURE=1 PRESSURE_DURATION=30s ./run.sh   # add the pool-pressure profile
 #
 # Outputs (in ./results/):
 #   summary.json  — full k6 end-of-test summary (throughput + latency percentiles)
@@ -32,6 +33,9 @@ docker run --rm -i "${HOST_FLAG[@]}" \
   -v "$PWD:/perf" -w /perf \
   -e BASE_URL="$BASE_URL" \
   -e VUS="${VUS:-}" -e RAMP="${RAMP:-}" -e DURATION="${DURATION:-}" \
+  -e PRESSURE="${PRESSURE:-}" -e PRESSURE_RATE="${PRESSURE_RATE:-}" \
+  -e PRESSURE_RAMP="${PRESSURE_RAMP:-}" -e PRESSURE_DURATION="${PRESSURE_DURATION:-}" \
+  -e PRESSURE_MAX_VUS="${PRESSURE_MAX_VUS:-}" \
   -e SEARCH_Q="${SEARCH_Q:-}" \
   -e SLUGS_SHOWS="${SLUGS_SHOWS:-}" \
   -e SLUGS_CATEGORIES="${SLUGS_CATEGORIES:-}" \
