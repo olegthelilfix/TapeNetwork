@@ -20,7 +20,10 @@ describe("robots", () => {
     expect(disallowFor("*")).toBe("/");
   });
 
-  it("disallows every named AI/LLM crawler", () => {
+  it("disallows every named AI/LLM crawler, with no extras or duplicates", () => {
+    expect(ruleList()).toHaveLength(1 + AI_CRAWLER_NAMES.length);
+    const userAgents = ruleList().map((r) => r.userAgent);
+    expect(new Set(userAgents).size).toBe(userAgents.length);
     const missing = AI_CRAWLER_NAMES.filter((bot) => disallowFor(bot) !== "/");
     expect(missing).toEqual([]);
   });
