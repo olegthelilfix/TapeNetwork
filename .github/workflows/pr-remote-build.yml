@@ -67,7 +67,7 @@ jobs:
             azul/zulu-openjdk:21 sh -c './gradlew build --no-daemon'
           echo '::endgroup::'
 
-          echo '::group::web — yarn install && test && build'
+          echo '::group::web — yarn install && build && test'
           # --network host + explicit DNS: next/font/google fetches IBM Plex
           # fonts from fonts.googleapis.com at build time, so the container
           # needs the same outbound reach as the host (default bridge net was
