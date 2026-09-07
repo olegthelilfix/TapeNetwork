@@ -14,7 +14,7 @@ const generatedController = showControllerController({
 
 export const getShows = (): ControllerResult<readonly ShowSummary[]> => {
     return mapGeneratedResult(
-        generatedController.list_13(),
+        generatedController.list_1(),
         (dtos) => E.traverseArray(mapShowSummaryDto)(dtos),
     );
 };

@@ -57,7 +57,7 @@ export const getArticles = (
         TE.fromEither,
         TE.chain((query) =>
             mapGeneratedResult(
-                generatedController.list_15({ query }),
+                generatedController.list_3({ query }),
                 mapArticlePageDto,
             ),
         ),

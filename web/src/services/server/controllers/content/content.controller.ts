@@ -53,14 +53,14 @@ const watchGeneratedController = watchControllerController({
 
 export const getSchedule = (): ControllerResult<readonly ScheduleItem[]> => {
     return mapGeneratedResult(
-        scheduleGeneratedController.list_14(),
+        scheduleGeneratedController.list_2(),
         (dtos) => E.traverseArray(mapScheduleItemDto)(dtos),
     );
 };
 
 export const getTicker = (): ControllerResult<readonly Ticker[]> => {
     return mapGeneratedResult(
-        tickerGeneratedController.list_12(),
+        tickerGeneratedController.list(),
         (dtos) => E.traverseArray(mapTickerDto)(dtos),
     );
 };
