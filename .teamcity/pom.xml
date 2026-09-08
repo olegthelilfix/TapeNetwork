@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Maven descriptor TeamCity uses to compile/validate the Kotlin DSL.
+  Auto-generated equivalent of what TeamCity writes when you enable Versioned
+  Settings in Kotlin format. The <version> here and `version = "..."` in
+  settings.kts must match the TeamCity server line (jetbrains/teamcity-server
+  tag in teamcity/docker-compose.yml).
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>TapeNetwork</groupId>
+  <artifactId>TapeNetwork_dsl</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <parent>
+    <groupId>org.jetbrains.teamcity</groupId>
+    <artifactId>configs-dsl-kotlin-parent</artifactId>
+    <version>2025.03</version>
+  </parent>
+
+  <repositories>
+    <repository>
+      <id>teamcity-server</id>
+      <url>http://host.docker.internal:8111/app/dsl-plugins-repository</url>
+    </repository>
+  </repositories>
+
+  <build>
+    <sourceDirectory>${basedir}</sourceDirectory>
+  </build>
+</project>

@@ -1,0 +1,33 @@
+# TeamCity (server + one agent) for CI/CD experiments.
+# Built-in HSQLDB (fine for testing, NOT for real use).
+# Agent uses docker-out-of-docker: shares the host Docker daemon via the socket.
+#
+# Deploy on the remote VM:
+#   docker compose -f docker-compose.yml up -d
+# Then open http://<VM_IP>:8111 and finish the setup wizard.
+
+services:
+  teamcity-server:
+    image: jetbrains/teamcity-server:2025.03
+    container_name: teamcity-server
+    ports:
+      - "8111:8111"
+    volumes:
+      - ./data:/data/teamcity_server/datadir
+      - ./logs:/opt/teamcity/logs
+    restart: unless-stopped
+
+  teamcity-agent:
+    image: jetbrains/teamcity-agent:2025.03
+    container_name: teamcity-agent-1
+    environment:
+      SERVER_URL: http://teamcity-server:8111
+      AGENT_NAME: agent-docker-1
+      # DOCKER_IN_DOCKER not set -> agent talks to the host daemon via the mounted socket below.
+    volumes:
+      - ./agent-conf:/data/teamcity_agent/conf
+      # docker-out-of-docker: agent builds images on the HOST daemon (shares prod's daemon).
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - teamcity-server
+    restart: unless-stopped
