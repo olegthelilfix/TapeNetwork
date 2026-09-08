@@ -52,6 +52,12 @@ jobs:
           if ! grep -q '^vm.max_map_count' /etc/sysctl.conf 2>/dev/null; then
             echo 'vm.max_map_count=262144' | sudo tee -a /etc/sysctl.conf >/dev/null || true
           fi
+          # Pre-create the bind-mount dirs and hand them to the in-container uids.
+          # TeamCity server+agent run as tcuser (1000); SonarQube runs as uid 1000
+          # too. Without this the containers can't write their datadir/conf and
+          # crash-loop with "Permission denied".
+          mkdir -p data logs agent-conf sonar-data sonar-extensions sonar-logs sonar-pgdata
+          sudo chown -R 1000:1000 data logs agent-conf sonar-data sonar-extensions sonar-logs || true
           docker compose pull
           docker compose up -d --remove-orphans
           docker compose ps
