@@ -24,7 +24,9 @@
   <repositories>
     <repository>
       <id>teamcity-server</id>
-      <url>http://host.docker.internal:8111/app/dsl-plugins-repository</url>
+      <!-- The DSL is compiled INSIDE the TeamCity server container, so the
+           server is reachable on localhost, not host.docker.internal. -->
+      <url>http://localhost:8111/app/dsl-plugins-repository</url>
     </repository>
   </repositories>
 
