@@ -87,7 +87,7 @@ const RAMP_DOWN = '10s';
 function afterPublicApi() {
   const totalMs = parseDurationMs(WARMUP) + parseDurationMs(RAMP) + parseDurationMs(DURATION)
     + parseDurationMs(RAMP_DOWN);
-  return `${Math.round(totalMs / 1000)}s`;
+  return `${totalMs}ms`;
 }
 
 export const options = {

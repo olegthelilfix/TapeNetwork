@@ -42,10 +42,13 @@ jobs:
       VUS: '20'
       RAMP: '30s'
       DURATION: '1m'
-      # Pool-pressure profile: a fixed-rate hammer on /search so a
-      # Hikari pool-size change actually moves the perf-compare numbers. Always
-      # on for this workflow only (not perf.yml's manual run). See run_leg()'s
-      # tar step below for why perf/ is sourced from head-src for both legs.
+      # Pool-pressure profile: a fixed-rate hammer on /search, meant to
+      # make a Hikari pool-size change visible in the perf-compare
+      # numbers. Always on for this workflow only (not perf.yml's manual
+      # run). The rate below is a starting point, not a proven
+      # saturation point. See perf/README.md's "Pool-pressure profile"
+      # section for the actual measurements. See run_leg()'s tar step
+      # below for why perf/ is sourced from head-src for both legs.
       PRESSURE: '1'
       PRESSURE_RATE: '200'
       PRESSURE_RAMP: '15s'
