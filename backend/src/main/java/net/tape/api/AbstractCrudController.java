@@ -43,6 +43,12 @@ public abstract class AbstractCrudController<E, M> {
         this.toModel = null; this.newEntity = null; this.applyToEntity = null;
     }
 
+    /**
+     * Sets {@code X-Total-Count} on the response because the CMS's Refine {@code simple-rest} data
+     * provider requires that header for list pagination. Contrast with the public API's
+     * {@link ArticleController#list}, which embeds pagination in the JSON body instead, since no
+     * consumer of that API needs a header.
+     */
     @GetMapping
     @Transactional(readOnly = true)
     public ResponseEntity<List<M>> list(
