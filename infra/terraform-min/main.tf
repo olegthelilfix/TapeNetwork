@@ -47,7 +47,7 @@ variable "vm_name" {
 
 variable "machine_type" {
   type    = string
-  default = "e2-medium"
+  default = "c2d-standard-4"
 }
 
 variable "boot_disk_size_gb" {
@@ -93,6 +93,9 @@ resource "google_compute_instance" "vm" {
   machine_type = var.machine_type
   zone         = var.zone
   tags         = ["tape"]
+
+  # Machine-type changes require the VM to be stopped; let terraform stop/start it.
+  allow_stopping_for_update = true
 
   boot_disk {
     initialize_params {

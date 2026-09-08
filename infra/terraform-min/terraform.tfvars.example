@@ -8,4 +8,4 @@ ssh_public_key = "ssh-ed25519 AAAA... tape-deploy"
 # project_id   = "schwab-433114"
 # region       = "europe-west4"
 # zone         = "europe-west4-a"
-# machine_type = "e2-medium"
+# machine_type = "c2d-standard-4"   # 4 dedicated vCPU / 16GB — faster builds (#30). e2-medium for the cheap 2-burstable-vCPU tier.
