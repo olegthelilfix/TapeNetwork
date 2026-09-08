@@ -1,0 +1,94 @@
+name: Deploy TeamCity (SSH)
+
+# Ships teamcity/ to the VM and (re)starts the TeamCity server + agent stack.
+# Manual only — trigger from Actions → Run workflow. Reuses the same SSH
+# secret/vars as deploy-vm.yml (SSH_PRIVATE_KEY, vars.SSH_USER, vars.VM_HOST).
+#
+# After the first deploy: open http://<VM_HOST>:8111, finish the setup wizard
+# (Internal HSQLDB, accept licence, create admin), authorize the agent, and
+# point Versioned Settings at this repo so .teamcity/settings.kts is imported.
+# Requires firewall port 8111 open on tape-allow-http (see teamcity/README.md).
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-teamcity
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SSH_USER: ${{ vars.SSH_USER }}
+      VM_HOST: ${{ vars.VM_HOST }}
+      DIR: /opt/tape/teamcity
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Copy compose to VM
+        run: |
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" "mkdir -p '$DIR'"
+          scp -i ~/.ssh/id_deploy teamcity/docker-compose.yml \
+            "$SSH_USER@$VM_HOST:$DIR/docker-compose.yml"
+
+      - name: Bring up TeamCity on VM
+        run: |
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" DIR="$DIR" bash <<'REMOTE'
+          set -euxo pipefail
+          cd "$DIR"
+          # SonarQube's embedded Elasticsearch requires this host sysctl, else it
+          # refuses to start. Set it now (and persist across reboots).
+          sudo sysctl -w vm.max_map_count=262144 || sysctl -w vm.max_map_count=262144 || true
+          if ! grep -q '^vm.max_map_count' /etc/sysctl.conf 2>/dev/null; then
+            echo 'vm.max_map_count=262144' | sudo tee -a /etc/sysctl.conf >/dev/null || true
+          fi
+          docker compose pull
+          docker compose up -d --remove-orphans
+          docker compose ps
+          REMOTE
+
+      - name: Wait for TeamCity server to answer on :8111
+        run: |
+          for i in $(seq 1 40); do
+            code=$(ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
+              "curl -s -o /dev/null -w '%{http_code}' http://localhost:8111/login.html || true")
+            echo "attempt $i -> HTTP $code"
+            # 200 = wizard/login ready; 401 = auth wall already up; both mean the server is serving.
+            case "$code" in 200|401|302) echo "TeamCity server is up"; exit 0;; esac
+            sleep 15
+          done
+          echo "TeamCity server did not become ready in time"
+          exit 1
+
+      - name: Wait for SonarQube to answer on :9000
+        run: |
+          for i in $(seq 1 60); do
+            status=$(ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
+              "curl -s http://localhost:9000/api/system/status | grep -o '\"status\":\"[A-Z]*\"' || true")
+            echo "attempt $i -> $status"
+            case "$status" in *UP*) echo "SonarQube is up"; exit 0;; esac
+            sleep 15
+          done
+          echo "SonarQube did not become ready in time (first boot can be slow — check 'docker compose logs sonarqube' on the VM)"
+          exit 1
+
+      - name: Summary
+        run: |
+          {
+            echo "### TeamCity + SonarQube deployed"
+            echo "- TeamCity UI: http://${VM_HOST}:8111"
+            echo "- SonarQube UI: http://${VM_HOST}:9000  (default login admin/admin — change it)"
+            echo "- Finish the TeamCity wizard, then authorize agent \`agent-docker-1\` under **Agents → Unauthorized**."
+            echo "- Point **Administration → Versioned Settings** at this repo to import \`.teamcity/settings.kts\`."
+            echo "- In SonarQube generate a token, then set it as the \`SONAR_TOKEN\` parameter on the **Sonar analysis** build config."
+          } >> "$GITHUB_STEP_SUMMARY"
