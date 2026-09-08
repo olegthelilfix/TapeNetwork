@@ -1,0 +1,70 @@
+name: Sonar analysis
+
+# Runs SonarQube analysis for all three modules against the self-hosted Sonar
+# server on the VM (http://34.13.255.70:9000, port open in tape-allow-http).
+# Auth is by token — no GitHub OAuth/App needed.
+#
+# Secrets/vars to set (Settings → Secrets and variables → Actions):
+#   secrets.SONAR_TOKEN  — a Sonar user token (Sonar → My Account → Security)
+#   vars.SONAR_HOST_URL  — http://34.13.255.70:9000
+#
+# Project keys: tape-backend / tape-web / tape-cms (web & cms read them from
+# their sonar-project.properties; backend passes it as a flag). Sonar
+# auto-creates the projects on first scan.
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: sonar-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Sonar wants full history for blame/new-code
+      - uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: "21"
+          cache: gradle
+      - name: Gradle sonar (plugin applied via init script)
+        working-directory: backend
+        run: |
+          ./gradlew --no-daemon \
+            --init-script ../teamcity/sonar/sonar-init.gradle.kts \
+            build sonar
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: SonarScanner (web)
+        uses: SonarSource/sonarqube-scan-action@v4
+        with:
+          projectBaseDir: web
+        # SONAR_HOST_URL + SONAR_TOKEN come from env above.
+
+  cms:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: SonarScanner (cms)
+        uses: SonarSource/sonarqube-scan-action@v4
+        with:
+          projectBaseDir: cms
