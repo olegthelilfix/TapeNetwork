@@ -72,6 +72,12 @@ TapeNetwork CI/CD scenarios (build + perf) in TeamCity instead of GitHub Actions
 
 ## Gotchas
 
+- **Bind-mount permissions.** TeamCity server+agent run as `tcuser` (uid 1000)
+  and SonarQube as uid 1000; the bind dirs (`data`, `logs`, `agent-conf`,
+  `sonar-*`) must be owned by 1000 or the containers crash-loop with
+  `Permission denied` / can't write their datadir. The deploy workflow
+  `chown -R 1000:1000`s them before `up`. If you brought the stack up by hand:
+  `sudo chown -R 1000:1000 data logs agent-conf sonar-data sonar-extensions sonar-logs && docker compose up -d`.
 - **DooD = root on the host daemon.** The agent can see/affect the prod
   TapeNetwork containers. Acceptable for a single experiment box; know it.
 - **Resource pressure.** Server (~2 GB) + agent + your Gradle/Node/Docker builds
