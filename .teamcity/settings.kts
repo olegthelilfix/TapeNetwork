@@ -30,6 +30,7 @@ project {
 
     buildType(Build)
     buildType(PerfX4)
+    buildType(SonarScan)
 }
 
 object Build : BuildType({
@@ -134,6 +135,70 @@ object PerfX4 : BuildType({
     artifactRules = "perf/results/comparison.md => perf-report\nperf/results/*.json => perf-report"
 
     // Manual only — perf against the live stack is deliberate, not on-push.
+    requirements {
+        exists("docker.version")
+    }
+})
+
+object SonarScan : BuildType({
+    name = "Sonar analysis (backend + web + cms)"
+    description = "Static analysis: backend via the Gradle SonarQube plugin (applied through an init script), web & cms via sonar-scanner-cli. Results land in the SonarQube server on :9000."
+
+    vcs { root(DslContext.settingsRoot) }
+
+    params {
+        // Sonar server reachable from the analysis containers on the host.
+        param("env.SONAR_HOST_URL", "http://host.docker.internal:9000")
+        // Generate a token in the SonarQube UI (My Account → Security) and set
+        // it here (mark the field as a password/secret in the TeamCity UI).
+        password("env.SONAR_TOKEN", "", display = ParameterDisplay.HIDDEN)
+        param("env.GRADLE_CACHE", "/opt/tape/ci/gradle")
+    }
+
+    steps {
+        // backend — apply the sonar plugin via init script, no build.gradle edit.
+        script {
+            name = "backend — gradle sonar"
+            scriptContent = """
+                set -euxo pipefail
+                cd "%teamcity.build.checkoutDir%"
+                mkdir -p "${'$'}GRADLE_CACHE"
+                docker run --rm --network host \
+                    -e SONAR_HOST_URL -e SONAR_TOKEN \
+                    -v "%teamcity.build.checkoutDir%:/src" \
+                    -v "${'$'}GRADLE_CACHE:/root/.gradle" -w /src/backend \
+                    azul/zulu-openjdk:21 sh -c \
+                    './gradlew --no-daemon --init-script /src/teamcity/sonar/sonar-init.gradle.kts build sonar'
+            """.trimIndent()
+        }
+        // web — sonar-scanner-cli reads web/sonar-project.properties.
+        script {
+            name = "web — sonar-scanner"
+            scriptContent = """
+                set -euxo pipefail
+                docker run --rm --network host \
+                    -e SONAR_HOST_URL -e SONAR_TOKEN \
+                    -v "%teamcity.build.checkoutDir%/web:/usr/src" \
+                    sonarsource/sonar-scanner-cli
+            """.trimIndent()
+        }
+        // cms — same, against cms/sonar-project.properties.
+        script {
+            name = "cms — sonar-scanner"
+            scriptContent = """
+                set -euxo pipefail
+                docker run --rm --network host \
+                    -e SONAR_HOST_URL -e SONAR_TOKEN \
+                    -v "%teamcity.build.checkoutDir%/cms:/usr/src" \
+                    sonarsource/sonar-scanner-cli
+            """.trimIndent()
+        }
+    }
+
+    triggers {
+        vcs { }
+    }
+
     requirements {
         exists("docker.version")
     }

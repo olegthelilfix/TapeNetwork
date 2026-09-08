@@ -46,6 +46,12 @@ jobs:
           ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" DIR="$DIR" bash <<'REMOTE'
           set -euxo pipefail
           cd "$DIR"
+          # SonarQube's embedded Elasticsearch requires this host sysctl, else it
+          # refuses to start. Set it now (and persist across reboots).
+          sudo sysctl -w vm.max_map_count=262144 || sysctl -w vm.max_map_count=262144 || true
+          if ! grep -q '^vm.max_map_count' /etc/sysctl.conf 2>/dev/null; then
+            echo 'vm.max_map_count=262144' | sudo tee -a /etc/sysctl.conf >/dev/null || true
+          fi
           docker compose pull
           docker compose up -d --remove-orphans
           docker compose ps
@@ -64,11 +70,25 @@ jobs:
           echo "TeamCity server did not become ready in time"
           exit 1
 
+      - name: Wait for SonarQube to answer on :9000
+        run: |
+          for i in $(seq 1 60); do
+            status=$(ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
+              "curl -s http://localhost:9000/api/system/status | grep -o '\"status\":\"[A-Z]*\"' || true")
+            echo "attempt $i -> $status"
+            case "$status" in *UP*) echo "SonarQube is up"; exit 0;; esac
+            sleep 15
+          done
+          echo "SonarQube did not become ready in time (first boot can be slow — check 'docker compose logs sonarqube' on the VM)"
+          exit 1
+
       - name: Summary
         run: |
           {
-            echo "### TeamCity deployed"
-            echo "- UI: http://${VM_HOST}:8111"
-            echo "- Finish the setup wizard, then authorize agent \`agent-docker-1\` under **Agents → Unauthorized**."
+            echo "### TeamCity + SonarQube deployed"
+            echo "- TeamCity UI: http://${VM_HOST}:8111"
+            echo "- SonarQube UI: http://${VM_HOST}:9000  (default login admin/admin — change it)"
+            echo "- Finish the TeamCity wizard, then authorize agent \`agent-docker-1\` under **Agents → Unauthorized**."
             echo "- Point **Administration → Versioned Settings** at this repo to import \`.teamcity/settings.kts\`."
+            echo "- In SonarQube generate a token, then set it as the \`SONAR_TOKEN\` parameter on the **Sonar analysis** build config."
           } >> "$GITHUB_STEP_SUMMARY"

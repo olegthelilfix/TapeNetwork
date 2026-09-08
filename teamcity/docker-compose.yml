@@ -31,3 +31,39 @@ services:
     depends_on:
       - teamcity-server
     restart: unless-stopped
+
+  # ---- SonarQube (code analysis) -------------------------------------------
+  # Community edition + its own postgres (Sonar's bundled H2 refuses to persist
+  # across restarts). Needs vm.max_map_count=262144 on the HOST for its embedded
+  # Elasticsearch — the deploy workflow sets that sysctl before `up`.
+  sonar-db:
+    image: postgres:16
+    container_name: sonar-db
+    environment:
+      POSTGRES_DB: sonar
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+    volumes:
+      - ./sonar-pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonarqube
+    depends_on:
+      - sonar-db
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonar-db:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+      # Keep the JVMs modest — this box also runs the prod stack + TeamCity.
+      SONAR_WEB_JAVAOPTS: -Xmx512m
+      SONAR_CE_JAVAOPTS: -Xmx512m
+      SONAR_SEARCH_JAVAADDITIONALOPTS: -Xmx512m -Xms512m
+    volumes:
+      - ./sonar-data:/opt/sonarqube/data
+      - ./sonar-extensions:/opt/sonarqube/extensions
+      - ./sonar-logs:/opt/sonarqube/logs
+    restart: unless-stopped
