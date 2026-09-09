@@ -6,7 +6,7 @@ import routerBindings, { DocumentTitleHandler, UnsavedChangesNotifier } from "@r
 import { App as AntdApp, ConfigProvider } from "antd";
 import { BrowserRouter } from "react-router-dom";
 
-import { authProvider, dataProvider, resources, uploadMedia } from "@/app/refine";
+import { authProvider, dataProvider, listVideos, resources, uploadMedia, uploadVideo } from "@/app/refine";
 
 import { AppRoutes } from "./router";
 
@@ -18,7 +18,7 @@ export const App: FC = () => {
       <ConfigProvider theme={RefineThemes.Blue}>
         <AntdApp>
           <Refine dataProvider={dataProvider} authProvider={authProvider} routerProvider={routerBindings} notificationProvider={useNotificationProvider} resources={resources} options={{ syncWithLocation: true, warnWhenUnsavedChanges: true, title: { text: "Tape Network CMS" } }}>
-            <AppRoutes uploadMedia={uploadMedia} />
+            <AppRoutes uploadMedia={uploadMedia} listVideos={listVideos} uploadVideo={uploadVideo} />
             <UnsavedChangesNotifier />
             <DocumentTitleHandler />
           </Refine>

@@ -64,6 +64,7 @@ services:
       context: ./cms
       args:
         VITE_ADMIN_API_URL: ${VITE_ADMIN_API_URL:-http://localhost:8080/api/admin}
+        VITE_STREAMER_URL: ${NEXT_PUBLIC_STREAMER_URL:-http://localhost:8082}
     ports:
       - "${CMS_PORT:-5173}:80"
     depends_on:

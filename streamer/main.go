@@ -28,6 +28,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -266,8 +267,8 @@ func (s *server) addCORS(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Range")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Range, Content-Type")
 }
 
 // ---------------------------------------------------------------------------
@@ -539,6 +540,86 @@ func (s *server) handleVideos(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(videos)
 }
 
+// handleUpload accepts a multipart video upload (field "file"), stores it under
+// VIDEOS_DIR, and enqueues it for preparation. Responds 202 with the stored name
+// and status so the caller can then poll /videos or the master playlist.
+func (s *server) handleUpload(w http.ResponseWriter, r *http.Request) {
+	s.addCORS(w, r)
+
+	// Stream large files: overflow beyond 32 MiB is buffered to temp files on disk.
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		http.Error(w, "invalid multipart form", http.StatusBadRequest)
+		return
+	}
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "missing file field", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	// Sanitise the client-provided name into a URL-addressable segment.
+	name := sanitizeUploadName(header.Filename)
+	if name == "" || !isSafeSegment(name) {
+		http.Error(w, "unsupported or unsafe filename", http.StatusBadRequest)
+		return
+	}
+	if !videoExts[strings.ToLower(filepath.Ext(name))] {
+		http.Error(w, "unsupported video extension", http.StatusBadRequest)
+		return
+	}
+
+	dest := filepath.Join(s.cfg.VideosDir, name)
+	if _, err := os.Stat(dest); err == nil {
+		http.Error(w, "a video with this name already exists", http.StatusConflict)
+		return
+	}
+
+	// Write to a temp file first, then atomically rename so the scanner never sees
+	// a half-written file.
+	tmp, err := os.CreateTemp(s.cfg.VideosDir, ".upload-*")
+	if err != nil {
+		http.Error(w, "cannot create temp file", http.StatusInternalServerError)
+		log.Printf("[tape-streamer] upload CreateTemp: %v", err)
+		return
+	}
+	tmpName := tmp.Name()
+	if _, err := io.Copy(tmp, file); err != nil {
+		tmp.Close()
+		os.Remove(tmpName)
+		http.Error(w, "failed to store upload", http.StatusInternalServerError)
+		log.Printf("[tape-streamer] upload copy: %v", err)
+		return
+	}
+	tmp.Close()
+	if err := os.Rename(tmpName, dest); err != nil {
+		os.Remove(tmpName)
+		http.Error(w, "failed to store upload", http.StatusInternalServerError)
+		log.Printf("[tape-streamer] upload rename: %v", err)
+		return
+	}
+	log.Printf("[tape-streamer] uploaded %s (%d bytes), enqueuing", name, header.Size)
+
+	// Pick it up now instead of waiting for the next rescan.
+	s.scan()
+
+	st, _ := s.reg.get(name)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(videoInfo{Name: name, Size: header.Size, Status: st.Status, Tiers: st.Tiers})
+}
+
+// sanitizeUploadName reduces a client filename to a safe, URL-addressable segment:
+// base name only, spaces/odd chars → underscore, collapsed, lower-cased extension kept.
+func sanitizeUploadName(filename string) string {
+	name := filepath.Base(strings.TrimSpace(filename))
+	name = strings.ReplaceAll(name, " ", "_")
+	// Drop anything outside the safe set.
+	name = regexp.MustCompile(`[^A-Za-z0-9._-]`).ReplaceAllString(name, "")
+	name = strings.TrimLeft(name, ".-")
+	return name
+}
+
 // handleStatus returns the full preparation registry (ops/debug view).
 func (s *server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	s.addCORS(w, r)
@@ -634,7 +715,11 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case path == "health":
 		s.handleHealth(w, r)
 	case path == "videos":
-		s.handleVideos(w, r)
+		if r.Method == http.MethodPost {
+			s.handleUpload(w, r)
+		} else {
+			s.handleVideos(w, r)
+		}
 	case path == "status":
 		s.handleStatus(w, r)
 	case strings.HasPrefix(path, "stream/"):

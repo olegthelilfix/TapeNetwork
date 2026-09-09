@@ -24,7 +24,7 @@ const ReferenceFieldItem: FC<{ field: ReferenceField }> = ({ field }) => {
   );
 };
 
-export const ResourceFormFeature: FC<ResourceFormFeatureProps> = ({ definition, action, uploadMedia }) => {
+export const ResourceFormFeature: FC<ResourceFormFeatureProps> = ({ definition, action, uploadMedia, listVideos, uploadVideo }) => {
   const { formProps, saveButtonProps } = useForm();
   const { isUploading, upload } = useMediaUpload(uploadMedia, () => {
     message.error("Upload failed");
@@ -41,7 +41,7 @@ export const ResourceFormFeature: FC<ResourceFormFeatureProps> = ({ definition, 
   const renderField = (field: ResourceField) => {
     return field.type === "reference"
       ? <ReferenceFieldItem field={field} />
-      : <ResourceFormField field={field} isUploadingMedia={isUploading} onUploadMedia={upload} />;
+      : <ResourceFormField field={field} isUploadingMedia={isUploading} onUploadMedia={upload} listVideos={listVideos} uploadVideo={uploadVideo} />;
   };
 
   const FormWrapper = action === "create" ? Create : Edit;
