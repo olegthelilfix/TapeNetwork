@@ -2,6 +2,7 @@ package net.tape.service;
 
 import net.tape.api.ArticleDtoV1;
 import net.tape.api.PersonDtoV1;
+import net.tape.api.PersonSummaryDtoV1;
 import net.tape.api.PersonVideoDtoV1;
 import net.tape.model.Person;
 import net.tape.orm.*;
@@ -38,6 +39,16 @@ public class PersonService {
         this.videoMapper = videoMapper;
         this.articleMapper = articleMapper;
         this.media = media;
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.List<PersonSummaryDtoV1> list() {
+        return people.findAll().stream()
+            .sorted(java.util.Comparator
+                .comparingInt(PersonEntity::getSort)
+                .thenComparing(PersonEntity::getName, String.CASE_INSENSITIVE_ORDER))
+            .map(p -> new PersonSummaryDtoV1(p.getSlug(), p.getName(), p.getInitials()))
+            .toList();
     }
 
     @Transactional(readOnly = true)

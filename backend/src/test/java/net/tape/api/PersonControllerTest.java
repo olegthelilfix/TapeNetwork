@@ -57,6 +57,20 @@ class PersonControllerTest {
     }
 
     @Test
+    void listReturnsPersonSummaries() throws Exception {
+        when(service.list()).thenReturn(List.of(
+            new PersonSummaryDtoV1("jane-doe", "Jane Doe", "JD"),
+            new PersonSummaryDtoV1("john-roe", "John Roe", "JR")));
+
+        mvc.perform(get("/api/v1/people"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(2)))
+            .andExpect(jsonPath("$[0].slug").value("jane-doe"))
+            .andExpect(jsonPath("$[0].name").value("Jane Doe"))
+            .andExpect(jsonPath("$[0].id").doesNotExist());
+    }
+
+    @Test
     void bySlugReturns404WhenPersonIsMissing() throws Exception {
         when(service.bySlug("missing")).thenThrow(new NotFoundException("person", "missing"));
 

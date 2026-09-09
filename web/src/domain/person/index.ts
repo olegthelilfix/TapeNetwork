@@ -1,1 +1,1 @@
-export type { Person, PersonVideo, PersonVideoRole } from "./Person";
+export type { Person, PersonSummary, PersonVideo, PersonVideoRole } from "./Person";

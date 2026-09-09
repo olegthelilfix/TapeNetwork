@@ -20,7 +20,7 @@ export {
 export type { ControllerError } from "./controller.errors";
 export type { ControllerResult } from "./controller.utils";
 export { getHome } from "./home";
-export { getPersonBySlug } from "./person/person.controller";
+export { getPeople, getPersonBySlug } from "./person/person.controller";
 export { resolveControllerResult } from "./resolveControllerResult";
 export {
     getShowBySlug,

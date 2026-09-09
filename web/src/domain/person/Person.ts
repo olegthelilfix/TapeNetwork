@@ -2,6 +2,12 @@ import type { ArticleSummary } from "@/domain/article";
 
 export type PersonVideoRole = "host" | "guest";
 
+export type PersonSummary = {
+    readonly slug: string;
+    readonly name: string;
+    readonly initials: string | null;
+};
+
 export type PersonVideo = {
     readonly slug: string;
     readonly title: string;

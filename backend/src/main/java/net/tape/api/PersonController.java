@@ -15,6 +15,11 @@ public class PersonController {
         this.service = service;
     }
 
+    @GetMapping
+    public java.util.List<PersonSummaryDtoV1> list() {
+        return service.list();
+    }
+
     @GetMapping("/{slug}")
     public PersonDtoV1 bySlug(@PathVariable String slug) {
         return service.bySlug(slug);

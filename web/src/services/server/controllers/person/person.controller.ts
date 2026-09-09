@@ -4,7 +4,7 @@ import { pipe } from "fp-ts/function";
 import * as TE from "fp-ts/TaskEither";
 
 import type { ArticleSummary } from "@/domain/article";
-import type { Person, PersonVideo, PersonVideoRole } from "@/domain/person";
+import type { Person, PersonSummary, PersonVideo, PersonVideoRole } from "@/domain/person";
 import { serverHttpClient } from "@/services/server/http";
 
 import { normalizeControllerError } from "../controller.errors";
@@ -172,5 +172,31 @@ export const getPersonBySlug = (slug: string): ControllerResult<Person> => {
                 E.mapLeft(() => ({ type: "invalid-api-response" as const, entity: "Person", field: "response" })),
             ),
         ),
+    );
+};
+
+const mapPersonSummary = (raw: Record<string, unknown>): PersonSummary | null => {
+    const slug = asString(raw.slug);
+    const name = asString(raw.name);
+
+    if (slug === null || name === null) {
+        return null;
+    }
+
+    return { slug, name, initials: asString(raw.initials) };
+};
+
+/** GET /api/v1/people — compact list for the header menu. */
+export const getPeople = (): ControllerResult<readonly PersonSummary[]> => {
+    const request = serverHttpClient.request({
+        method: "GET",
+        url: "/api/v1/people",
+        responseType: "json",
+    });
+
+    return pipe(
+        request,
+        TE.mapLeft(normalizeControllerError),
+        TE.map((payload) => mapArray<Record<string, unknown>, PersonSummary>(payload, mapPersonSummary)),
     );
 };
