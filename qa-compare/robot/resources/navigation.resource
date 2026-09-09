@@ -8,6 +8,7 @@ ${Browser}        edge
 *** Keywords ***
 
 Start Test Main Page
+    [Arguments]       ${Path}
     New Browser       chromium    headless=true
-    New Page          ${BASE_URL}/
+    New Page          ${BASE_URL}${Path}
     Get Title         contains    Tape

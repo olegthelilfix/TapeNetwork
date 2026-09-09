@@ -61,8 +61,16 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("org.mockito:mockito-core")
+    testImplementation("org.mockito:mockito-junit-jupiter")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+// Surfaces deprecated/for-removal API usage as build warnings (main and test sources), so a
+// future deprecation gets caught here instead of needing a manual sweep to find it.
+tasks.withType<JavaCompile> {
+    options.compilerArgs.add("-Xlint:deprecation")
 }

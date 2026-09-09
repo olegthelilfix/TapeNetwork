@@ -3,31 +3,55 @@ Documentation     Same scenario as ../playwright/tests/smoke.spec.ts — compare
 Library           Browser
 Suite Teardown    Close Browser
 Resource          ../../resources/navigation.resource
+Resource          ../../resources/search.resource
 
 *** Variables ***
-${BASE_URL}       http://localhost:3000
+${ShowsNav}     shows
+${ShowsText}    Shows
+${ArticlesNav}  articles
+${ArticlesText}  The newsroom
+${OnDemandNav}  on-demand
+${OnDemandText}  Browse the archive
 
 *** Test Cases ***
 Home Navigates To Shows
     [Tags]  navigation  shows
-    Start Test Main Page
-    Click             a[href="/shows"] >> nth=0
-    Wait For Elements State    h1:has-text("Shows")    visible    timeout=10s
-    Get Url           contains    /shows
-    Get Text          h1    ==    Shows
+    Start Test Main Page    /
+    Click             a[href="/${ShowsNav}"] >> nth=0
+    Wait For Elements State    h1:has-text("${ShowsText}")    visible    timeout=10s
+    Get Url           contains    /${ShowsNav}
+    Get Text          h1    ==    ${ShowsText}
 
 Home Navigates To Articles
     [Tags]  navigation  articles
-    Start Test Main Page
-    Click             a[href="/articles"] >> nth=0
-    Wait For Elements State    h1:has-text("The newsroom")    visible    timeout=10s
-    Get Url           contains    /articles
-    Get Text          h1    ==    The newsroom
+    Start Test Main Page    /
+    Click             a[href="/${ArticlesNav}"] >> nth=0
+    Wait For Elements State    h1:has-text("${ArticlesText}")    visible    timeout=10s
+    Get Url           contains    /${ArticlesNav}
+    Get Text          h1    ==    ${ArticlesText}
 
 Home Navigates To On Demand
     [Tags]  navigation  on-demand
-    Start Test Main Page
-    Click             a[href="/on-demand"] >> nth=0
-    Wait For Elements State    h1:has-text("Browse the archive")    visible    timeout=10s
-    Get Url           contains    /on-demand
-    Get Text          h1    ==    Browse the archive
+    Start Test Main Page    /
+    Click             a[href="/${OnDemandNav}"] >> nth=0
+    Wait For Elements State    h1:has-text("${OnDemandText}")    visible    timeout=10s
+    Get Url           contains    /${OnDemandNav}
+    Get Text          h1    ==    ${OnDemandText}
+
+Search for Shows Upper case
+    [Tags]  shows   search
+    Start Test Main Page    /
+    Search For  ${SearchUCMacro}
+    Wait For Elements State    h3:has-text("${SearchUCMacro}")    visible    timeout=10s
+
+Search for Shows Lower case
+    [Tags]  shows   search
+    Start Test Main Page    /
+    Search For  ${SearchLCMacro}
+    Wait For Elements State    h3:has-text("${SearchLCMacro}")    visible    timeout=10s
+
+Search for Non-existing Term
+    [Tags]  shows   search
+    Start Test Main Page    /
+    Search For  ${SearchIncorrect}
+    Wait For Elements State    p:has-text("Nothing matched. Try different terms.")    visible    timeout=10s
