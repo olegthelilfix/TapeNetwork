@@ -17,6 +17,9 @@ permissions:
 jobs:
   remote-build:
     runs-on: ubuntu-latest
+    # Hard ceiling so a wedged VM step (docker/flock/network) can never hang for
+    # GitHub's default 6h — a real build finishes in a few minutes.
+    timeout-minutes: 30
     env:
       SSH_USER: ${{ vars.SSH_USER }}
       VM_HOST: ${{ vars.VM_HOST }}
@@ -33,16 +36,13 @@ jobs:
 
       - name: Package & copy source to VM
         run: |
-          # Reclaim disk before building: prune Docker build cache, dangling
-          # images and stopped containers (never touches running-stack images
-          # or named volumes), and drop pr-build dirs left behind by runs that
-          # were cancelled/killed before their own "Clean up VM" step ran.
-          # The 29G root disk fills up otherwise -> yarn install ENOSPC.
+          # Drop pr-build dirs left behind by runs that were cancelled/killed
+          # before their own "Clean up VM" step ran. Safe without the build lock
+          # (each dir is unique per run). Docker prune is NOT done here — it runs
+          # under the build lock in the next step so it can't race a concurrent
+          # PR's build. The 29G root fills up otherwise -> yarn install ENOSPC.
           ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" bash <<'PRECLEAN'
           set -eux
-          docker builder prune -f    >/dev/null 2>&1 || true
-          docker container prune -f  >/dev/null 2>&1 || true
-          docker image prune -f      >/dev/null 2>&1 || true
           find /tmp -maxdepth 1 -name 'pr-build-*' -mmin +120 \
             -exec docker run --rm -v '{}':/w busybox sh -c 'rm -rf /w/..?* /w/.[!.]* /w/*' \; \
             -exec rmdir '{}' \; 2>/dev/null || true
@@ -62,8 +62,11 @@ jobs:
 
           # Shared Gradle cache mount can't take concurrent runs (journal-1.lock
           # contention). Serialize builds on this VM instead of racing them.
+          # Bounded wait: another PR's build may legitimately hold the lock, but
+          # if it's held >20min the holder is wedged/orphaned — fail fast with a
+          # clear message instead of hanging until GitHub's 6h job timeout.
           exec 9>/opt/tape/ci/build.lock
-          flock 9
+          flock -w 1200 9 || { echo "ERROR: another build has held the VM lock >20min (wedged/orphaned holder). Aborting."; exit 1; }
 
           # Gradle's journal lock records the owner by PID, but every container
           # runs Gradle at the same low PID (fresh PID namespace). A build killed
@@ -75,6 +78,13 @@ jobs:
           # user can't rm it directly — do it from a throwaway root container.
           docker run --rm -v /opt/tape/ci/gradle:/root/.gradle alpine \
             rm -rf /root/.gradle/caches/journal-1
+
+          # Reclaim disk before building, under the lock so we can't race a
+          # concurrent PR's build: build cache + dangling images + stopped
+          # containers. No -a and no --volumes -> running stack + DB volumes safe.
+          docker builder prune -f   >/dev/null 2>&1 || true
+          docker container prune -f >/dev/null 2>&1 || true
+          docker image prune -f     >/dev/null 2>&1 || true
 
           echo '::group::backend — gradle build'
           docker run --rm -v "$PWD/backend:/app" -v /opt/tape/ci/gradle:/root/.gradle -w /app \
@@ -101,11 +111,8 @@ jobs:
         if: always()
         run: |
           # Runs on success OR failure (if: always()) so a failed build still
-          # cleans up after itself: remove this run's source dir, then prune the
-          # docker build cache / dangling images / stopped containers it left
-          # behind. No -a and no --volumes -> running stack + DB volumes safe.
+          # removes its own source dir. Docker prune is intentionally NOT here:
+          # it runs under the build lock before each build (see "Build & test"),
+          # so it never races a concurrent PR's in-flight build.
           ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
-            "docker run --rm -v '$DIR:/w' busybox sh -c 'rm -rf /w/..?* /w/.[!.]* /w/*' 2>/dev/null || true; rmdir '$DIR' 2>/dev/null || true; \
-             docker builder prune -f >/dev/null 2>&1 || true; \
-             docker container prune -f >/dev/null 2>&1 || true; \
-             docker image prune -f >/dev/null 2>&1 || true"
+            "docker run --rm -v '$DIR:/w' busybox sh -c 'rm -rf /w/..?* /w/.[!.]* /w/*' 2>/dev/null || true; rmdir '$DIR' 2>/dev/null || true"
