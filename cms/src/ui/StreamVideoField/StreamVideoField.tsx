@@ -6,16 +6,7 @@ import type { UploadProps } from "antd";
 import { Button, message, Select, Space, Upload } from "antd";
 
 import type { StreamerVideo, StreamVideoFieldProps } from "./StreamVideoField.types";
-
-const STATUS_RANK: Record<StreamerVideo["status"], number> = {
-  ready: 0,
-  transcoding: 1,
-  pending: 2,
-  unknown: 3,
-  failed: 4,
-};
-
-const optionLabel = (v: StreamerVideo): string => `${v.name} — ${v.status}`;
+import { buildVideoOptions } from "./streamVideoOptions";
 
 /**
  * Picks the stream for an episode/video: a searchable dropdown of the streamer's
@@ -42,18 +33,7 @@ export const StreamVideoField: FC<StreamVideoFieldProps> = ({ value, onChange, l
     void refresh();
   }, [refresh]);
 
-  const options = useMemo(() => {
-    const sorted = [...videos].sort(
-      (a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status] || a.name.localeCompare(b.name),
-    );
-    const opts = sorted.map((v) => ({ value: v.name, label: optionLabel(v) }));
-    // Keep the currently-bound value visible even if the streamer doesn't list it
-    // (e.g. an absolute URL, or a file removed from the streamer).
-    if (value && !sorted.some((v) => v.name === value)) {
-      opts.unshift({ value, label: `${value} — (not on streamer)` });
-    }
-    return opts;
-  }, [videos, value]);
+  const options = useMemo(() => buildVideoOptions(videos, value), [videos, value]);
 
   const beforeUpload: UploadProps["beforeUpload"] = useCallback(
     async (file: File) => {
@@ -75,7 +55,7 @@ export const StreamVideoField: FC<StreamVideoFieldProps> = ({ value, onChange, l
   );
 
   return (
-    <Space.Compact style={{ display: "flex", width: "100%" }}>
+    <Space.Compact data-testid="stream-video-field" style={{ display: "flex", width: "100%" }}>
       <Select
         style={{ flex: 1 }}
         showSearch
@@ -86,9 +66,10 @@ export const StreamVideoField: FC<StreamVideoFieldProps> = ({ value, onChange, l
         onChange={(next?: string) => onChange?.(next ?? null)}
         options={options}
         optionFilterProp="label"
+        data-testid="stream-video-select"
       />
-      <Button icon={<ReloadOutlined />} loading={loading} onClick={() => void refresh()} title="Refresh list" />
-      <Upload beforeUpload={beforeUpload} showUploadList={false} accept="video/*,.mkv,.mov,.avi,.ts">
+      <Button icon={<ReloadOutlined />} loading={loading} onClick={() => void refresh()} title="Refresh list" data-testid="stream-video-refresh" />
+      <Upload beforeUpload={beforeUpload} showUploadList={false} accept="video/*,.mkv,.mov,.avi,.ts" data-testid="stream-video-upload">
         <Button icon={<UploadOutlined />} loading={uploading}>Upload</Button>
       </Upload>
     </Space.Compact>
