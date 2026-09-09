@@ -6,7 +6,6 @@ import { Brand } from "@/ui/Brand";
 import styles from "./Header.module.css";
 
 const NAV = [
-  { href: "/", label: "Home" },
   { href: "/shows", label: "Shows" },
   { href: "/articles", label: "Articles" },
   { href: "/on-demand", label: "On Demand" },
