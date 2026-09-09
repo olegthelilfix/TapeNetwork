@@ -6,30 +6,45 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Opt-in Flyway resilience for development databases.
+ * Opt-in Flyway startup strategies for non-production databases, selected by
+ * {@code tape.flyway.strategy} (env {@code FLYWAY_STRATEGY}). Default {@code none}
+ * registers no bean, so production keeps Flyway's strict validate-then-migrate — a
+ * checksum mismatch there is a real signal that an applied migration was altered.
  *
- * <p>Local Postgres volumes outlive branch switches, so a migration whose checksum
- * changed (an unreleased migration edited in place, or two branches with a different
- * {@code V<n>}) makes Flyway's validate step abort startup. When
- * {@code tape.flyway.repair-on-migrate=true} this registers a migration strategy that
- * runs {@link org.flywaydb.core.Flyway#repair() repair} (realign checksums, drop failed
- * entries) before {@link org.flywaydb.core.Flyway#migrate() migrate}, so a dev backend
- * self-heals instead of refusing to boot.
+ * <p>Local Postgres volumes and long-lived test stacks outlive branch switches, so a
+ * migration whose checksum changed (an unreleased migration edited in place, or two
+ * branches with a different {@code V<n>}) makes validate abort startup. The strategies:
  *
- * <p><strong>Default is off</strong> — production keeps Flyway's strict validate-then-migrate
- * behaviour, where a checksum mismatch is a real signal that an applied migration was
- * altered. Only the docker-compose dev stack turns it on (via {@code FLYWAY_REPAIR_ON_MIGRATE}).
- * The rollback case (a migration applied in the DB but absent locally) is handled separately
- * by {@code spring.flyway.ignore-migration-patterns} (e.g. {@code *:missing}).
+ * <ul>
+ *   <li>{@code repair} — {@link org.flywaydb.core.Flyway#repair() repair} (realign
+ *       checksums, drop failed entries) then {@link org.flywaydb.core.Flyway#migrate()
+ *       migrate}. Non-destructive: keeps existing data. Good for local dev.</li>
+ *   <li>{@code clean} — {@link org.flywaydb.core.Flyway#clean() clean} (drop everything)
+ *       then migrate, rebuilding the schema from {@code V1..V<n>} on every boot. For
+ *       ephemeral/throwaway test stacks where "deploy anything" must always match the
+ *       code. <strong>Destroys all data each start.</strong> Requires
+ *       {@code spring.flyway.clean-disabled=false} (set {@code FLYWAY_CLEAN_DISABLED=false}).</li>
+ * </ul>
  */
 @Configuration
-@ConditionalOnProperty(prefix = "tape.flyway", name = "repair-on-migrate", havingValue = "true")
 public class FlywayConfig {
 
+    /** Non-destructive self-heal: repair drifted checksums, then migrate. */
     @Bean
+    @ConditionalOnProperty(prefix = "tape.flyway", name = "strategy", havingValue = "repair")
     public FlywayMigrationStrategy repairThenMigrate() {
         return flyway -> {
             flyway.repair();
+            flyway.migrate();
+        };
+    }
+
+    /** Ephemeral test stacks: wipe the schema and rebuild it from the migrations. */
+    @Bean
+    @ConditionalOnProperty(prefix = "tape.flyway", name = "strategy", havingValue = "clean")
+    public FlywayMigrationStrategy cleanThenMigrate() {
+        return flyway -> {
+            flyway.clean();
             flyway.migrate();
         };
     }
