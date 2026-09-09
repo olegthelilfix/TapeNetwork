@@ -26,6 +26,10 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
       SEARCH_INDEX_DIR: ${SEARCH_INDEX_DIR:-/var/lib/tape/search}
       MEDIA_DIR: ${MEDIA_DIR:-/var/lib/tape/media}
+      # Dev resilience: self-heal Flyway across branch switches / rollbacks so the
+      # backend boots instead of failing validation. Do NOT enable these in production.
+      FLYWAY_REPAIR_ON_MIGRATE: ${FLYWAY_REPAIR_ON_MIGRATE:-true}
+      FLYWAY_IGNORE_MIGRATION_PATTERNS: ${FLYWAY_IGNORE_MIGRATION_PATTERNS:-*:missing,*:future}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:

@@ -25,6 +25,9 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+    # Tolerate migrations applied in the DB but absent locally (e.g. after rolling back
+    # to an older commit). Empty by default (strict); dev sets e.g. "*:missing".
+    ignore-migration-patterns: ${FLYWAY_IGNORE_MIGRATION_PATTERNS:*:future}
   servlet:
     multipart:
       max-file-size: 50MB
@@ -47,6 +50,11 @@ springdoc:
   writer-with-default-pretty-printer: true
 
 tape:
+  flyway:
+    # Dev-only: run Flyway repair() before migrate() so a checksum mismatch or failed
+    # migration (from editing an unreleased migration or switching branches) self-heals
+    # instead of aborting startup. Keep false in production. See FlywayConfig.
+    repair-on-migrate: ${FLYWAY_REPAIR_ON_MIGRATE:false}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
   cache:
