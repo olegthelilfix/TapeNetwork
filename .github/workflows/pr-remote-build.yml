@@ -67,20 +67,20 @@ jobs:
             azul/zulu-openjdk:21 sh -c './gradlew build --no-daemon'
           echo '::endgroup::'
 
-          echo '::group::web — npm ci && test && build'
+          echo '::group::web — yarn install && build && test'
           # --network host + explicit DNS: next/font/google fetches IBM Plex
           # fonts from fonts.googleapis.com at build time, so the container
           # needs the same outbound reach as the host (default bridge net was
           # timing out -> NextFontError ETIMEDOUT).
           docker run --rm --network host --dns 8.8.8.8 --dns 1.1.1.1 \
             -v "$PWD/web:/app" -w /app \
-            node:20-alpine sh -c 'npm ci && npm test && npm run build'
+            node:20-alpine sh -c 'yarn install --frozen-lockfile && yarn build && yarn test'
           echo '::endgroup::'
 
-          echo '::group::cms — npm ci && build'
+          echo '::group::cms — yarn install && build'
           docker run --rm --network host --dns 8.8.8.8 --dns 1.1.1.1 \
             -v "$PWD/cms:/app" -w /app \
-            node:20-alpine sh -c 'npm ci && npm run build'
+            node:20-alpine sh -c 'yarn install --frozen-lockfile && yarn build'
           echo '::endgroup::'
           REMOTE
       - name: Clean up VM

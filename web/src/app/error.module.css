@@ -1,0 +1,32 @@
+.state {
+    display: grid;
+    min-height: 50vh;
+    place-items: center;
+    padding: 48px 24px;
+}
+
+.content {
+    max-width: 560px;
+    text-align: center;
+}
+
+.title {
+    margin: 0;
+    color: var(--text);
+    font-family: var(--font-serif);
+    font-size: clamp(32px, 7vw, 56px);
+}
+
+.description {
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.button {
+    border: 1px solid var(--border-strong);
+    background: var(--accent);
+    color: var(--bg);
+    cursor: pointer;
+    font: inherit;
+    padding: 10px 16px;
+}

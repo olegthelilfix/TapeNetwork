@@ -1,36 +1,20 @@
-import type { Metadata } from "next";
-import { api } from "@/lib/api/client";
-import { Card } from "@/components/Card";
-import { CardGrid } from "@/components/Section";
-import styles from "../list.module.css";
+import { notFound } from "next/navigation";
+
+import type { AsyncServerComponent } from "@/app/_types";
+import { ShowsListFeature } from "@/features/shows/list";
+import { getShows, resolveControllerResult } from "@/services/server/controllers";
 
 export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = {
-  title: "Shows",
-  description: "Every Tape Network show — markets, macro, options, technicals and long-form interviews.",
-  alternates: { canonical: "/shows" },
+export const metadata = {
+    title: "Shows",
+    description: "Every Tape Network show — markets, macro, options, technicals and long-form interviews.",
+    alternates: { canonical: "/shows" },
 };
 
-export default async function ShowsPage() {
-  const shows = await api.shows();
-  return (
-    <>
-      <header className={styles.intro}>
-        <h1 className={styles.h1}>Shows</h1>
-        <p className={styles.lede}>Live and on demand, every weekday. Free to watch.</p>
-      </header>
-      <CardGrid>
-        {shows.map((s) => (
-          <Card
-            key={s.slug}
-            href={`/shows/${s.slug}`}
-            title={s.name}
-            subtitle={s.scheduleSlot ?? s.tagline}
-            imageUrl={s.imageUrl}
-          />
-        ))}
-      </CardGrid>
-    </>
-  );
-}
+const ShowsPage: AsyncServerComponent<Record<never, never>> = async () => {
+    const shows = await resolveControllerResult(getShows(), { onNotFound: notFound });
+
+    return <ShowsListFeature shows={shows} />;
+};
+
+export default ShowsPage;

@@ -6,8 +6,8 @@ backend API (`/api/v1`); no client state beyond the page.
 ## Run
 
 ```bash
-npm ci
-npm run dev            # http://localhost:3000 (expects backend on :8080)
+yarn install
+yarn dev                # http://localhost:3000 (expects backend on :8080)
 # or via the whole stack from repo root:
 docker compose up --build web
 ```
@@ -15,11 +15,13 @@ docker compose up --build web
 ## Scripts
 
 ```bash
-npm run dev      # dev server
-npm run build    # production build (standalone output)
-npm start        # serve the production build
-npm test         # vitest (src/lib/*.test.ts)
-npm run gen:api  # regenerate TS types from the running backend's OpenAPI → packages/api-types
+yarn dev         # dev server
+yarn build       # production build (standalone output)
+yarn start       # serve the production build
+yarn lint        # ESLint for handwritten code
+yarn typecheck   # strict TypeScript validation
+yarn test        # Vitest
+yarn gen:api     # regenerate the OpenAPI client → src/api
 ```
 
 ## Layout
@@ -35,11 +37,13 @@ src/
     search/                results
     sitemap.ts , robots.ts
     layout.tsx             header + ticker + footer + site JSON-LD
-  components/              Header, Brand, Ticker, Footer, Card, Section, …
-  lib/
-    api/client.ts          typed fetch client for /api/v1
-    api/types.ts           hand-written types mirroring the backend DTOs (interim; see gen:api)
-    format.ts              mediaUrl(), formatDate() (unit-tested)
+  api/                     generated OpenAPI transport client (not committed)
+  services/server/http/    server-only TaskEither transport for generated controllers
+  domain/                  transport-independent application entities
+  features/                server-side route behaviour and orchestration
+  services/server/         generated API integration, mappers and controllers
+  ui/                      reusable presentational components
+  lib/format.ts            legacy presentation helpers (being migrated)
   styles/tokens.css        design tokens (dark "terminal" theme, IBM Plex fonts)
 ```
 
@@ -56,5 +60,4 @@ src/
 ## Env
 
 - `API_BASE_URL` — backend URL used during SSR (container-to-container), default `http://localhost:8080`.
-- `NEXT_PUBLIC_API_BASE_URL` — backend URL used in the browser.
 - `NEXT_PUBLIC_SITE_URL` — public origin for canonical/OG/sitemap.

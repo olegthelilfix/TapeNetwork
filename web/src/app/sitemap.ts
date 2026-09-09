@@ -1,17 +1,25 @@
+import * as E from "fp-ts/Either";
 import type { MetadataRoute } from "next";
-import { api } from "@/lib/api/client";
+
+import { getSitemapEntries } from "@/services/server/controllers";
 
 export const dynamic = "force-dynamic";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   try {
-    const entries = await api.sitemap();
+    const result = await getSitemapEntries()();
+    if (E.isLeft(result)) {
+      return [{ url: base }];
+    }
+    const entries = result.right;
     return entries.map((e) => ({
-      url: base + e.loc,
-      lastModified: e.lastmod ?? undefined,
+      url: base + e.location,
+      lastModified: e.lastModified ?? undefined,
     }));
   } catch {
     return [{ url: base }];
   }
-}
+};
+
+export default sitemap;

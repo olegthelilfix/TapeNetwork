@@ -1,8 +1,8 @@
 # ---- deps ----
 FROM node:20-alpine AS deps
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm install
+COPY package.json yarn.lock* ./
+RUN yarn install --frozen-lockfile
 
 # ---- build ----
 FROM node:20-alpine AS build
@@ -12,8 +12,9 @@ ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 ARG NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 COPY --from=deps /app/node_modules ./node_modules
+COPY ../packages/api-types/generated/user-openapi.json packages/api-types/generated/user-openapi.json
 COPY . .
-RUN npm run build
+RUN yarn build
 
 # ---- run (standalone) ----
 FROM node:20-alpine AS run
