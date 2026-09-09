@@ -69,6 +69,20 @@ public class VideoEntity {
     @Column(columnDefinition = "text[]")
     private String[] tags = new String[0];
 
+    // Read-only associations for search indexing of attached securities/people (#54).
+    // Writes go through the dedicated join repositories, not these collections.
+    @org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded(includePaths = {"security.symbol", "security.name"})
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "video_id", insertable = false, updatable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private List<VideoSecurityEntity> securityLinks = new ArrayList<>();
+
+    @org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded(includePaths = {"person.name"})
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "video_id", insertable = false, updatable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private List<VideoPersonEntity> personLinks = new ArrayList<>();
+
     @Column(nullable = false)
     private boolean published = true;
 

@@ -1,0 +1,49 @@
+package net.tape.orm;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.Serializable;
+import java.util.Objects;
+
+/** Join row video &lt;-&gt; security (#54). */
+@Entity
+@Table(name = "video_security")
+@Getter
+@Setter
+@IdClass(VideoSecurityEntity.Key.class)
+public class VideoSecurityEntity {
+
+    @Id
+    @Column(name = "video_id")
+    private Long videoId;
+
+    @Id
+    @Column(name = "security_id")
+    private Long securityId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "security_id", insertable = false, updatable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private SecurityEntity security;
+
+    @Getter
+    @Setter
+    public static class Key implements Serializable {
+        private Long videoId;
+        private Long securityId;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Key key)) return false;
+            return Objects.equals(videoId, key.videoId) && Objects.equals(securityId, key.securityId);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(videoId, securityId);
+        }
+    }
+}

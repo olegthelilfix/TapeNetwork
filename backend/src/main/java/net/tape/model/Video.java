@@ -24,6 +24,8 @@ public class Video {
     private Long thumbMediaId;
     private String imageUrl;
     private String[] tags;
+    private java.util.List<Security> securities = new java.util.ArrayList<>();
+    private java.util.List<VideoPerson> people = new java.util.ArrayList<>();
     private boolean published;
     private Instant createdAt;
     private Instant updatedAt;
