@@ -6,7 +6,7 @@
 .inner {
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 48px 24px 32px;
+  padding: 48px var(--gutter) 32px;
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
   gap: 40px;
@@ -34,7 +34,7 @@
   max-width: var(--maxw);
   margin: 0 auto;
   border-top: 1px solid var(--border);
-  padding: 20px 24px 40px;
+  padding: 20px var(--gutter) 40px;
   font-family: var(--font-mono);
   font-size: 10.5px;
   letter-spacing: 0.04em;

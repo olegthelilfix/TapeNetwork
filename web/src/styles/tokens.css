@@ -26,6 +26,7 @@
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* Layout */
-  --maxw: 1200px;
+  --gutter: clamp(16px, 4vw, 48px);            /* adaptive side padding, grows with viewport */
+  --maxw: min(100% - (var(--gutter) * 2), 1760px); /* near full width, capped on ultrawide */
   --radius: 4px;
 }
