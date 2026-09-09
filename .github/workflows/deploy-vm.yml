@@ -46,6 +46,7 @@ jobs:
           docker build \
             --build-arg NEXT_PUBLIC_API_BASE_URL="${{ vars.PUBLIC_API_URL }}" \
             --build-arg NEXT_PUBLIC_SITE_URL="${{ vars.PUBLIC_WEB_URL }}" \
+            --build-arg NEXT_PUBLIC_STREAMER_URL="${{ vars.PUBLIC_STREAMER_URL }}" \
             -t "$IMAGE_PREFIX/tape-web:$TAG" -t "$IMAGE_PREFIX/tape-web:latest" ./web
           rm -rf web/packages
           docker push "$IMAGE_PREFIX/tape-web:$TAG"
@@ -86,6 +87,7 @@ jobs:
           POSTGRES_USER=tape
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
+          FLYWAY_STRATEGY=${{ vars.FLYWAY_STRATEGY || 'clean' }}
           EOF
 
       - name: Copy compose + env to VM

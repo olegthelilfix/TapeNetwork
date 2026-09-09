@@ -28,6 +28,11 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       SEARCH_INDEX_DIR: /var/lib/tape/search
       MEDIA_DIR: /var/lib/tape/media
+      # This VM is the throwaway test stand where any branch gets deployed, so rebuild
+      # the DB from scratch on every boot (drop + re-apply V1..V<n>) — no Flyway checksum
+      # mismatch across branch switches. Override to "none" (strict) if this ever hosts
+      # data worth keeping. See FlywayConfig / CLAUDE.md.
+      FLYWAY_STRATEGY: ${FLYWAY_STRATEGY:-clean}
     volumes:
       - /opt/tape/data/search:/var/lib/tape/search
       - /opt/tape/data/media:/var/lib/tape/media
