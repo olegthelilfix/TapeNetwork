@@ -13,4 +13,5 @@ public interface ArticleRepository extends JpaRepository<ArticleEntity, Long> {
     Page<ArticleEntity> findByPublishedTrueAndCategory_Slug(String categorySlug, Pageable pageable);
     List<ArticleEntity> findByPublishedTrueAndFeaturedTrueOrderByPublishedAtDesc();
     List<ArticleEntity> findTop4ByPublishedTrueOrderByPublishedAtDesc();
+    List<ArticleEntity> findByPersonIdAndPublishedTrueOrderByPublishedAtDesc(Long personId);
 }

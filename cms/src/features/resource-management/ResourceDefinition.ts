@@ -7,6 +7,8 @@ export type ResourceName =
     | "categories"
     | "subcategories"
     | "videos"
+    | "securities"
+    | "people"
     | "authors"
     | "articles"
     | "schedule"

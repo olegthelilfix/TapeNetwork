@@ -6,7 +6,7 @@ import net.tape.orm.VideoEntity;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = SecurityMapper.class)
 public abstract class VideoMapper {
     @Autowired protected MediaResolver media;
 
@@ -18,6 +18,8 @@ public abstract class VideoMapper {
 
     @Mapping(target = "durationLabel", expression = "java(Format.duration(m.getDurationSec()))")
     public abstract VideoDtoV1 toDtoV1(Video m);
+
+    public abstract net.tape.api.PersonRefDtoV1 toPersonRefDtoV1(net.tape.model.VideoPerson p);
 
     @Mapping(target = "show", ignore = true)
     @Mapping(target = "subcategory", ignore = true)

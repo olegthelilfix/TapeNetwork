@@ -93,3 +93,17 @@ class AdminMediaController extends AbstractCrudController<MediaAssetEntity, Medi
         super(r, j, MediaAsset.class, m::toModel, MediaAssetEntity::new, m::applyToEntity);
     }
 }
+
+@RestController @RequestMapping("/api/admin/securities")
+class AdminSecurityController extends AbstractCrudController<SecurityEntity, Security> {
+    AdminSecurityController(SecurityRepository r, ObjectMapper j, SecurityMapper m) {
+        super(r, j, Security.class, m::toModel, SecurityEntity::new, m::applyToEntity);
+    }
+}
+
+@RestController @RequestMapping("/api/admin/people")
+class AdminPersonController extends AbstractCrudController<PersonEntity, Person> {
+    AdminPersonController(PersonRepository r, ObjectMapper j, PersonMapper m) {
+        super(r, j, Person.class, m::toModel, PersonEntity::new, m::applyToEntity);
+    }
+}

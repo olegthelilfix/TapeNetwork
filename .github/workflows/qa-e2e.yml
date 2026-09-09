@@ -9,6 +9,10 @@ on:
         description: "Base URL to test against"
         required: false
         default: "http://34.13.255.70"
+      api_url:
+        description: "Backend API URL (for the Robot API suites)"
+        required: false
+        default: "http://34.13.255.70:8080"
   push:
     paths:
       - "qa-compare/**"
@@ -16,6 +20,7 @@ on:
 
 env:
   BASE_URL: ${{ github.event.inputs.base_url || 'http://34.13.255.70' }}
+  API_URL: ${{ github.event.inputs.api_url || 'http://34.13.255.70:8080' }}
 
 jobs:
   playwright:
@@ -54,6 +59,7 @@ jobs:
       - run: pip install -r requirements.txt
       - run: rfbrowser init
       - run: robot --outputdir results -v BASE_URL:"$BASE_URL" tests/e2e/smoke.robot
+      - run: robot --outputdir results/api -v API_URL:"$API_URL" tests/api/
       - uses: actions/upload-artifact@v4
         if: ${{ always() }}
         with:
