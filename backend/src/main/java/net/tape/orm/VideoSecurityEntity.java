@@ -23,6 +23,8 @@ public class VideoSecurityEntity {
     @Column(name = "security_id")
     private Long securityId;
 
+    @org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded(includePaths = {"symbol", "name"})
+    @org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexingDependency(reindexOnUpdate = org.hibernate.search.mapper.pojo.automaticindexing.ReindexOnUpdate.SHALLOW)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "security_id", insertable = false, updatable = false)
     @com.fasterxml.jackson.annotation.JsonIgnore

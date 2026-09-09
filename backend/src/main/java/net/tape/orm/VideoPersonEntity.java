@@ -27,6 +27,8 @@ public class VideoPersonEntity {
     @Column(nullable = false)
     private String role = "host";
 
+    @org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded(includePaths = {"name"})
+    @org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexingDependency(reindexOnUpdate = org.hibernate.search.mapper.pojo.automaticindexing.ReindexOnUpdate.SHALLOW)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id", insertable = false, updatable = false)
     @com.fasterxml.jackson.annotation.JsonIgnore
