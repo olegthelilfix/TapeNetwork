@@ -58,7 +58,7 @@ tape:
     #   none   — strict Flyway validate → migrate (default).
     #   repair — repair() then migrate(): self-heal checksum drift, keep data (local dev).
     #   clean  — clean() then migrate(): rebuild schema from scratch every boot, DROPS all
-    #            data (ephemeral test stacks). Also needs FLYWAY_CLEAN_DISABLED=false.
+    #            data (ephemeral test stacks). Self-enables clean; no other flag needed.
     strategy: ${FLYWAY_STRATEGY:none}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}

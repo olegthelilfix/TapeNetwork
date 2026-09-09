@@ -29,10 +29,9 @@ services:
       # Dev resilience: self-heal Flyway across branch switches / rollbacks so the
       # backend boots instead of failing validation. Do NOT enable these in production.
       #   local dev default = repair (heals checksum drift, keeps data).
-      #   ephemeral test stack: set FLYWAY_STRATEGY=clean + FLYWAY_CLEAN_DISABLED=false
-      #   in the deploy env to rebuild the DB from scratch on every start.
+      #   ephemeral test stack: set FLYWAY_STRATEGY=clean in the deploy env to rebuild
+      #   the DB from scratch on every start (self-enables clean; no other flag needed).
       FLYWAY_STRATEGY: ${FLYWAY_STRATEGY:-repair}
-      FLYWAY_CLEAN_DISABLED: ${FLYWAY_CLEAN_DISABLED:-true}
       FLYWAY_IGNORE_MIGRATION_PATTERNS: ${FLYWAY_IGNORE_MIGRATION_PATTERNS:-*:missing,*:future}
     ports:
       - "${BACKEND_PORT:-8080}:8080"

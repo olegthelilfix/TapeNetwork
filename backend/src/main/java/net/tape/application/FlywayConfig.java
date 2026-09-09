@@ -1,5 +1,6 @@
 package net.tape.application;
 
+import org.flywaydb.core.Flyway;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
 import org.springframework.context.annotation.Bean;
@@ -39,12 +40,22 @@ public class FlywayConfig {
         };
     }
 
-    /** Ephemeral test stacks: wipe the schema and rebuild it from the migrations. */
+    /**
+     * Ephemeral test stacks: wipe the schema and rebuild it from the migrations.
+     * Enabling this strategy is itself the explicit opt-in to a destructive clean, so
+     * it runs clean() through a copy of the Flyway config with {@code cleanDisabled=false}
+     * — no separate {@code FLYWAY_CLEAN_DISABLED} needed. The app's own Flyway bean keeps
+     * clean disabled, so nothing else can wipe the DB.
+     */
     @Bean
     @ConditionalOnProperty(prefix = "tape.flyway", name = "strategy", havingValue = "clean")
     public FlywayMigrationStrategy cleanThenMigrate() {
         return flyway -> {
-            flyway.clean();
+            Flyway.configure()
+                .configuration(flyway.getConfiguration())
+                .cleanDisabled(false)
+                .load()
+                .clean();
             flyway.migrate();
         };
     }
