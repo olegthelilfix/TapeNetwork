@@ -100,5 +100,12 @@ jobs:
       - name: Clean up VM
         if: always()
         run: |
+          # Runs on success OR failure (if: always()) so a failed build still
+          # cleans up after itself: remove this run's source dir, then prune the
+          # docker build cache / dangling images / stopped containers it left
+          # behind. No -a and no --volumes -> running stack + DB volumes safe.
           ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
-            "docker run --rm -v '$DIR:/w' busybox sh -c 'rm -rf /w/..?* /w/.[!.]* /w/*' 2>/dev/null || true; rmdir '$DIR' 2>/dev/null || true"
+            "docker run --rm -v '$DIR:/w' busybox sh -c 'rm -rf /w/..?* /w/.[!.]* /w/*' 2>/dev/null || true; rmdir '$DIR' 2>/dev/null || true; \
+             docker builder prune -f >/dev/null 2>&1 || true; \
+             docker container prune -f >/dev/null 2>&1 || true; \
+             docker image prune -f >/dev/null 2>&1 || true"
