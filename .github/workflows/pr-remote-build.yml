@@ -34,7 +34,7 @@ jobs:
       - name: Package & copy source to VM
         run: |
           tar czf src.tgz --exclude=.git --exclude=node_modules --exclude=target --exclude=.next \
-            backend web cms
+            backend web cms .env.example docker-compose.yml
           ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" "mkdir -p '$DIR'"
           scp -i ~/.ssh/id_deploy src.tgz "$SSH_USER@$VM_HOST:$DIR/src.tgz"
 
@@ -63,7 +63,7 @@ jobs:
             rm -rf /root/.gradle/caches/journal-1
 
           echo '::group::backend — gradle build'
-          docker run --rm -v "$PWD/backend:/app" -v /opt/tape/ci/gradle:/root/.gradle -w /app \
+          docker run --rm -v "$PWD:/repo" -v /opt/tape/ci/gradle:/root/.gradle -w /repo/backend \
             azul/zulu-openjdk:21 sh -c './gradlew build --no-daemon'
           echo '::endgroup::'
 

@@ -24,6 +24,12 @@ const optAll = (name) => {
   return out;
 };
 
+// Shown in the report table but never decides pass/fail: lat_pool_pressure
+// tracks traffic we push on purpose to see how it performs, not a speed
+// limit this check enforces. Peak resource use, further down, gets the
+// same treatment.
+const INFORMATIONAL_GROUPS = new Set(['lat_pool_pressure']);
+
 function median(nums) {
   const xs = nums.filter((n) => n != null && !Number.isNaN(n)).sort((a, b) => a - b);
   if (!xs.length) return null;
@@ -112,12 +118,14 @@ if (cmd === 'record') {
   ])].sort();
   const groupRows = [];
   for (const g of groupNames) {
+    const informational = INFORMATIONAL_GROUPS.has(g);
     for (const stat of ['p95', 'p99']) {
       const b = base.k6.groups?.[g]?.[stat];
       const h = head.k6.groups?.[g]?.[stat];
       const { pct, verdict, bad } = judge(b, h, true, maxReg);
-      if (bad) regressed = true;
-      groupRows.push([`${prettyGroup(g)} ${stat}`, fmt(b), fmt(h), pct, verdict]);
+      if (bad && !informational) regressed = true;
+      const groupLabel = `${prettyGroup(g)} ${stat}${informational ? ' (info)' : ''}`;
+      groupRows.push([groupLabel, fmt(b), fmt(h), pct, verdict]);
     }
   }
 
@@ -172,7 +180,8 @@ function renderMd(base, head, overallRows, groupRows, peakRows, maxReg, regresse
     md += '| Service | base CPU% | head CPU% | base mem MiB | head mem MiB |\n|---|---|---|---|---|\n';
     for (const r of peakRows) md += `| ${r.join(' | ')} |\n`;
   }
-  md += `\n<sub>🟢 better · 🟡 worse but within budget · 🔴 regression > ${maxReg}%. Latency (overall + per-group) & error gated; throughput & resources informational.</sub>`;
+  md += `\n<sub>🟢 better · 🟡 worse but within budget · 🔴 regression > ${maxReg}%. Latency (overall `
+    + `+ per-group) & error gated; throughput, resources, and groups marked "(info)" informational.</sub>`;
   return md;
 }
 
