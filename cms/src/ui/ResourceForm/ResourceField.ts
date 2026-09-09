@@ -25,4 +25,23 @@ export type ReferenceField = FieldBase & {
     optionLabel: string;
 };
 
-export type ResourceField = TextField | SelectField | ReferenceField;
+export type MultiReferenceField = FieldBase & {
+    type: "multiReference";
+    refResource: string;
+    optionLabel: string;
+    endpoint: string;
+};
+
+export type PersonRolesField = FieldBase & {
+    type: "personRoles";
+    refResource: string;
+    optionLabel: string;
+    endpoint: string;
+};
+
+export type ResourceField =
+    | TextField
+    | SelectField
+    | ReferenceField
+    | MultiReferenceField
+    | PersonRolesField;
