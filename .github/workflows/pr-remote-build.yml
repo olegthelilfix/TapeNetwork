@@ -33,6 +33,20 @@ jobs:
 
       - name: Package & copy source to VM
         run: |
+          # Reclaim disk before building: prune Docker build cache, dangling
+          # images and stopped containers (never touches running-stack images
+          # or named volumes), and drop pr-build dirs left behind by runs that
+          # were cancelled/killed before their own "Clean up VM" step ran.
+          # The 29G root disk fills up otherwise -> yarn install ENOSPC.
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" bash <<'PRECLEAN'
+          set -eux
+          docker builder prune -f    >/dev/null 2>&1 || true
+          docker container prune -f  >/dev/null 2>&1 || true
+          docker image prune -f      >/dev/null 2>&1 || true
+          find /tmp -maxdepth 1 -name 'pr-build-*' -mmin +120 \
+            -exec docker run --rm -v '{}':/w busybox sh -c 'rm -rf /w/..?* /w/.[!.]* /w/*' \; \
+            -exec rmdir '{}' \; 2>/dev/null || true
+          PRECLEAN
           tar czf src.tgz --exclude=.git --exclude=node_modules --exclude=target --exclude=.next \
             backend web cms
           ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" "mkdir -p '$DIR'"
