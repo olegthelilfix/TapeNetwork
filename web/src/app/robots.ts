@@ -28,5 +28,3 @@ export default function robots(): MetadataRoute.Robots {
     ],
   };
 };
-
-export default robots;
