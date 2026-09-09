@@ -9,7 +9,7 @@
 .inner {
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 var(--gutter);
   height: 64px;
   display: flex;
   align-items: center;
@@ -20,6 +20,7 @@
   align-items: center;
   gap: 26px;
   flex: 1;
+  min-width: 0;
 }
 .link {
   font-size: 13.5px;
@@ -39,7 +40,8 @@
   border-radius: var(--radius);
   color: var(--text-faint);
   font-size: 13px;
-  min-width: 240px;
+  flex: 0 1 240px;
+  min-width: 120px;
 }
 .searchIcon {
   font-size: 15px;
