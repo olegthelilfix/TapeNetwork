@@ -12,16 +12,20 @@ public class WatchService {
     private final VideoStore videos;
     private final EpisodeRepository episodes;
     private final EpisodeMapper episodeMapper;
+    private final ViewCountService viewCounts;
 
-    public WatchService(VideoStore videos, EpisodeRepository episodes, EpisodeMapper episodeMapper) {
+    public WatchService(VideoStore videos, EpisodeRepository episodes, EpisodeMapper episodeMapper,
+                        ViewCountService viewCounts) {
         this.videos = videos; this.episodes = episodes;
         this.episodeMapper = episodeMapper;
+        this.viewCounts = viewCounts;
     }
 
     @Transactional(readOnly = true)
     public PlayerDtoV1 watch(String slug) {
         Video v = videos.findAll().stream().filter(video -> slug.equals(video.getSlug())).findFirst().orElse(null);
         if (v != null) {
+            viewCounts.recordView(v.getId());
             return new PlayerDtoV1("video", v.getSlug(), v.getTitle(), v.getDescription(),
                 v.getShowName(), v.getShowSlug(), Format.duration(v.getDurationSec()), v.getImageUrl(),
                 false, java.util.Arrays.asList(v.getTags() == null ? new String[0] : v.getTags()),

@@ -10,6 +10,8 @@ public record VideoDtoV1(
     String durationLabel,
     String showName,
     String categoryName,
+    String views,
+    long viewCount,
     java.util.List<String> tags,
     java.util.List<SecurityDtoV1> securities,
     java.util.List<PersonRefDtoV1> people,

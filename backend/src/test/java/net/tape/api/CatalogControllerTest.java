@@ -126,7 +126,7 @@ class CatalogControllerTest {
         when(service.videoBySlug("earnings-call")).thenReturn(video);
         when(videoMapper.toDtoV1(video)).thenReturn(new VideoDtoV1(
             "earnings-call", "Q3 Earnings Call", "Full replay.", java.time.Instant.parse("2026-01-01T00:00:00Z"),
-            754, "12:34", "Market Open", "Markets", List.of("earnings"),
+            754, "12:34", "Market Open", "Markets", "12K", 12000L, List.of("earnings"),
             List.of(new SecurityDtoV1("AAPL", "Apple Inc.")),
             List.of(new PersonRefDtoV1("jane-doe", "Jane Doe", "JD", "host")),
             "/uploads/earnings.jpg"));

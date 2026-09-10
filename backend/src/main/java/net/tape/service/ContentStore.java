@@ -10,4 +10,7 @@ public interface ContentStore<M> {
     M create(M model);
     M update(Long id, M patch);
     M delete(Long id);
+
+    /** Re-fetch a single row from the database into the cache (e.g. after an out-of-band update). */
+    void reload(Long id);
 }
