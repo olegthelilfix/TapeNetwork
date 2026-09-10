@@ -2,7 +2,9 @@
 Documentation     Issue #19 — the CMS "Video" field: a dropdown of the streamer's
 ...               prepared videos on the episode form. Uploads a video to the streamer,
 ...               then checks it can be picked in the admin.
-...               Needs cms (:5173), backend (:8080) and streamer (:8082) running.
+...               Needs cms (:8081, prod compose maps 8081:80), backend (:8080) and
+...               streamer (:8082) running. Override the CMS with
+...               -v CMS_URL:http://host:PORT (local dev is http://localhost:5173).
 Library           Browser
 Library           RequestsLibrary
 Library           Collections
@@ -12,7 +14,7 @@ Suite Setup       Seed A Streamer Video
 Suite Teardown    Close Browser
 
 *** Variables ***
-${CMS_URL}          http://localhost:5173
+${CMS_URL}          http://localhost:8081
 ${STREAMER_URL}     http://localhost:8082
 ${ADMIN_EMAIL}      admin@tape.local
 ${ADMIN_PASSWORD}   password
@@ -27,9 +29,11 @@ Episode Form Shows The Streamer Video Dropdown
     Log In To Cms
     Go To    ${CMS_URL}/episodes/edit/1
     Wait For Elements State    [data-testid="stream-video-field"]    visible    timeout=15s
-    # Open the dropdown and confirm the uploaded video is offered.
-    Click    [data-testid="stream-video-field"] .ant-select-selector
-    Wait For Elements State    .ant-select-dropdown    visible    timeout=10s
+    # Open the dropdown and confirm the uploaded video is offered. The antd Select
+    # is search-enabled, so opening focuses an input; retry the open until the
+    # options panel is actually rendered (it can lag on a loaded prod stack).
+    Wait Until Keyword Succeeds    5x    2s    Open Stream Video Dropdown
+    # The option label is "<name> — <status>", so match the seeded name as a substring.
     Wait For Elements State
     ...    .ant-select-item-option >> text=${SeededVideo}    visible    timeout=10s
 
@@ -58,5 +62,14 @@ Log In To Cms
     Fill Text    input[placeholder="${ADMIN_EMAIL}"]    ${ADMIN_EMAIL}
     Fill Text    input[type="password"]    ${ADMIN_PASSWORD}
     Click    button[type="submit"]
-    # Authenticated landing renders the resource nav (a link to Episodes).
-    Wait For Elements State    a[href="/episodes"]    visible    timeout=15s
+    # Authenticated landing renders the resource nav (a link to Episodes). The
+    # SPA auth handshake can lag on a loaded stack, so wait generously.
+    Wait For Elements State    a[href="/episodes"]    visible    timeout=30s
+
+Open Stream Video Dropdown
+    [Documentation]    Click the search-enabled Select and confirm its options panel
+    ...                actually renders. Retried by the caller because the panel can
+    ...                lag behind the click on a loaded stack.
+    Click    [data-testid="stream-video-field"] .ant-select-selector
+    Wait For Elements State    .ant-select-dropdown    visible    timeout=3s
+    Get Element Count    .ant-select-item-option    >=    1
