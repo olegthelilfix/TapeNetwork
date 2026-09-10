@@ -6,6 +6,8 @@
 # SUITE=scenarios (default) — load the backend API (/api/v1) directly.
 # SUITE=cache               — cache-focused API load (issue #49): isolates the
 #                             Hazelcast cache-hit + eviction costs as own metrics.
+# SUITE=stress              — breakpoint test: ramp VUs past peak to find the knee
+#                             (ad-hoc capacity check; not meaningful in perf-compare).
 # SUITE=journey             — bring up the web frontend too and drive real
 #                             SSR pages as a user journey (issue #39).
 #
@@ -52,6 +54,7 @@ else
   done
   K6_SCRIPT="scenarios.js"
   [ "$SUITE" = "cache" ] && K6_SCRIPT="cache.js"
+  [ "$SUITE" = "stress" ] && K6_SCRIPT="stress.js"
   TARGET_ENV=(-e BASE_URL="http://host.docker.internal:${BACKEND_PORT}")
   # Prime the API endpoints once (warm JIT + Caffeine + Lucene) before measuring.
   PRIME_BASE="http://localhost:${BACKEND_PORT}/api/v1"
@@ -77,6 +80,7 @@ docker run --rm --add-host=host.docker.internal:host-gateway \
   "${TARGET_ENV[@]}" \
   -e VUS -e RAMP -e DURATION -e WARMUP -e THINK_MIN -e THINK_MAX \
   -e ADMIN_EMAIL -e ADMIN_PASSWORD -e HOT_PATHS \
+  -e STAGES -e STAGE_DURATION -e STAGE_RAMP -e ABORT_ERROR_RATE -e ABORT_P95_MS \
   grafana/k6 run "$K6_SCRIPT"
 K6_RC=$?
 set -e

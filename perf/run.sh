@@ -5,6 +5,7 @@
 #   ./run.sh                         # defaults (localhost:8080, 20 VUs, 1m)
 #   BASE_URL=http://34.13.255.70:8080 ./run.sh
 #   VUS=50 RAMP=1m DURATION=3m ./run.sh
+#   SCRIPT=stress.js STAGES=10,50,100,200,400 ./run.sh   # breakpoint / stress test
 #
 # Outputs (in ./results/):
 #   summary.json  — full k6 end-of-test summary (throughput + latency percentiles)
@@ -36,7 +37,10 @@ docker run --rm -i "${HOST_FLAG[@]}" \
   -e SLUGS_SHOWS="${SLUGS_SHOWS:-}" \
   -e SLUGS_CATEGORIES="${SLUGS_CATEGORIES:-}" \
   -e SLUGS_SUBCATEGORIES="${SLUGS_SUBCATEGORIES:-}" \
-  grafana/k6 run scenarios.js
+  -e STAGES="${STAGES:-}" -e STAGE_DURATION="${STAGE_DURATION:-}" \
+  -e STAGE_RAMP="${STAGE_RAMP:-}" \
+  -e ABORT_ERROR_RATE="${ABORT_ERROR_RATE:-}" -e ABORT_P95_MS="${ABORT_P95_MS:-}" \
+  grafana/k6 run "${SCRIPT:-scenarios.js}"
 
 echo
 echo "Reports written to perf/results/:"
