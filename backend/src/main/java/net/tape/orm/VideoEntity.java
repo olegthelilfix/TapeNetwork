@@ -59,6 +59,9 @@ public class VideoEntity {
 
     private String views;
 
+    @Column(name = "view_count", nullable = false)
+    private long viewCount = 0;
+
     @Column(name = "video_url")
     private String videoUrl;
 

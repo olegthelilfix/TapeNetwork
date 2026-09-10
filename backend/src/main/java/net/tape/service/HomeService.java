@@ -26,17 +26,20 @@ public class HomeService {
     private final ScheduleMapper scheduleMapper;
     private final TickerService tickerService;
     private final TickerMapper tickerMapper;
+    private final PopularVideosService popularVideos;
 
     public HomeService(HomeBlockRepository blocks, EpisodeRepository episodes, VideoStore videos,
                        EpisodeMapper episodeMapper,
                        ArticleService articleService, ArticleMapper articleMapper,
                        ScheduleService scheduleService, ScheduleMapper scheduleMapper,
-                       TickerService tickerService, TickerMapper tickerMapper) {
+                       TickerService tickerService, TickerMapper tickerMapper,
+                       PopularVideosService popularVideos) {
         this.blocks = blocks; this.episodes = episodes; this.videos = videos;
         this.episodeMapper = episodeMapper;
         this.articleService = articleService; this.articleMapper = articleMapper;
         this.scheduleService = scheduleService; this.scheduleMapper = scheduleMapper;
         this.tickerService = tickerService; this.tickerMapper = tickerMapper;
+        this.popularVideos = popularVideos;
     }
 
     public HomeResponseDtoV1 home() {
@@ -45,7 +48,7 @@ public class HomeService {
         return new HomeResponseDtoV1(
             liveNow,
             cards("featured"),
-            cards("most_watched"),
+            popularVideos.top(5).stream().map(this::videoCard).toList(),
             cards("up_next"),
             tickerService.list().stream().map(tickerMapper::toDtoV1).toList(),
             scheduleService.list().stream().map(scheduleMapper::toDtoV1).toList(),

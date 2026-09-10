@@ -60,4 +60,9 @@ public final class JpaContentStore<E, M> implements ContentStore<M> {
         repo.delete(entity);
         return model;
     }
+
+    @Override
+    public void reload(Long id) {
+        // The DB store is stateless; reloading the cache is the decorator's job.
+    }
 }
