@@ -11,4 +11,6 @@ public record VideoDtoV1(
     String showName,
     String categoryName,
     java.util.List<String> tags,
+    java.util.List<SecurityDtoV1> securities,
+    java.util.List<PersonRefDtoV1> people,
     String imageUrl) {}

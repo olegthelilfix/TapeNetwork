@@ -51,6 +51,14 @@ export const PlayerFeature: FC<PlayerFeatureProps> = ({ player }) => {
             {[p.durationLabel, formatDate(p.publishedAt)].filter(Boolean).join(" · ")}
           </div>
           {p.description && <p className={styles.desc}>{p.description}</p>}
+          {/*
+            TODO(#54/#56): render host/guest links to /person/{slug} here.
+            The player payload (PlayerDtoV1) does NOT carry people — only
+            GET /api/v1/on-demand/videos/{slug} exposes `people[{slug,name,role}]`.
+            Once the Player domain type gains `people`, map over them and render
+            <Link href={`/person/${person.slug}`}>{person.name}</Link> (host/guest
+            grouped). Do not invent the field before the backend/DTO provides it.
+          */}
           {p.tags.length > 0 && (
             <div className={styles.tags}>
               {p.tags.map((t) => <span key={t} className={styles.tag}>{t}</span>)}

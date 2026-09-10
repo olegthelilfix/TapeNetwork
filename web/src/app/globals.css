@@ -20,7 +20,7 @@ h1, h2, h3 { font-family: var(--font-serif); font-weight: 700; letter-spacing: -
 .page {
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: 32px var(--gutter);
   min-height: 60vh;
 }
 button:disabled { opacity: 0.55; }

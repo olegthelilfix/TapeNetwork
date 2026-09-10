@@ -1,0 +1,104 @@
+.head {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding-bottom: 28px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.avatar {
+  position: relative;
+  flex: 0 0 auto;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.avatarImg { object-fit: cover; }
+.avatarInitials {
+  font-family: var(--font-mono);
+  font-size: 34px;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.headText { min-width: 0; }
+.h1 { font-size: 40px; line-height: 1.08; letter-spacing: -0.028em; margin: 0 0 12px; }
+.bio {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  margin: 0;
+  max-width: 640px;
+}
+
+.section { margin-top: 48px; }
+
+.empty {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 4px 0 0;
+}
+
+/* Article list mirrors the article-detail related-list card markup. */
+.articleList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
+}
+.article { display: block; }
+.articleMedia {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  margin-bottom: 10px;
+}
+.articleImg { object-fit: cover; }
+.articleCat {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 5px;
+}
+.articleTitle {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.25;
+}
+.article:hover .articleTitle { color: var(--accent); }
+.articleMeta {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 5px;
+}
+
+@media (max-width: 640px) {
+  .head { flex-direction: column; align-items: flex-start; gap: 18px; }
+  .avatar { width: 88px; height: 88px; }
+  .h1 { font-size: 30px; }
+  .bio { font-size: 17px; }
+}

@@ -41,7 +41,7 @@ public class SearchService {
             : Set.of(type.toLowerCase(Locale.ROOT));
 
         List<SearchHit> hits = new ArrayList<>();
-        SearchSession session = (types.contains("episode") || types.contains("show"))
+        SearchSession session = (types.contains("episode") || types.contains("show") || types.contains("video"))
             ? Search.session(em) : null;
 
         if (types.contains("article")) {
@@ -60,11 +60,16 @@ public class SearchService {
                     media.url(e.getThumbMediaId()), "/watch/" + e.getSlug())));
         }
         if (types.contains("video")) {
-            videos.findAll().stream()
-                .filter(v -> matches(query, v.getTitle(), v.getDescription()))
-                .limit(per)
+            session.search(net.tape.orm.VideoEntity.class)
+                .where(f -> f.match()
+                    .fields("title", "description",
+                        "securityLinks.security.symbol", "securityLinks.security.name",
+                        "personLinks.person.name")
+                    .matching(q))
+                .fetchHits(per)
                 .forEach(v -> hits.add(new SearchHit("video", v.getSlug(), v.getTitle(),
-                    v.getShowName(), v.getImageUrl(), "/watch/" + v.getSlug())));
+                    v.getShow() != null ? v.getShow().getName() : null,
+                    media.url(v.getThumbMediaId()), "/watch/" + v.getSlug())));
         }
         if (types.contains("show")) {
             session.search(ShowEntity.class)
