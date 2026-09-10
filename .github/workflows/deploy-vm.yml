@@ -8,6 +8,12 @@ name: Deploy (GHCR + SSH)
 # gets built and deployed.
 on:
   workflow_dispatch:
+    inputs:
+      clean_db:
+        description: "DESTRUCTIVE: wipe the DB and re-seed from V1..Vn (Flyway clean). Leave off to keep data (migrate)."
+        type: boolean
+        required: false
+        default: false
 
 concurrency:
   group: deploy-vm
@@ -88,7 +94,9 @@ jobs:
           POSTGRES_USER=tape
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
-          FLYWAY_STRATEGY=${{ vars.FLYWAY_STRATEGY || 'clean' }}
+          # Data-safe by default: 'migrate' preserves the DB across deploys AND restarts.
+          # Only a deliberate run with clean_db=true wipes + re-seeds (fresh environment).
+          FLYWAY_STRATEGY=${{ (github.event.inputs.clean_db == 'true') && 'clean' || 'migrate' }}
           EOF
 
       - name: Copy compose + env to VM
