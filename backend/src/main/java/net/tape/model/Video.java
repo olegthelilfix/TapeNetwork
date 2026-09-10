@@ -20,6 +20,7 @@ public class Video {
     private Instant publishedAt;
     private Integer durationSec;
     private String views;
+    private long viewCount;
     private String videoUrl;
     private Long thumbMediaId;
     private String imageUrl;

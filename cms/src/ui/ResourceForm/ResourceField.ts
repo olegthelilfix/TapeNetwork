@@ -3,6 +3,7 @@ type FieldBase = {
     label: string;
     required?: boolean;
     inList?: boolean;
+    readOnly?: boolean;
 };
 
 type TextField = FieldBase & {

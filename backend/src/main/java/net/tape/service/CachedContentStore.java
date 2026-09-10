@@ -62,4 +62,12 @@ public class CachedContentStore<M> implements ContentStore<M> {
         cache.remove(idOf.apply(deleted));
         return deleted;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void reload(Long id) {
+        database.findById(id).ifPresentOrElse(
+            model -> cache.put(idOf.apply(model), model),
+            () -> cache.remove(id));
+    }
 }

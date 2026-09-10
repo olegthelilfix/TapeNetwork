@@ -90,6 +90,7 @@ jobs:
           PUBLIC_WEB_URL=${{ vars.PUBLIC_WEB_URL }}
           PUBLIC_API_URL=${{ vars.PUBLIC_API_URL }}
           CORS_ALLOWED_ORIGINS=${{ vars.CORS_ALLOWED_ORIGINS }}
+          ACME_EMAIL=${{ vars.ACME_EMAIL }}
           POSTGRES_DB=tape
           POSTGRES_USER=tape
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
@@ -105,12 +106,17 @@ jobs:
             "${{ vars.SSH_USER }}@${{ vars.VM_HOST }}:/opt/tape/docker-compose.yml"
           scp -i ~/.ssh/id_deploy deploy.env \
             "${{ vars.SSH_USER }}@${{ vars.VM_HOST }}:/opt/tape/.env"
+          ssh -i ~/.ssh/id_deploy "${{ vars.SSH_USER }}@${{ vars.VM_HOST }}" \
+            "mkdir -p /opt/tape/caddy"
+          scp -i ~/.ssh/id_deploy infra/deploy/Caddyfile \
+            "${{ vars.SSH_USER }}@${{ vars.VM_HOST }}:/opt/tape/caddy/Caddyfile"
 
       - name: Deploy on VM
         run: |
           ssh -i ~/.ssh/id_deploy "${{ vars.SSH_USER }}@${{ vars.VM_HOST }}" \
             "echo '${{ secrets.GHCR_READ_TOKEN }}' | docker login ghcr.io -u '${{ github.repository_owner }}' --password-stdin && \
              chmod 600 /opt/tape/.env && \
+             docker network create tape-edge 2>/dev/null || true && \
              cd /opt/tape && \
              docker compose pull && \
              docker compose up -d --remove-orphans && \

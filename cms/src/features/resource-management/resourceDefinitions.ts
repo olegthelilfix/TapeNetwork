@@ -51,7 +51,7 @@ export const resourceDefinitions: readonly ResourceDefinition[] = [
       { name: "showId", label: "Show", type: "reference", refResource: "shows", optionLabel: "name" },
       { name: "title", label: "Title", type: "text", required: true, inList: true }, { name: "slug", label: "Slug", type: "text", required: true, inList: true },
       { name: "description", label: "Description", type: "textarea" }, { name: "publishedAt", label: "Published at", type: "datetime" },
-      { name: "durationSec", label: "Duration (sec)", type: "number" }, { name: "views", label: "Views label", type: "text" },
+      { name: "durationSec", label: "Duration (sec)", type: "number" }, { name: "viewCount", label: "Views", type: "number", inList: true, readOnly: true },
       { name: "videoUrl", label: "Video", type: "streamVideo" }, { name: "thumbMediaId", label: "Thumbnail", type: "media" },
       { name: "tags", label: "Tags", type: "tags" }, published,
       { name: "securityIds", label: "Securities", type: "multiReference", refResource: "securities", optionLabel: "symbol", endpoint: "securities" },

@@ -1,0 +1,67 @@
+# Caddy reverse proxy for Tape Network — automatic HTTPS via Let's Encrypt.
+#
+# One Caddy fronts EVERYTHING on :80/:443. Backing services are reached over
+# Docker networks by service name (no host ports needed anymore):
+#   - prod stack (web/cms/backend/streamer) live on the compose default network
+#   - teamcity + sonarqube live in the separate teamcity/ compose; both compose
+#     files join the shared external network `tape-edge` so this Caddy can see them.
+#
+# ACME e-mail for expiry notices / recovery. Override per-deploy with the
+# ACME_EMAIL env var (see docker-compose.prod.yml).
+{
+	email {$ACME_EMAIL:admin@tapenetwork.de}
+}
+
+# --- Public site + API + Swagger, all on the apex domain -------------------
+# Browser hits https://tapenetwork.de/api/* — no CORS, no mixed content, since
+# API is same-origin as the site.
+tapenetwork.de, www.tapenetwork.de {
+	# API (public /api/v1 + admin /api/admin) and Swagger go to the backend.
+	@api path /api/* /v3/api-docs* /swagger-ui* /swagger-ui.html
+	handle @api {
+		reverse_proxy backend:8080
+	}
+
+	# Everything else is the Next.js site (SSR).
+	handle {
+		reverse_proxy web:3000
+	}
+
+	# Redirect www -> apex.
+	@www host www.tapenetwork.de
+	redir @www https://tapenetwork.de{uri} permanent
+
+	encode zstd gzip
+}
+
+# --- CMS (Refine SPA served by nginx) --------------------------------------
+cms.tapenetwork.de {
+	reverse_proxy cms:80
+	encode zstd gzip
+}
+
+# --- Video streamer (Go HLS service) ---------------------------------------
+video.tapenetwork.de {
+	reverse_proxy streamer:8082
+	encode zstd gzip
+}
+
+# --- TeamCity --------------------------------------------------------------
+# TeamCity needs the forwarded proto/host so it builds correct absolute URLs;
+# Caddy sets X-Forwarded-* by default. Also raise timeouts for long build logs.
+teamcity.tapenetwork.de {
+	reverse_proxy teamcity-server:8111 {
+		# Long-poll / SSE build log streaming needs generous timeouts.
+		transport http {
+			read_timeout 600s
+			write_timeout 600s
+		}
+	}
+	encode zstd gzip
+}
+
+# --- SonarQube -------------------------------------------------------------
+sonar.tapenetwork.de {
+	reverse_proxy sonarqube:9000
+	encode zstd gzip
+}
