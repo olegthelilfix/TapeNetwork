@@ -10,11 +10,16 @@ services:
   teamcity-server:
     image: jetbrains/teamcity-server:2025.03
     container_name: teamcity-server
-    ports:
-      - "8111:8111"
+    # No host port: Caddy proxies https://teamcity.tapenetwork.de -> teamcity-server:8111
+    # (to expose directly for debugging, uncomment)
+    # ports:
+    #   - "8111:8111"
     volumes:
       - ./data:/data/teamcity_server/datadir
       - ./logs:/opt/teamcity/logs
+    networks:
+      - default
+      - tape-edge
     restart: unless-stopped
 
   teamcity-agent:
@@ -52,8 +57,10 @@ services:
     container_name: sonarqube
     depends_on:
       - sonar-db
-    ports:
-      - "9000:9000"
+    # No host port: Caddy proxies https://sonar.tapenetwork.de -> sonarqube:9000
+    # (to expose directly for debugging, uncomment)
+    # ports:
+    #   - "9000:9000"
     environment:
       SONAR_JDBC_URL: jdbc:postgresql://sonar-db:5432/sonar
       SONAR_JDBC_USERNAME: sonar
@@ -66,4 +73,15 @@ services:
       - ./sonar-data:/opt/sonarqube/data
       - ./sonar-extensions:/opt/sonarqube/extensions
       - ./sonar-logs:/opt/sonarqube/logs
+    networks:
+      - default
+      - tape-edge
     restart: unless-stopped
+
+networks:
+  # Shared with the prod compose (infra/deploy/docker-compose.prod.yml) so the
+  # single Caddy running there can reach teamcity-server + sonarqube by name.
+  # Create it once on the VM before `up`:
+  #   docker network create tape-edge
+  tape-edge:
+    external: true

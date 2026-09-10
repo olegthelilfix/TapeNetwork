@@ -22,9 +22,51 @@ push to master ─▶ .github/workflows/deploy-vm.yml
    ├─ docker build backend/web/cms/streamer  (web & cms baked with prod URLs)
    ├─ push :<git-sha> + :latest      ─▶ ghcr.io/<owner>/tape-*
    └─ scp compose+.env, ssh (key) ─▶ VM:  docker login ghcr && compose pull && up -d
-VM (Ubuntu 22.04): backend :8080 · web :80 · cms :8081 · streamer :8082 · postgres (internal)
+VM (Ubuntu 22.04): Caddy :80/:443 (TLS, reverse-proxy) ─▶ web · cms · backend · streamer
+                   teamcity + sonarqube reachable via the shared `tape-edge` network
+                   backend/web/cms/streamer have NO host ports (edge-only); postgres internal
                    persistent disk mounted at /opt/tape/data
 ```
+
+## Domains & TLS (Caddy)
+
+A single **Caddy** container (in `infra/deploy/docker-compose.prod.yml`) terminates
+TLS on :80/:443, gets **Let's Encrypt** certs automatically, and routes by Host —
+see [`infra/deploy/Caddyfile`](deploy/Caddyfile):
+
+| Domain                    | Proxies to        | Service                    |
+|---------------------------|-------------------|----------------------------|
+| `tapenetwork.de`          | `web:3000`        | Public site (Next.js SSR)  |
+| `tapenetwork.de/api/*`    | `backend:8080`    | API (public + admin), same-origin — no CORS |
+| `cms.tapenetwork.de`      | `cms:80`          | CMS (Refine)               |
+| `video.tapenetwork.de`    | `streamer:8082`   | Video streamer (Go HLS)    |
+| `teamcity.tapenetwork.de` | `teamcity-server:8111` | TeamCity              |
+| `sonar.tapenetwork.de`    | `sonarqube:9000`  | SonarQube                  |
+
+**DNS (do this first — Let's Encrypt can't issue until the names resolve to the VM):**
+add A-records at your registrar, all pointing at the VM's static IP (`34.13.255.70`):
+
+```
+tapenetwork.de          A   34.13.255.70
+www.tapenetwork.de      A   34.13.255.70
+cms.tapenetwork.de      A   34.13.255.70
+video.tapenetwork.de    A   34.13.255.70
+teamcity.tapenetwork.de A   34.13.255.70
+sonar.tapenetwork.de    A   34.13.255.70
+```
+(Or a wildcard: `tapenetwork.de A …` + `*.tapenetwork.de A …`.)
+
+**Shared network (one-time on the VM)** — lets the prod-stack Caddy reach the
+TeamCity/Sonar containers that live in the separate `teamcity/` compose:
+
+```bash
+docker network create tape-edge   # deploy-vm.yml also runs this idempotently
+```
+
+After the domains resolve and the stack is up, set the public base URL **inside**
+TeamCity (Administration → HTTPS/Server URL → `https://teamcity.tapenetwork.de`) and
+SonarQube (Administration → General → Server base URL → `https://sonar.tapenetwork.de`)
+so their absolute links/redirects are correct.
 
 ## Prerequisites (once)
 
@@ -70,13 +112,24 @@ Gradle builds and FFmpeg transcode aren't CPU-throttled. Override with
 
 The terraform identity has `networkAdmin`, which can't create firewalls, so this
 is a one-time manual step. `CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT=` forces
-your own identity (`compute.editor`) instead of the impersonated SA:
+your own identity (`compute.editor`) instead of the impersonated SA.
+
+With Caddy fronting everything, only **80 + 443** need to be open — the old
+per-service ports (8080/8081/8082/8111/9000) are no longer published on the host:
 
 ```bash
 CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT= gcloud compute firewall-rules create tape-allow-http \
   --project schwab-433114 --network default --direction INGRESS --action ALLOW \
-  --rules tcp:80,tcp:443,tcp:8080,tcp:8081,tcp:8082 --source-ranges 0.0.0.0/0 --target-tags tape
+  --rules tcp:80,tcp:443,udp:443 --source-ranges 0.0.0.0/0 --target-tags tape
 ```
+
+> Migrating an existing VM that still has the old ports open? Tighten the rule
+> AFTER confirming Caddy serves all six domains:
+> ```bash
+> CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT= gcloud compute firewall-rules update tape-allow-http \
+>   --rules tcp:80,tcp:443,udp:443
+> ```
+> (`udp:443` enables HTTP/3; drop it if you don't want QUIC.)
 ```bash
 CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT= gcloud compute firewall-rules create tape-allow-ssh \
   --project schwab-433114 --network default --direction INGRESS --action ALLOW \
