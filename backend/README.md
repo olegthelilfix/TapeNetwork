@@ -110,8 +110,32 @@ is seeded (`admin@tape.local` / `password`).
 Uploads (`POST /api/admin/media/upload`) are stored under `tape.media.dir` and served at
 `/uploads/**` (`WebConfig`). Seed images are referenced as relative `uploads/…` paths.
 
+## Cache
+
+Public read endpoints are cached with Spring Cache (`@Cacheable` in the service layer,
+`@EvictsPublicContent` — a global `@CacheEvict(allEntries=true)` — on admin writes). The
+backend is **embedded Hazelcast** (`CacheConfig`): it runs a Hazelcast member inside the JVM,
+so both the cached entries and the write-triggered eviction are **cluster-wide**. With several
+backend instances joined into one Hazelcast cluster, an admin write on any instance invalidates
+the entry on every other instance — the per-JVM staleness a local cache would have.
+
+By default it runs as a **single member with no extra infra** (multicast is always disabled).
+To run multiple backend instances as one cache cluster, point each at its peers via
+`HAZELCAST_MEMBERS` (see below); TCP/IP discovery turns on only when that list is non-empty.
+Cached model types (`net.tape.model.*`) implement `Serializable` because Hazelcast serializes
+cache values.
+
+- `PUBLIC_CACHE_TTL_SECONDS` (default `600`) — per-map time-to-live; `0` = never expire by
+  time, invalidate only on writes.
+- `HAZELCAST_CLUSTER_NAME` (default `tape-public-cache`) — members only join peers sharing it.
+- `HAZELCAST_PORT` (default `5701`) — member port (auto-increments if taken).
+- `HAZELCAST_MEMBERS` (default empty = single member) — comma-separated peer `host[:port]`
+  list, e.g. `backend-a:5701,backend-b:5701`.
+
 ## Config (env)
 
 `SPRING_DATASOURCE_URL/USERNAME/PASSWORD`, `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`,
-`SEARCH_INDEX_DIR`, `MEDIA_DIR`, `SEARCH_REINDEX_ON_STARTUP`. Defaults suit local dev; see
+`SEARCH_INDEX_DIR`, `MEDIA_DIR`, `SEARCH_REINDEX_ON_STARTUP`,
+`PUBLIC_CACHE_TTL_SECONDS`, `HAZELCAST_CLUSTER_NAME`, `HAZELCAST_PORT`, `HAZELCAST_MEMBERS`
+(see [Cache](#cache)). Defaults suit local dev; see
 `src/main/resources/application.yml` and the repo-root `.env.example`.

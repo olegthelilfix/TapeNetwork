@@ -2,12 +2,14 @@ package net.tape.model;
 
 import lombok.Getter;
 import lombok.Setter;
+
+import java.io.Serializable;
 import java.time.Instant;
 
 /** Domain model — framework-free POJO. */
 @Getter
 @Setter
-public class Show {
+public class Show implements Serializable {
     private Long id;
     private String slug;
     private String name;

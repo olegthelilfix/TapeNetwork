@@ -67,6 +67,14 @@ tape:
     # admin write; this TTL is a safety net for out-of-band changes. 0 = never expire
     # by time (invalidate only on writes).
     public-ttl-seconds: ${PUBLIC_CACHE_TTL_SECONDS:600}
+    # Embedded Hazelcast is the cache backend, so entries and evictions are cluster-wide.
+    # Single member by default (no extra infra); to run several backend instances as one
+    # cluster, set HAZELCAST_MEMBERS to a comma-separated peer list (e.g. "backend-a,backend-b").
+    # Multicast discovery is always disabled — only the explicit TCP/IP member list is used.
+    hazelcast:
+      cluster-name: ${HAZELCAST_CLUSTER_NAME:tape-public-cache}
+      port: ${HAZELCAST_PORT:5701}
+      members: ${HAZELCAST_MEMBERS:}
   security:
     jwt-secret: ${JWT_SECRET:dev-secret-change-me-please-32bytes-min}
     jwt-ttl-minutes: 480

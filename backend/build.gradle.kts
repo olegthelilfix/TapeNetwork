@@ -33,8 +33,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-cache")
 
-    // Caffeine backs the cache abstraction so TTL (expire-after-write) is configurable
-    implementation("com.github.ben-manes.caffeine:caffeine")
+    // Embedded Hazelcast backs the cache abstraction so cached entries and evictions are
+    // cluster-wide (multi-instance ready); per-map time-to-live provides the configurable TTL.
+    // Version managed by the Spring Boot BOM (hazelcast 5.5.0).
+    implementation("com.hazelcast:hazelcast-spring")
 
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
