@@ -41,7 +41,12 @@ cms.tapenetwork.de {
 }
 
 # --- Video streamer (Go HLS service) ---------------------------------------
+# Read-only from the internet: only GET/HEAD/OPTIONS reach the streamer, so its
+# unauthenticated POST /videos upload cannot be hit publicly. Uploads go through
+# the backend admin API (JWT) which proxies to streamer:8082 on the internal net.
 video.tapenetwork.de {
+	@writes not method GET HEAD OPTIONS
+	respond @writes "Method Not Allowed" 405
 	reverse_proxy streamer:8082
 	encode zstd gzip
 }
