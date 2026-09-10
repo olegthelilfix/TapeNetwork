@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   compare:
-    if: ${{ contains(github.event.pull_request.labels.*.name, 'perf') || contains(github.event.pull_request.labels.*.name, 'perf-journey') }}
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'perf') || contains(github.event.pull_request.labels.*.name, 'perf-journey') || contains(github.event.pull_request.labels.*.name, 'perf-cache') }}
     runs-on: ubuntu-latest
     env:
       SSH_USER: ${{ vars.SSH_USER }}
@@ -37,8 +37,9 @@ jobs:
       BASE_WEB_PORT: '13001'
       HEAD_WEB_PORT: '13002'
       # 'perf-journey' label runs the full-service user journey (web pages);
-      # plain 'perf' runs the API suite.
-      SUITE: ${{ contains(github.event.pull_request.labels.*.name, 'perf-journey') && 'journey' || 'scenarios' }}
+      # 'perf-cache' runs the cache-focused API suite (issue #49);
+      # plain 'perf' runs the general API suite.
+      SUITE: ${{ contains(github.event.pull_request.labels.*.name, 'perf-journey') && 'journey' || (contains(github.event.pull_request.labels.*.name, 'perf-cache') && 'cache' || 'scenarios') }}
       VUS: '20'
       RAMP: '30s'
       DURATION: '1m'
