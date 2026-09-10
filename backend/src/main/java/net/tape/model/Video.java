@@ -2,12 +2,14 @@ package net.tape.model;
 
 import lombok.Getter;
 import lombok.Setter;
+
+import java.io.Serializable;
 import java.time.Instant;
 
 /** Domain model — framework-free POJO. */
 @Getter
 @Setter
-public class Video {
+public class Video implements Serializable {
     private Long id;
     private Long subcategoryId;
     private Long showId;

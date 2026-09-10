@@ -27,6 +27,15 @@ services:
       SEARCH_INDEX_DIR: ${SEARCH_INDEX_DIR:-/var/lib/tape/search}
       MEDIA_DIR: ${MEDIA_DIR:-/var/lib/tape/media}
       STREAMER_INTERNAL_URL: ${STREAMER_INTERNAL_URL:-http://streamer:8082}
+      # Public-read cache (embedded Hazelcast). Single member by default — no extra infra.
+      # PUBLIC_CACHE_TTL_SECONDS: per-map TTL safety net (0 = evict only on admin writes).
+      # To run several backend instances as ONE cache cluster (cluster-wide eviction),
+      # set HAZELCAST_MEMBERS on each to the peer list, e.g. "backend-a:5701,backend-b:5701";
+      # TCP/IP discovery turns on only when that list is non-empty (multicast is always off).
+      PUBLIC_CACHE_TTL_SECONDS: ${PUBLIC_CACHE_TTL_SECONDS:-600}
+      # HAZELCAST_CLUSTER_NAME: ${HAZELCAST_CLUSTER_NAME:-tape-public-cache}
+      # HAZELCAST_PORT: ${HAZELCAST_PORT:-5701}
+      # HAZELCAST_MEMBERS: ${HAZELCAST_MEMBERS:-}
       # Dev resilience: self-heal Flyway across branch switches / rollbacks so the
       # backend boots instead of failing validation. Do NOT enable these in production.
       #   local dev default = repair (heals checksum drift, keeps data).

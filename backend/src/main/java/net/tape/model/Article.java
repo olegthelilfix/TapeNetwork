@@ -3,6 +3,8 @@ package net.tape.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 import java.time.Instant;
 import java.util.List;
 
@@ -13,7 +15,7 @@ import java.util.List;
  */
 @Getter
 @Setter
-public class Article {
+public class Article implements Serializable {
     private Long id;
     private String slug;
     private Long categoryId;
