@@ -72,5 +72,10 @@ tape:
     jwt-ttl-minutes: 480
   media:
     dir: ${MEDIA_DIR:./media-uploads}
+  streamer:
+    # Internal base URL of tape-streamer, used by the admin upload proxy
+    # (AdminStreamerUploadController). In compose this is the service name; the
+    # public video.* host only exposes GET/HEAD, so writes go through the backend.
+    url: ${STREAMER_INTERNAL_URL:http://localhost:8082}
   search:
     reindex-on-startup: ${SEARCH_REINDEX_ON_STARTUP:true}
