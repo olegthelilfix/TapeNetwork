@@ -31,8 +31,8 @@ services:
     volumes:
       - /opt/tape/data/search:/var/lib/tape/search
       - /opt/tape/data/media:/var/lib/tape/media
-    ports:
-      - "8080:8080"
+    # No host port: reached only via Caddy at https://tapenetwork.de/api/*
+    # (public /api/v1 + admin /api/admin) over the internal network.
     depends_on:
       postgres:
         condition: service_healthy
@@ -44,16 +44,14 @@ services:
       API_BASE_URL: http://backend:8080
       NEXT_PUBLIC_API_BASE_URL: ${PUBLIC_API_URL}
       NEXT_PUBLIC_SITE_URL: ${PUBLIC_WEB_URL}
-    ports:
-      - "80:3000"
+    # No host port: Caddy proxies https://tapenetwork.de -> web:3000
     depends_on:
       - backend
 
   cms:
     image: ${CMS_IMAGE}
     restart: unless-stopped
-    ports:
-      - "8081:80"
+    # No host port: Caddy proxies https://cms.tapenetwork.de -> cms:80
     depends_on:
       - backend
 
@@ -69,5 +67,37 @@ services:
     volumes:
       - ${VIDEOS_HOST_DIR:-/home/oaleksandrov/videos}:/data/videos
       - ${HLS_CACHE_HOST_DIR:-/home/oaleksandrov/hls-cache}:/data/hls-cache
+    # No host port: Caddy proxies https://video.tapenetwork.de -> streamer:8082
+
+  # ---- Edge reverse proxy: TLS termination + HTTPS for every service -------
+  # Terminates :80/:443, gets Let's Encrypt certs automatically, and routes by
+  # Host header. See infra/deploy/Caddyfile. TeamCity + SonarQube live in the
+  # teamcity/ compose and are reachable here via the shared `tape-edge` network.
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
     ports:
-      - "8082:8082"
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:-admin@tapenetwork.de}
+    volumes:
+      - /opt/tape/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - /opt/tape/caddy/data:/data # certs + ACME account (persist across restarts!)
+      - /opt/tape/caddy/config:/config
+    networks:
+      - default
+      - tape-edge
+    depends_on:
+      - web
+      - backend
+      - cms
+      - streamer
+
+networks:
+  # Shared with the teamcity/ compose so a single Caddy can reach teamcity-server
+  # and sonarqube by name. Created once on the VM:
+  #   docker network create tape-edge
+  tape-edge:
+    external: true
