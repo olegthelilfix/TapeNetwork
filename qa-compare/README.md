@@ -36,6 +36,43 @@ robot smoke.robot                 # runs the suite, writes log.html / report.htm
 > Note: `robotframework-browser`'s `Browser` library is Playwright under the hood — with Robot you
 > still ship Playwright, plus a Python runtime and the keyword DSL on top.
 
+### Player e2e (issue #19)
+
+`tests/e2e/player.robot` exercises the real `/watch` video player: a video with an
+available stream plays and its controls (play/pause, mute, seek) work; a video with
+no stream shows a "can't be played right now" message on play.
+
+Preconditions: the full stack up (`docker compose up --build` from the repo root — the
+seeded episode `semis-earnings-…` points at the bundled `tape-streamer`, which serves
+HLS with CORS for `localhost:3000`) and a video prepared in the streamer.
+
+Real HLS is **H.264**, which Playwright's bundled Chromium cannot decode — so the
+playback tests drive the **system Chrome** channel by default:
+
+```bash
+robot -v BROWSER_CHANNEL:chrome tests/e2e/player.robot     # real decoded playback
+```
+
+Use `-v BROWSER_CHANNEL:msedge` for Edge, or `-v BROWSER_CHANNEL:` (empty) for bundled
+Chromium — then only the DOM/fallback tests are meaningful, as playback can't decode.
+
+### Streamer + CMS video picker (issue #19)
+
+`tests/api/streamer.robot` covers the `tape-streamer` HTTP API — list, multipart
+upload (accept, sanitise, reject bad extension / duplicate / missing file):
+
+```bash
+robot -v STREAMER_URL:http://localhost:8082 tests/api/streamer.robot
+```
+
+`tests/e2e/cms-video.robot` logs into the CMS and checks the episode form's **Video**
+field is the streamer dropdown (seeded video selectable) with an upload control. Needs
+cms (:5173), backend (:8080) and streamer (:8082) up:
+
+```bash
+robot -v CMS_URL:http://localhost:5173 -v STREAMER_URL:http://localhost:8082 tests/e2e/cms-video.robot
+```
+
 ## What to compare hands-on
 
 | | Playwright | Robot Framework |

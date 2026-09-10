@@ -126,13 +126,19 @@ class CatalogControllerTest {
         when(service.videoBySlug("earnings-call")).thenReturn(video);
         when(videoMapper.toDtoV1(video)).thenReturn(new VideoDtoV1(
             "earnings-call", "Q3 Earnings Call", "Full replay.", java.time.Instant.parse("2026-01-01T00:00:00Z"),
-            754, "12:34", "Market Open", "Markets", List.of("earnings"), "/uploads/earnings.jpg"));
+            754, "12:34", "Market Open", "Markets", "12K", 12000L, List.of("earnings"),
+            List.of(new SecurityDtoV1("AAPL", "Apple Inc.")),
+            List.of(new PersonRefDtoV1("jane-doe", "Jane Doe", "JD", "host")),
+            "/uploads/earnings.jpg"));
 
         mvc.perform(get("/api/v1/on-demand/videos/earnings-call"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").doesNotExist())
             .andExpect(jsonPath("$.slug").value("earnings-call"))
-            .andExpect(jsonPath("$.durationLabel").value("12:34"));
+            .andExpect(jsonPath("$.durationLabel").value("12:34"))
+            .andExpect(jsonPath("$.securities[0].symbol").value("AAPL"))
+            .andExpect(jsonPath("$.people[0].slug").value("jane-doe"))
+            .andExpect(jsonPath("$.people[0].role").value("host"));
     }
 
     @Test

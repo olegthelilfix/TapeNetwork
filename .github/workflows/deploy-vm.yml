@@ -8,6 +8,12 @@ name: Deploy (GHCR + SSH)
 # gets built and deployed.
 on:
   workflow_dispatch:
+    inputs:
+      clean_db:
+        description: "DESTRUCTIVE: wipe the DB and re-seed from V1..Vn (Flyway clean). Leave off to keep data (migrate)."
+        type: boolean
+        required: false
+        default: false
 
 concurrency:
   group: deploy-vm
@@ -38,10 +44,17 @@ jobs:
 
       - name: Build & push web
         run: |
+          # COPY inside web/Dockerfile cannot reach ../packages (outside the
+          # build context), so stage the OpenAPI spec into the web/ context first.
+          mkdir -p web/packages/api-types/generated
+          cp packages/api-types/generated/user-openapi.json \
+             web/packages/api-types/generated/user-openapi.json
           docker build \
             --build-arg NEXT_PUBLIC_API_BASE_URL="${{ vars.PUBLIC_API_URL }}" \
             --build-arg NEXT_PUBLIC_SITE_URL="${{ vars.PUBLIC_WEB_URL }}" \
+            --build-arg NEXT_PUBLIC_STREAMER_URL="${{ vars.PUBLIC_STREAMER_URL }}" \
             -t "$IMAGE_PREFIX/tape-web:$TAG" -t "$IMAGE_PREFIX/tape-web:latest" ./web
+          rm -rf web/packages
           docker push "$IMAGE_PREFIX/tape-web:$TAG"
           docker push "$IMAGE_PREFIX/tape-web:latest"
 
@@ -49,6 +62,7 @@ jobs:
         run: |
           docker build \
             --build-arg VITE_ADMIN_API_URL="${{ vars.PUBLIC_API_URL }}/api/admin" \
+            --build-arg VITE_STREAMER_URL="${{ vars.PUBLIC_STREAMER_URL }}" \
             -t "$IMAGE_PREFIX/tape-cms:$TAG" -t "$IMAGE_PREFIX/tape-cms:latest" ./cms
           docker push "$IMAGE_PREFIX/tape-cms:$TAG"
           docker push "$IMAGE_PREFIX/tape-cms:latest"
@@ -76,10 +90,14 @@ jobs:
           PUBLIC_WEB_URL=${{ vars.PUBLIC_WEB_URL }}
           PUBLIC_API_URL=${{ vars.PUBLIC_API_URL }}
           CORS_ALLOWED_ORIGINS=${{ vars.CORS_ALLOWED_ORIGINS }}
+          ACME_EMAIL=${{ vars.ACME_EMAIL }}
           POSTGRES_DB=tape
           POSTGRES_USER=tape
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
+          # Data-safe by default: 'migrate' preserves the DB across deploys AND restarts.
+          # Only a deliberate run with clean_db=true wipes + re-seeds (fresh environment).
+          FLYWAY_STRATEGY=${{ (github.event.inputs.clean_db == 'true') && 'clean' || 'migrate' }}
           EOF
 
       - name: Copy compose + env to VM
@@ -88,13 +106,19 @@ jobs:
             "${{ vars.SSH_USER }}@${{ vars.VM_HOST }}:/opt/tape/docker-compose.yml"
           scp -i ~/.ssh/id_deploy deploy.env \
             "${{ vars.SSH_USER }}@${{ vars.VM_HOST }}:/opt/tape/.env"
+          ssh -i ~/.ssh/id_deploy "${{ vars.SSH_USER }}@${{ vars.VM_HOST }}" \
+            "mkdir -p /opt/tape/caddy"
+          scp -i ~/.ssh/id_deploy infra/deploy/Caddyfile \
+            "${{ vars.SSH_USER }}@${{ vars.VM_HOST }}:/opt/tape/caddy/Caddyfile"
 
       - name: Deploy on VM
         run: |
           ssh -i ~/.ssh/id_deploy "${{ vars.SSH_USER }}@${{ vars.VM_HOST }}" \
             "echo '${{ secrets.GHCR_READ_TOKEN }}' | docker login ghcr.io -u '${{ github.repository_owner }}' --password-stdin && \
              chmod 600 /opt/tape/.env && \
+             docker network create tape-edge 2>/dev/null || true && \
              cd /opt/tape && \
              docker compose pull && \
              docker compose up -d --remove-orphans && \
-             docker image prune -f"
+             docker image prune -f && \
+             docker builder prune -f"

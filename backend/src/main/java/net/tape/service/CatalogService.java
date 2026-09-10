@@ -24,11 +24,15 @@ public class CatalogService {
     private final VideoStore videos;
     private final CategoryMapper categoryMapper;
     private final SubcategoryMapper subcategoryMapper;
+    private final VideoMetadataService videoMetadata;
+    private final ViewCountService viewCounts;
 
     public CatalogService(CategoryRepository categories, SubcategoryRepository subcategories, VideoStore videos,
-                          CategoryMapper categoryMapper, SubcategoryMapper subcategoryMapper) {
+                          CategoryMapper categoryMapper, SubcategoryMapper subcategoryMapper,
+                          VideoMetadataService videoMetadata, ViewCountService viewCounts) {
         this.categories = categories; this.subcategories = subcategories; this.videos = videos;
         this.categoryMapper = categoryMapper; this.subcategoryMapper = subcategoryMapper;
+        this.videoMetadata = videoMetadata; this.viewCounts = viewCounts;
     }
 
     @Cacheable(PublicCaches.CATEGORIES)
@@ -54,10 +58,15 @@ public class CatalogService {
     }
 
     public Video videoBySlug(String slug) {
-        return videos.findAll().stream()
+        Video video = videos.findAll().stream()
             .filter(v -> Objects.equals(slug, v.getSlug()))
             .findFirst()
             .orElseThrow(() -> new NotFoundException("video", slug));
+        videoMetadata.enrich(video);
+        long effective = viewCounts.effective(video.getId(), video.getViewCount());
+        video.setViewCount(effective);
+        video.setViews(Format.views(effective));
+        return video;
     }
 
     private Category categoryWithCounts(CategoryEntity c) {

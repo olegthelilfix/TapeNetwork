@@ -5,6 +5,7 @@ import { Button, DatePicker, Divider, Form, Input, InputNumber, Select, Space, S
 import dayjs, { type Dayjs } from "dayjs";
 
 import { MediaField } from "@/ui/MediaField";
+import { StreamVideoField } from "@/ui/StreamVideoField";
 
 import type { ResourceFormFieldProps } from "./ResourceFormField.types";
 
@@ -18,14 +19,15 @@ const toDayjsValue = (value: unknown): Dayjs | undefined => {
   return undefined;
 };
 
-export const ResourceFormField: FC<ResourceFormFieldProps> = ({ field, isUploadingMedia, onUploadMedia }) => {
+export const ResourceFormField: FC<ResourceFormFieldProps> = ({ field, isUploadingMedia, onUploadMedia, listVideos, uploadVideo }) => {
   const rules = field.required ? [{ required: true }] : undefined;
+  const readOnly = field.readOnly === true;
 
   switch (field.type) {
     case "textarea":
       return <Form.Item label={field.label} name={field.name} rules={rules}><Input.TextArea rows={3} /></Form.Item>;
     case "number":
-      return <Form.Item label={field.label} name={field.name} rules={rules}><InputNumber className={css["resource-form-field__control"]} /></Form.Item>;
+      return <Form.Item label={field.label} name={field.name} rules={rules}><InputNumber disabled={readOnly} className={css["resource-form-field__control"]} /></Form.Item>;
     case "boolean":
       return <Form.Item label={field.label} name={field.name} valuePropName="checked"><Switch /></Form.Item>;
     case "select":
@@ -36,6 +38,12 @@ export const ResourceFormField: FC<ResourceFormFieldProps> = ({ field, isUploadi
       return (
         <Form.Item label={field.label} name={field.name}>
           <MediaField isUploading={isUploadingMedia} onUpload={onUploadMedia} />
+        </Form.Item>
+      );
+    case "streamVideo":
+      return (
+        <Form.Item label={field.label} name={field.name} rules={rules}>
+          <StreamVideoField listVideos={listVideos} uploadVideo={uploadVideo} />
         </Form.Item>
       );
     case "datetime":
@@ -66,6 +74,6 @@ export const ResourceFormField: FC<ResourceFormFieldProps> = ({ field, isUploadi
         </>
       );
     default:
-      return <Form.Item label={field.label} name={field.name} rules={rules}><Input /></Form.Item>;
+      return <Form.Item label={field.label} name={field.name} rules={rules}><Input disabled={readOnly} /></Form.Item>;
   }
 };

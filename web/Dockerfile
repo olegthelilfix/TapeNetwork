@@ -18,8 +18,13 @@ ARG NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 ARG NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+ARG NEXT_PUBLIC_STREAMER_URL
+ENV NEXT_PUBLIC_STREAMER_URL=$NEXT_PUBLIC_STREAMER_URL
 COPY --from=deps /app/node_modules ./node_modules
-COPY ../packages/api-types/generated/user-openapi.json packages/api-types/generated/user-openapi.json
+# user-openapi.json is staged into the web/ build context by the CI step
+# ("Stage OpenAPI spec") before docker build, because COPY cannot reach
+# outside the build context (../packages).
+COPY packages/api-types/generated/user-openapi.json packages/api-types/generated/user-openapi.json
 COPY . .
 RUN yarn build
 

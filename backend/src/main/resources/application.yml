@@ -25,6 +25,12 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+    # Tolerate migrations applied in the DB but absent locally (e.g. after rolling back
+    # to an older commit). Strict default (*:future); dev sets e.g. "*:missing,*:future".
+    ignore-migration-patterns: ${FLYWAY_IGNORE_MIGRATION_PATTERNS:*:future}
+    # clean() is destructive, so Flyway blocks it by default. Only the FLYWAY_STRATEGY=clean
+    # mode needs it enabled — keep it disabled everywhere else (production especially).
+    clean-disabled: ${FLYWAY_CLEAN_DISABLED:true}
   servlet:
     multipart:
       max-file-size: 50MB
@@ -47,6 +53,13 @@ springdoc:
   writer-with-default-pretty-printer: true
 
 tape:
+  flyway:
+    # Non-production startup strategy (see FlywayConfig). Keep "none" in production.
+    #   none   — strict Flyway validate → migrate (default).
+    #   repair — repair() then migrate(): self-heal checksum drift, keep data (local dev).
+    #   clean  — clean() then migrate(): rebuild schema from scratch every boot, DROPS all
+    #            data (ephemeral test stacks). Self-enables clean; no other flag needed.
+    strategy: ${FLYWAY_STRATEGY:none}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
   cache:
@@ -54,10 +67,23 @@ tape:
     # admin write; this TTL is a safety net for out-of-band changes. 0 = never expire
     # by time (invalidate only on writes).
     public-ttl-seconds: ${PUBLIC_CACHE_TTL_SECONDS:600}
+    # Embedded Hazelcast is the cache backend, so entries and evictions are cluster-wide.
+    # Single member by default (no extra infra); to run several backend instances as one
+    # cluster, set HAZELCAST_MEMBERS to a comma-separated peer list (e.g. "backend-a,backend-b").
+    # Multicast discovery is always disabled — only the explicit TCP/IP member list is used.
+    hazelcast:
+      cluster-name: ${HAZELCAST_CLUSTER_NAME:tape-public-cache}
+      port: ${HAZELCAST_PORT:5701}
+      members: ${HAZELCAST_MEMBERS:}
   security:
     jwt-secret: ${JWT_SECRET:dev-secret-change-me-please-32bytes-min}
     jwt-ttl-minutes: 480
   media:
     dir: ${MEDIA_DIR:./media-uploads}
+  streamer:
+    # Internal base URL of tape-streamer, used by the admin upload proxy
+    # (AdminStreamerUploadController). In compose this is the service name; the
+    # public video.* host only exposes GET/HEAD, so writes go through the backend.
+    url: ${STREAMER_INTERNAL_URL:http://localhost:8082}
   search:
     reindex-on-startup: ${SEARCH_REINDEX_ON_STARTUP:true}

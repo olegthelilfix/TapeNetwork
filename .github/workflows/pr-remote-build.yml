@@ -17,6 +17,9 @@ permissions:
 jobs:
   remote-build:
     runs-on: ubuntu-latest
+    # Hard ceiling so a wedged VM step (docker/network) can never hang for
+    # GitHub's default 6h — a real build finishes in a few minutes.
+    timeout-minutes: 30
     env:
       SSH_USER: ${{ vars.SSH_USER }}
       VM_HOST: ${{ vars.VM_HOST }}
@@ -33,6 +36,15 @@ jobs:
 
       - name: Package & copy source to VM
         run: |
+          # Drop pr-build dirs left behind by runs that were cancelled/killed
+          # before their own "Clean up VM" step ran. Each dir is unique per run,
+          # so this is always safe. The 29G root fills up otherwise.
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" bash <<'PRECLEAN'
+          set -eux
+          find /tmp -maxdepth 1 -name 'pr-build-*' -mmin +120 \
+            -exec docker run --rm -v '{}':/w busybox sh -c 'rm -rf /w/..?* /w/.[!.]* /w/*' \; \
+            -exec rmdir '{}' \; 2>/dev/null || true
+          PRECLEAN
           tar czf src.tgz --exclude=.git --exclude=node_modules --exclude=target --exclude=.next \
             backend web cms
           ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" "mkdir -p '$DIR'"
@@ -44,26 +56,21 @@ jobs:
           set -euxo pipefail
           cd "$DIR"
           tar xzf src.tgz
-          mkdir -p /opt/tape/ci/gradle   # cache Gradle deps between runs
 
-          # Shared Gradle cache mount can't take concurrent runs (journal-1.lock
-          # contention). Serialize builds on this VM instead of racing them.
-          exec 9>/opt/tape/ci/build.lock
-          flock 9
-
-          # Gradle's journal lock records the owner by PID, but every container
-          # runs Gradle at the same low PID (fresh PID namespace). A build killed
-          # before releasing the lock leaves journal-1.lock claiming "PID 38" —
-          # the next build's Gradle is also PID 38, thinks the owner is alive, and
-          # blocks until timeout. Under flock nothing else holds it, so drop the
-          # stale journal (an access-time cache Gradle rebuilds; deps untouched).
-          # The cache is root-owned (written by the build container), so the SSH
-          # user can't rm it directly — do it from a throwaway root container.
-          docker run --rm -v /opt/tape/ci/gradle:/root/.gradle alpine \
-            rm -rf /root/.gradle/caches/journal-1
+          # No shared Gradle cache and no build lock: each build runs fully
+          # isolated in its own throwaway container with an ephemeral
+          # ~/.gradle, so concurrent PR builds can't contend for a journal
+          # lock. Slightly slower (deps re-downloaded per run) but removes the
+          # whole flock / stale-journal / lock-deadlock class of failures.
+          #
+          # Reclaim disk first (dangling images + stopped containers + build
+          # cache). No -a and no --volumes -> running stack + DB volumes safe.
+          docker builder prune -f   >/dev/null 2>&1 || true
+          docker container prune -f >/dev/null 2>&1 || true
+          docker image prune -f     >/dev/null 2>&1 || true
 
           echo '::group::backend — gradle build'
-          docker run --rm -v "$PWD/backend:/app" -v /opt/tape/ci/gradle:/root/.gradle -w /app \
+          docker run --rm -v "$PWD/backend:/app" -w /app \
             azul/zulu-openjdk:21 sh -c './gradlew build --no-daemon'
           echo '::endgroup::'
 
@@ -86,5 +93,7 @@ jobs:
       - name: Clean up VM
         if: always()
         run: |
+          # Runs on success OR failure (if: always()) so a failed build still
+          # removes its own source dir.
           ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
             "docker run --rm -v '$DIR:/w' busybox sh -c 'rm -rf /w/..?* /w/.[!.]* /w/*' 2>/dev/null || true; rmdir '$DIR' 2>/dev/null || true"

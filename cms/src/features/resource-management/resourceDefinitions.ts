@@ -20,7 +20,7 @@ export const resourceDefinitions: readonly ResourceDefinition[] = [
       { name: "title", label: "Title", type: "text", required: true, inList: true }, { name: "slug", label: "Slug", type: "text", required: true, inList: true },
       { name: "epNo", label: "Episode no.", type: "text", inList: true }, { name: "description", label: "Description", type: "textarea" },
       { name: "publishedAt", label: "Published at", type: "datetime" }, { name: "durationSec", label: "Duration (sec)", type: "number" },
-      { name: "views", label: "Views label", type: "text" }, { name: "videoUrl", label: "Video URL", type: "text" },
+      { name: "views", label: "Views label", type: "text" }, { name: "videoUrl", label: "Video", type: "streamVideo" },
       { name: "thumbMediaId", label: "Thumbnail", type: "media" }, { name: "live", label: "Live", type: "boolean", inList: true },
       { name: "tags", label: "Tags", type: "tags" }, published,
     ],
@@ -51,9 +51,26 @@ export const resourceDefinitions: readonly ResourceDefinition[] = [
       { name: "showId", label: "Show", type: "reference", refResource: "shows", optionLabel: "name" },
       { name: "title", label: "Title", type: "text", required: true, inList: true }, { name: "slug", label: "Slug", type: "text", required: true, inList: true },
       { name: "description", label: "Description", type: "textarea" }, { name: "publishedAt", label: "Published at", type: "datetime" },
-      { name: "durationSec", label: "Duration (sec)", type: "number" }, { name: "views", label: "Views label", type: "text" },
-      { name: "videoUrl", label: "Video URL", type: "text" }, { name: "thumbMediaId", label: "Thumbnail", type: "media" },
+      { name: "durationSec", label: "Duration (sec)", type: "number" }, { name: "viewCount", label: "Views", type: "number", inList: true, readOnly: true },
+      { name: "videoUrl", label: "Video", type: "streamVideo" }, { name: "thumbMediaId", label: "Thumbnail", type: "media" },
       { name: "tags", label: "Tags", type: "tags" }, published,
+      { name: "securityIds", label: "Securities", type: "multiReference", refResource: "securities", optionLabel: "symbol", endpoint: "securities" },
+      { name: "people", label: "People (host / guest)", type: "personRoles", refResource: "people", optionLabel: "name", endpoint: "people" },
+    ],
+  },
+  {
+    name: "securities", label: "Securities", fields: [
+      { name: "symbol", label: "Symbol", type: "text", required: true, inList: true },
+      { name: "name", label: "Name", type: "text", required: true, inList: true }, sort,
+    ],
+  },
+  {
+    name: "people", label: "People", fields: [
+      { name: "name", label: "Name", type: "text", required: true, inList: true },
+      { name: "slug", label: "Slug", type: "text", required: true, inList: true },
+      { name: "initials", label: "Initials", type: "text" },
+      { name: "bio", label: "Bio", type: "textarea" },
+      { name: "avatarMediaId", label: "Avatar", type: "media" }, sort,
     ],
   },
   {

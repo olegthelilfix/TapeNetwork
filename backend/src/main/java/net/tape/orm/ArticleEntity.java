@@ -43,6 +43,15 @@ public class ArticleEntity {
     @Column(name = "author_id")
     private Long authorId;
 
+    // Canonical person authorship (#56); author_id retained for backward compatibility.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "person_id", insertable = false, updatable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private PersonEntity person;
+
+    @Column(name = "person_id")
+    private Long personId;
+
     @FullTextField
     @Column(nullable = false)
     private String title;

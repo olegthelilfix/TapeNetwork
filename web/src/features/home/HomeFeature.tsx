@@ -99,7 +99,7 @@ export const HomeFeature: FC<HomeFeatureProps> = ({ home, shows }) => {
           </section>
 
           <section className={styles.panel}>
-            <div className={styles.panelHead}><span>Most watched</span></div>
+            <div className={styles.panelHead}><span>Most popular</span></div>
             <ol className={styles.ranked}>
               {data.mostWatched.map((c, i) => (
                 <li key={c.slug}>
@@ -108,7 +108,7 @@ export const HomeFeature: FC<HomeFeatureProps> = ({ home, shows }) => {
                     <span className={styles.rankBody}>
                       <span className={styles.rankTitle}>{c.title}</span>
                       <span className={styles.rankMeta}>
-                        {[c.subtitle, c.durationLabel].filter(Boolean).join(" · ")}
+                        {[c.subtitle, c.viewsLabel ? `${c.viewsLabel} views` : null, c.durationLabel].filter(Boolean).join(" · ")}
                       </span>
                     </span>
                   </Link>
