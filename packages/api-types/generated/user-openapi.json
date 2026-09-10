@@ -10,6 +10,68 @@
     "description" : "Generated server url"
   } ],
   "paths" : {
+    "/api/v1/dxfeed/schedule" : {
+      "post" : {
+        "tags" : [ "dxfeed-controller" ],
+        "operationId" : "schedule",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ScheduleRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "additionalProperties" : {
+                      "$ref" : "#/components/schemas/ScheduleWrapper"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dxfeed/scanner/scanner/snapshot" : {
+      "post" : {
+        "tags" : [ "dxfeed-controller" ],
+        "operationId" : "scannerSnapshot",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SnapshotRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SnapshotResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/watch/{slug}" : {
       "get" : {
         "tags" : [ "watch-controller" ],
@@ -329,6 +391,39 @@
         }
       }
     },
+    "/api/v1/dxfeed/ipf" : {
+      "get" : {
+        "tags" : [ "dxfeed-controller" ],
+        "operationId" : "ipf",
+        "parameters" : [ {
+          "name" : "SYMBOL",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "text",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/plain;charset=UTF-8" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/articles" : {
       "get" : {
         "tags" : [ "article-controller" ],
@@ -402,6 +497,196 @@
   },
   "components" : {
     "schemas" : {
+      "ScheduleRequest" : {
+        "type" : "object",
+        "properties" : {
+          "schedules" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "start" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "stop" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "tz" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Day" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "isHoliday" : {
+            "type" : "string"
+          },
+          "isShort" : {
+            "type" : "string"
+          },
+          "sessions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Session"
+            }
+          }
+        }
+      },
+      "Schedule" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "timeZone" : {
+            "type" : "string"
+          },
+          "days" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Day"
+            }
+          }
+        }
+      },
+      "ScheduleWrapper" : {
+        "type" : "object",
+        "properties" : {
+          "schedule" : {
+            "$ref" : "#/components/schemas/Schedule"
+          }
+        }
+      },
+      "Session" : {
+        "type" : "object",
+        "properties" : {
+          "startTime" : {
+            "type" : "string"
+          },
+          "endTime" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Datapoint" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "expr" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Filter" : {
+        "type" : "object",
+        "properties" : {
+          "datapoint" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "not" : {
+            "type" : "boolean"
+          },
+          "alternatives" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/FilterAlternative"
+            }
+          }
+        }
+      },
+      "FilterAlternative" : {
+        "type" : "object",
+        "properties" : {
+          "predicate" : {
+            "type" : "string"
+          },
+          "args" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object"
+            }
+          },
+          "not" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "Options" : {
+        "type" : "object",
+        "properties" : {
+          "snapshotSize" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "SnapshotRequest" : {
+        "type" : "object",
+        "properties" : {
+          "instrumentCategory" : {
+            "type" : "string"
+          },
+          "datapoints" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Datapoint"
+            }
+          },
+          "filters" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Filter"
+            }
+          },
+          "options" : {
+            "$ref" : "#/components/schemas/Options"
+          }
+        }
+      },
+      "Entry" : {
+        "type" : "object",
+        "properties" : {
+          "symbol" : {
+            "type" : "string"
+          },
+          "outputs" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object"
+            }
+          }
+        }
+      },
+      "SnapshotResponse" : {
+        "type" : "object",
+        "properties" : {
+          "outputNames" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "entries" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Entry"
+            }
+          }
+        }
+      },
       "PlayerDtoV1" : {
         "type" : "object",
         "properties" : {
