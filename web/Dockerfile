@@ -2,7 +2,14 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json yarn.lock* ./
-RUN yarn install --frozen-lockfile
+# Private @dx-display/* packages live in Nexus. Mount the host .npmrc as a build
+# secret so the token is available only for this step and never baked into a layer.
+# Portable across podman & docker: the secret lands at /run/secrets/npmrc and yarn
+# is pointed at it via NPM_CONFIG_USERCONFIG (podman ignores mount target=).
+#   podman: podman build --secret id=npmrc,src=$HOME/.npmrc -t tapenetwork-web ./web
+#   docker: DOCKER_BUILDKIT=1 docker build --secret id=npmrc,src=$HOME/.npmrc ...
+RUN --mount=type=secret,id=npmrc,required=false \
+    NPM_CONFIG_USERCONFIG=/run/secrets/npmrc yarn install --frozen-lockfile
 
 # ---- build ----
 FROM node:20-alpine AS build

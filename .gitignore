@@ -41,3 +41,7 @@ log
 
 target/
 
+# podman leaves the mounted build secret (e.g. ~/.npmrc) as a temp file in the
+# build dir when using `podman build --secret ...`; never commit it (holds a token).
+podman-build-secret-*
+
