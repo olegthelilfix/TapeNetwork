@@ -13,8 +13,12 @@
     "gen:api": "ts-node --project tsconfig.node.json scripts/gen-api.ts"
   },
   "dependencies": {
+    "@devexperts/dxcharts-lite": "^2.7.36",
     "@devexperts/swagger-codegen-ts": "^2.0.0-alpha.29",
     "@dx-display/widgets-heatmap": "^5.9.1-dev.1781280440002.0",
+    "@dxfeed/dxlink-core": "^0.9.0",
+    "@dxfeed/dxlink-feed": "^0.9.0",
+    "@dxfeed/dxlink-websocket-client": "^0.9.0",
     "fp-ts": "^2.16.11",
     "io-ts": "^2.2.22",
     "io-ts-types": "^0.5.19",

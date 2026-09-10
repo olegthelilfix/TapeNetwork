@@ -28,6 +28,15 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
+"@devexperts/dxcharts-lite@^2.7.36":
+  version "2.7.36"
+  resolved "https://registry.yarnpkg.com/@devexperts/dxcharts-lite/-/dxcharts-lite-2.7.36.tgz#97f6ce72dcfec4eeddf2efe0bfd0c02969bf4f3b"
+  integrity sha512-fOxE/YuM0ducFyRn87LXdbqJ1eI94T97xqSeQaV6GlQRTBmOQIX0E73Gsw0miFwo5GqZynkoLAr1kXZTS1423w==
+  dependencies:
+    color "4.2.3"
+    date-fns "4.1.0"
+    rxjs "7.8.2"
+
 "@devexperts/swagger-codegen-ts@^2.0.0-alpha.29":
   version "2.0.0-alpha.29"
   resolved "https://registry.yarnpkg.com/@devexperts/swagger-codegen-ts/-/swagger-codegen-ts-2.0.0-alpha.29.tgz#fed186da218d8b9acc90b0112508cc7553d1aeba"
@@ -589,6 +598,11 @@
   resolved "https://registry.yarnpkg.com/@dxfeed/dxlink-core/-/dxlink-core-0.7.0.tgz#351eace52c0dd4571bc5cdbbcd58a1f8d03a50ee"
   integrity sha512-Enr1/byaQsjOfTUhr448ovRNQCmGL+HMEXs4DWKi1vmcAnnw++JYCDR8syZ4Ch2uFqY6P578UKgnCG/OW5zjEA==
 
+"@dxfeed/dxlink-core@0.9.0", "@dxfeed/dxlink-core@^0.9.0":
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/@dxfeed/dxlink-core/-/dxlink-core-0.9.0.tgz#7c2f159a634425fc366953fe78e118d3a08c2f84"
+  integrity sha512-Gr+qP9czWVRTTE65yp1mhQi8gQ/N+7DJVAASpktb0OKL7Z4N+7sVwNTgP2e0tqBSGTvinmqRQ7+nUn3lprGfrw==
+
 "@dxfeed/dxlink-dom@0.7.0":
   version "0.7.0"
   resolved "https://registry.yarnpkg.com/@dxfeed/dxlink-dom/-/dxlink-dom-0.7.0.tgz#3e3961b0f16bb3e191077c8bf316289e33049a10"
@@ -603,6 +617,13 @@
   dependencies:
     "@dxfeed/dxlink-core" "0.7.0"
 
+"@dxfeed/dxlink-feed@^0.9.0":
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/@dxfeed/dxlink-feed/-/dxlink-feed-0.9.0.tgz#522d8b82c43b9ee19ca80233b5c4161ae9bac5f9"
+  integrity sha512-nnaVo4YbPjbpge4SB9GmJvuBd9relSrMYpc64cdWatvoutnSJ8ChkUkuj7djFU6ryILvXNYnQMxE8jtEWYZaBA==
+  dependencies:
+    "@dxfeed/dxlink-core" "0.9.0"
+
 "@dxfeed/dxlink-indichart@0.7.0":
   version "0.7.0"
   resolved "https://registry.yarnpkg.com/@dxfeed/dxlink-indichart/-/dxlink-indichart-0.7.0.tgz#d9aa3aeeb52c938151135eebe8e30e44be2f75be"
@@ -616,6 +637,13 @@
   integrity sha512-q5RdRSuc//wqjJPQrQCI26FxTizFf9/PYqy8VtkeYXNlBDOrMq86PPHsNkZpyKqBztnwShCqUdvc2nhAF3+teQ==
   dependencies:
     "@dxfeed/dxlink-core" "0.7.0"
+
+"@dxfeed/dxlink-websocket-client@^0.9.0":
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/@dxfeed/dxlink-websocket-client/-/dxlink-websocket-client-0.9.0.tgz#f980daa915cb1b3919717684f1d960e6eddaea7f"
+  integrity sha512-+XqKbL1O72gDmevIBFPVB1tTZPHZog995x286AtrmLgLcXP0WL6xQpUySFbCjr0CWNE2zvAfuBMIB4chI8HXvw==
+  dependencies:
+    "@dxfeed/dxlink-core" "0.9.0"
 
 "@emnapi/core@1.10.0":
   version "1.10.0"
@@ -2622,13 +2650,21 @@ color-name@^1.0.0, color-name@~1.1.4:
   resolved "https://registry.yarnpkg.com/color-name/-/color-name-1.1.4.tgz#c2a09a87acbde69543de6f63fa3995c826c536a2"
   integrity sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==
 
-color-string@^1.6.0:
+color-string@^1.6.0, color-string@^1.9.0:
   version "1.9.1"
   resolved "https://registry.yarnpkg.com/color-string/-/color-string-1.9.1.tgz#4467f9146f036f855b764dfb5bf8582bf342c7a4"
   integrity sha512-shrVawQFojnZv6xM40anx4CkoDP+fZsw/ZerEMsW/pyzsRbElpsL/DBVW7q3ExxwusdNXI3lXpuhEZkzs8p5Eg==
   dependencies:
     color-name "^1.0.0"
     simple-swizzle "^0.2.2"
+
+color@4.2.3:
+  version "4.2.3"
+  resolved "https://registry.yarnpkg.com/color/-/color-4.2.3.tgz#d781ecb5e57224ee43ea9627560107c0e0c6463a"
+  integrity sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==
+  dependencies:
+    color-convert "^2.0.1"
+    color-string "^1.9.0"
 
 color@^3.1.2:
   version "3.2.1"
@@ -2724,6 +2760,11 @@ data-view-byte-offset@^1.0.1:
     call-bound "^1.0.2"
     es-errors "^1.3.0"
     is-data-view "^1.0.1"
+
+date-fns@4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-4.1.0.tgz#64b3d83fff5aa80438f5b1a633c2e83b8a1c2d14"
+  integrity sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg==
 
 dayjs@1.10.3:
   version "1.10.3"
@@ -4627,7 +4668,7 @@ run-parallel@^1.1.9:
   dependencies:
     queue-microtask "^1.2.2"
 
-rxjs@^7.5.2:
+rxjs@7.8.2, rxjs@^7.5.2:
   version "7.8.2"
   resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-7.8.2.tgz#955bc473ed8af11a002a2be52071bf475638607b"
   integrity sha512-dhKf903U/PQZY6boNNtAGdWbG85WAbjT/1xYoZIC7FAY0yWapOBQVsVrDl58W86//e1VpMNBtRV4MaXfdMySFA==
