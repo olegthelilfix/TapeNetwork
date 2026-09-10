@@ -73,9 +73,16 @@ jobs:
           run_leg() {
             local leg="$1" round="$2" project="$3" bport="$4" pgport="$5" wport="$6" ref="$7" lbl="$8" srcdir="$9"
             local rdir="$DIR/${leg}${round}"
-            ( cd "$srcdir" && tar czf /tmp/src-${leg}${round}.tgz \
+            # App source (backend/web/cms/streamer/compose) comes from THIS leg's tree
+            # so master runs Caffeine and the branch runs Hazelcast. The perf/ harness
+            # is test scaffolding, not code under test, so take it from the PR branch on
+            # BOTH legs — otherwise a new suite (e.g. cache.js) that master doesn't have
+            # yet would make the master leg fail. Same k6 script, different app builds.
+            # (This step's CWD is the repo root, so head-src/perf is a valid rel path.)
+            ( tar czf /tmp/src-${leg}${round}.tgz \
                 --exclude=.git --exclude=node_modules --exclude=target --exclude=.next \
-                backend web cms streamer docker-compose.yml perf )
+                -C "$srcdir" backend web cms streamer docker-compose.yml \
+                -C "$GITHUB_WORKSPACE/head-src" perf )
             ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" "mkdir -p '$rdir'"
             scp -i ~/.ssh/id_deploy /tmp/src-${leg}${round}.tgz "$SSH_USER@$VM_HOST:$rdir/src.tgz"
             ssh -i ~/.ssh/id_deploy "$SSH_USER@$VM_HOST" \
