@@ -5,6 +5,7 @@ import { Button, DatePicker, Divider, Form, Input, InputNumber, Select, Space, S
 import dayjs, { type Dayjs } from "dayjs";
 
 import { MediaField } from "@/ui/MediaField";
+import { StreamVideoField } from "@/ui/StreamVideoField";
 
 import type { ResourceFormFieldProps } from "./ResourceFormField.types";
 
@@ -18,7 +19,7 @@ const toDayjsValue = (value: unknown): Dayjs | undefined => {
   return undefined;
 };
 
-export const ResourceFormField: FC<ResourceFormFieldProps> = ({ field, isUploadingMedia, onUploadMedia }) => {
+export const ResourceFormField: FC<ResourceFormFieldProps> = ({ field, isUploadingMedia, onUploadMedia, listVideos, uploadVideo }) => {
   const rules = field.required ? [{ required: true }] : undefined;
   const readOnly = field.readOnly === true;
 
@@ -37,6 +38,12 @@ export const ResourceFormField: FC<ResourceFormFieldProps> = ({ field, isUploadi
       return (
         <Form.Item label={field.label} name={field.name}>
           <MediaField isUploading={isUploadingMedia} onUpload={onUploadMedia} />
+        </Form.Item>
+      );
+    case "streamVideo":
+      return (
+        <Form.Item label={field.label} name={field.name} rules={rules}>
+          <StreamVideoField listVideos={listVideos} uploadVideo={uploadVideo} />
         </Form.Item>
       );
     case "datetime":

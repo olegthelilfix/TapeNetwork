@@ -29,7 +29,7 @@ const ResourceListFeature = lazy(async () => {
   return { default: module.ResourceListFeature };
 });
 
-export const AppRoutes: FC<AppRoutesProps> = ({ uploadMedia }) => {
+export const AppRoutes: FC<AppRoutesProps> = ({ uploadMedia, listVideos, uploadVideo }) => {
   return (
     <Suspense fallback={null}>
       <Routes>
@@ -38,8 +38,8 @@ export const AppRoutes: FC<AppRoutesProps> = ({ uploadMedia }) => {
           {resourceDefinitions.map((definition) => (
             <Route key={definition.name}>
               <Route path={`/${definition.name}`} element={<ResourceListFeature definition={definition} />} />
-              <Route path={`/${definition.name}/create`} element={<ResourceFormFeature definition={definition} action="create" uploadMedia={uploadMedia} />} />
-              <Route path={`/${definition.name}/edit/:id`} element={<ResourceFormFeature definition={definition} action="edit" uploadMedia={uploadMedia} />} />
+              <Route path={`/${definition.name}/create`} element={<ResourceFormFeature definition={definition} action="create" uploadMedia={uploadMedia} listVideos={listVideos} uploadVideo={uploadVideo} />} />
+              <Route path={`/${definition.name}/edit/:id`} element={<ResourceFormFeature definition={definition} action="edit" uploadMedia={uploadMedia} listVideos={listVideos} uploadVideo={uploadVideo} />} />
             </Route>
           ))}
           <Route path="*" element={<ErrorComponent />} />

@@ -28,6 +28,11 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       SEARCH_INDEX_DIR: /var/lib/tape/search
       MEDIA_DIR: /var/lib/tape/media
+      # Flyway strategy is set by the deploy workflow: 'migrate' (default, data-safe —
+      # preserves the DB across deploys and restarts) or 'clean' (only on a deliberate
+      # deploy with clean_db=true: drop + re-apply V1..V<n> + re-seed). The fallback here
+      # is 'migrate' so a plain restart / reboot NEVER wipes data. See FlywayConfig / CLAUDE.md.
+      FLYWAY_STRATEGY: ${FLYWAY_STRATEGY:-migrate}
     volumes:
       - /opt/tape/data/search:/var/lib/tape/search
       - /opt/tape/data/media:/var/lib/tape/media

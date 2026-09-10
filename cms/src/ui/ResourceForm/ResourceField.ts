@@ -7,7 +7,7 @@ type FieldBase = {
 };
 
 type TextField = FieldBase & {
-    type: "text" | "textarea" | "number" | "boolean" | "tags" | "stringArray" | "datetime" | "media";
+    type: "text" | "textarea" | "number" | "boolean" | "tags" | "stringArray" | "datetime" | "media" | "streamVideo";
 };
 
 type SelectOption = {

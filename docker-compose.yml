@@ -26,6 +26,13 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
       SEARCH_INDEX_DIR: ${SEARCH_INDEX_DIR:-/var/lib/tape/search}
       MEDIA_DIR: ${MEDIA_DIR:-/var/lib/tape/media}
+      # Dev resilience: self-heal Flyway across branch switches / rollbacks so the
+      # backend boots instead of failing validation. Do NOT enable these in production.
+      #   local dev default = repair (heals checksum drift, keeps data).
+      #   ephemeral test stack: set FLYWAY_STRATEGY=clean in the deploy env to rebuild
+      #   the DB from scratch on every start (self-enables clean; no other flag needed).
+      FLYWAY_STRATEGY: ${FLYWAY_STRATEGY:-repair}
+      FLYWAY_IGNORE_MIGRATION_PATTERNS: ${FLYWAY_IGNORE_MIGRATION_PATTERNS:-*:missing,*:future}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:
@@ -41,10 +48,12 @@ services:
       args:
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8080}
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+        NEXT_PUBLIC_STREAMER_URL: ${NEXT_PUBLIC_STREAMER_URL:-http://localhost:8082}
     environment:
       API_BASE_URL: ${API_BASE_URL:-http://backend:8080}
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8080}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      NEXT_PUBLIC_STREAMER_URL: ${NEXT_PUBLIC_STREAMER_URL:-http://localhost:8082}
     ports:
       - "${WEB_PORT:-3000}:3000"
     depends_on:
@@ -55,6 +64,7 @@ services:
       context: ./cms
       args:
         VITE_ADMIN_API_URL: ${VITE_ADMIN_API_URL:-http://localhost:8080/api/admin}
+        VITE_STREAMER_URL: ${NEXT_PUBLIC_STREAMER_URL:-http://localhost:8082}
     ports:
       - "${CMS_PORT:-5173}:80"
     depends_on:

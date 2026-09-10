@@ -25,6 +25,12 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+    # Tolerate migrations applied in the DB but absent locally (e.g. after rolling back
+    # to an older commit). Strict default (*:future); dev sets e.g. "*:missing,*:future".
+    ignore-migration-patterns: ${FLYWAY_IGNORE_MIGRATION_PATTERNS:*:future}
+    # clean() is destructive, so Flyway blocks it by default. Only the FLYWAY_STRATEGY=clean
+    # mode needs it enabled — keep it disabled everywhere else (production especially).
+    clean-disabled: ${FLYWAY_CLEAN_DISABLED:true}
   servlet:
     multipart:
       max-file-size: 50MB
@@ -47,6 +53,13 @@ springdoc:
   writer-with-default-pretty-printer: true
 
 tape:
+  flyway:
+    # Non-production startup strategy (see FlywayConfig). Keep "none" in production.
+    #   none   — strict Flyway validate → migrate (default).
+    #   repair — repair() then migrate(): self-heal checksum drift, keep data (local dev).
+    #   clean  — clean() then migrate(): rebuild schema from scratch every boot, DROPS all
+    #            data (ephemeral test stacks). Self-enables clean; no other flag needed.
+    strategy: ${FLYWAY_STRATEGY:none}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
   cache:
