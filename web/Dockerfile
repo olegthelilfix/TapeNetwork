@@ -2,14 +2,22 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json yarn.lock* ./
-# Private @dx-display/* packages live in Nexus. Mount the host .npmrc as a build
-# secret so the token is available only for this step and never baked into a layer.
-# Portable across podman & docker: the secret lands at /run/secrets/npmrc and yarn
-# is pointed at it via NPM_CONFIG_USERCONFIG (podman ignores mount target=).
-#   podman: podman build --secret id=npmrc,src=$HOME/.npmrc -t tapenetwork-web ./web
-#   docker: DOCKER_BUILDKIT=1 docker build --secret id=npmrc,src=$HOME/.npmrc ...
-RUN --mount=type=secret,id=npmrc,required=false \
-    NPM_CONFIG_USERCONFIG=/run/secrets/npmrc yarn install --frozen-lockfile
+# Private @dx-display/* packages live in Nexus. We pass ONLY the auth token as a
+# build secret (a short-lived token file, NOT the whole ~/.npmrc), assemble a
+# minimal .npmrc from it inside this step, and delete it in the SAME layer — so
+# nothing (token or npmrc) is ever written into an image layer.
+# NOTE: podman/buildah secret mounts accept only id/target/required/mode/uid/gid
+# (no env= — that is a docker-buildx-only flag), so the token is passed as a file.
+#   podman: podman build --secret id=nexus_token,src=<token-file> -t tapenetwork-web ./web
+#   docker: DOCKER_BUILDKIT=1 docker build --secret id=nexus_token,src=<token-file> ...
+# required=false lets a public-only build (no private deps) still succeed.
+RUN --mount=type=secret,id=nexus_token,required=false \
+    if [ -s /run/secrets/nexus_token ]; then \
+      printf '@dx-display:registry=https://nexus.in.devexperts.com/repository/candelabra-npm/\n//nexus.in.devexperts.com/repository/candelabra-npm/:_authToken=%s\n' \
+        "$(cat /run/secrets/nexus_token)" > /root/.npmrc; \
+    fi; \
+    yarn install --frozen-lockfile; \
+    rm -f /root/.npmrc
 
 # ---- build ----
 FROM node:20-alpine AS build

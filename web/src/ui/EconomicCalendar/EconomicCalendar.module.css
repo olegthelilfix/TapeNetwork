@@ -1,0 +1,25 @@
+.wrap {
+  width: 100%;
+}
+
+/*
+ * Blank the label of ONLY the first column header (importance).
+ *
+ * The widget renders each header as a styled-components
+ * <div ... class="... table-head-cell__StyledTableHeaderCell-sc-q785la-0 ...">.
+ * The hash suffix (-sc-…-0) is unstable, but the "table-head-cell__StyledTableHeaderCell"
+ * prefix is stable, so we match on it with [class*=].
+ *
+ * There is no "first of a class" or "previous sibling" selector, so:
+ *   1. hide the label text on every header cell,
+ *   2. restore it on every header cell that FOLLOWS another header cell.
+ * The net effect: only the first header cell (importance) stays blank.
+ */
+.wrap :global([class*="table-head-cell__StyledTableHeaderCell"]) {
+  font-size: 0;
+}
+.wrap
+  :global([class*="table-head-cell__StyledTableHeaderCell"])
+  ~ :global([class*="table-head-cell__StyledTableHeaderCell"]) {
+  font-size: revert;
+}

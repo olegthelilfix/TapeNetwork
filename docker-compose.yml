@@ -53,6 +53,10 @@ services:
       - mediadata:/var/lib/tape/media
 
   web:
+    # Pre-built by dev-up.sh with `podman build --secret ...` because classic
+    # docker-compose (podman compose) can't forward the Nexus npmrc secret. The
+    # image tag lets compose reuse that build; override with WEB_IMAGE if needed.
+    image: ${WEB_IMAGE:-localhost/tapenetwork-web:latest}
     build:
       context: ./web
       args:

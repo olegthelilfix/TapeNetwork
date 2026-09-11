@@ -10,7 +10,13 @@ import path from "node:path";
 // (e.g. shared-ui-i18n's useIntl) resolved from another, throwing
 // 'Missing dependency: "i18n-intl-object"' at runtime. Forcing all of them to resolve
 // to one canonical copy restores the single-instance assumption the widget relies on.
-const DX_DISPLAY_SINGLETON_ALIASES = ["@dx-display/injectable-react", "@dx-display/frp-ts-react", "styled-components"];
+const DX_DISPLAY_SINGLETON_ALIASES = ["@dx-display/injectable-react", "@dx-display/frp-ts-react"];
+
+// styled-components is a direct dependency of web (added so the deeply-nested
+// dx-display ui-kit copies can resolve it), so it hoists to the ROOT node_modules
+// rather than under widgets-core. Alias it to that single root copy to keep the
+// styled-components ThemeContext a singleton across every widget.
+const STYLED_COMPONENTS_SINGLETON = path.resolve("./node_modules/styled-components");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -26,6 +32,14 @@ const nextConfig = {
         `./node_modules/@dx-display/widgets-core/node_modules/${name}`,
       );
     }
+    config.resolve.alias["styled-components"] = STYLED_COMPONENTS_SINGLETON;
+    // Some deeply-nested @dx-display/ui-kit copies import the bare specifier
+    // "styled-components"; the exact-match ($) alias guarantees webpack maps it to
+    // the single root copy's ESM entry instead of failing to resolve it from the
+    // vendored package folder.
+    config.resolve.alias["styled-components$"] = path.resolve(
+      "./node_modules/styled-components/dist/styled-components.esm.js",
+    );
     return config;
   },
 };

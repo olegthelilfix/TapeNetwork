@@ -1,0 +1,89 @@
+.crumb {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+}
+
+/* ---------- header band ---------- */
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 24px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+.headId { min-width: 0; }
+.tickerRow { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.ticker { font-size: 44px; line-height: 1; letter-spacing: -0.03em; font-weight: 700; }
+.company { font-family: var(--font-serif); font-size: 24px; color: var(--text-dim); }
+.badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.priceBlock { margin-left: auto; text-align: left; }
+.price { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; }
+.change { font-size: 18px; margin-left: 10px; }
+.down { color: var(--negative, #e5484d); }
+.up { color: var(--positive, #46a758); }
+.asof { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+.headActions { display: flex; gap: 10px; align-items: flex-start; }
+.btnPrimary {
+  font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+  background: var(--accent); color: #08090b; border: none; border-radius: 6px;
+  padding: 10px 16px; cursor: default;
+}
+.btnGhost {
+  font-family: var(--font-mono); font-size: 12px;
+  background: transparent; color: var(--text); border: 1px solid var(--border);
+  border-radius: 6px; padding: 10px 16px; cursor: default;
+}
+
+/* ---------- layout ---------- */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 48px; align-items: start; }
+.main { min-width: 0; }
+.side { display: flex; flex-direction: column; gap: 24px; }
+
+.blockHead {
+  display: flex; align-items: baseline; justify-content: space-between;
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-muted);
+  padding-bottom: 12px; border-bottom: 1px solid var(--border); margin: 34px 0 18px;
+}
+.blockHead a:hover { color: var(--accent); }
+.blockHead:first-of-type { margin-top: 0; }
+
+.chartCard {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface-2); overflow: hidden;
+}
+
+/* on-tape grid */
+.tapeGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+
+/* about the company */
+.about { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+.aboutBody { min-width: 0; }
+.aboutSummerfox { min-width: 0; }
+
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 1fr; }
+  .side { display: none; }
+}
+@media (max-width: 760px) {
+  .tapeGrid { grid-template-columns: 1fr; }
+  .about { grid-template-columns: 1fr; }
+  .ticker { font-size: 32px; }
+  .price { font-size: 30px; }
+  .priceBlock { margin-left: 0; }
+}

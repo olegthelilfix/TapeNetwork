@@ -5,6 +5,7 @@ import type { FC } from "react";
 import type { Home,HomeCardKind } from "@/domain/content";
 import type { ShowSummary } from "@/domain/show";
 import { Card } from "@/ui/Card";
+import { EconomicCalendar } from "@/ui/EconomicCalendar";
 
 import styles from "./HomeFeature.module.css";
 
@@ -96,6 +97,11 @@ export const HomeFeature: FC<HomeFeatureProps> = ({ home, shows }) => {
                 </li>
               ))}
             </ul>
+          </section>
+
+          <section className={styles.panel}>
+            <div className={styles.panelHead}><span>Economic calendar</span></div>
+            <EconomicCalendar />
           </section>
 
           <section className={styles.panel}>
